@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/VariableHelper.php';
@@ -24,26 +24,25 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
 /**
  * PRTGDevice Klasse für ein Gerät von PRTG.
  * Erweitert IPSModule.
- * 
- * @package       PRTG
+ *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.0 
+ *
+ * @version       1.0
+ *
  * @example <b>Ohne</b>
  */
 class PRTGDevice extends IPSModule
 {
-
     use VariableHelper,
         VariableProfile,
         DebugHelper,
         BufferHelper,
         PRTGPause;
+
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function Create()
     {
@@ -61,8 +60,6 @@ class PRTGDevice extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function ApplyChanges()
     {
@@ -144,7 +141,7 @@ class PRTGDevice extends IPSModule
     }
 
     /**
-     * Setzt den Intervall-Timer
+     * Setzt den Intervall-Timer.
      */
     private function SetTimer(bool $Active)
     {
@@ -158,9 +155,8 @@ class PRTGDevice extends IPSModule
     }
 
     /**
-     * IPS Instanz-Funktion PRTG_RequestState
+     * IPS Instanz-Funktion PRTG_RequestState.
      *
-     * @access public
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function RequestState(): bool
@@ -170,6 +166,7 @@ class PRTGDevice extends IPSModule
 
     /**
      * Liest den aktuellen Status des Gerätes von PRTG.
+     *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     private function RequestDeviceState(): bool
@@ -182,7 +179,7 @@ class PRTGDevice extends IPSModule
         if (!array_key_exists('devices', $Result)) {
             return false;
         }
-        if (sizeof($Result['devices']) != 1) {
+        if (count($Result['devices']) != 1) {
             return false;
         }
 
@@ -216,11 +213,12 @@ class PRTGDevice extends IPSModule
     }
 
     /**
-     * Sendet Eine Anfrage an den IO und liefert die Antwort
-     * 
-     * @param string $Uri URI der Anfrage
-     * @param array $QueryData Alle mit Allen GET-Parametern
-     * @param string $PostData String mit POST Daten
+     * Sendet Eine Anfrage an den IO und liefert die Antwort.
+     *
+     * @param string $Uri       URI der Anfrage
+     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string $PostData  String mit POST Daten
+     *
      * @return array Antwort ale Array
      */
     private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
@@ -250,8 +248,6 @@ class PRTGDevice extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function ReceiveData($JSONString)
     {
@@ -263,8 +259,6 @@ class PRTGDevice extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function RequestAction($Ident, $Value)
     {
@@ -279,7 +273,6 @@ class PRTGDevice extends IPSModule
         trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
         return false;
     }
-
 }
 
-/** @} */
+/* @} */

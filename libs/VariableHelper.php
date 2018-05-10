@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 trait VariableHelper
 {
     private function ConvertRuntime(int $Seconds)
@@ -13,7 +14,7 @@ trait VariableHelper
 
     private function ConvertPRTGTimestamp(float $Timestamp)
     {
-        return (-2209165200 + (86400 * $Timestamp));
+        return -2209165200 + (86400 * $Timestamp);
     }
 
     private function ConvertValue($Value)
@@ -153,7 +154,6 @@ trait VariableHelper
             }
         }
     }
-
 }
 
 /**
@@ -162,14 +162,13 @@ trait VariableHelper
 trait VariableProfile
 {
     /**
-     * Erstell und konfiguriert ein VariablenProfil für den Typ bool mit Assoziationen
+     * Erstell und konfiguriert ein VariablenProfil für den Typ bool mit Assoziationen.
      *
-     * @access protected
-     * @param string $Name Name des Profils.
-     * @param string $Icon Name des Icon.
-     * @param string $Prefix Prefix für die Darstellung.
-     * @param string $Suffix Suffix für die Darstellung.
-     * @param array $Associations Assoziationen der Werte als Array.
+     * @param string $Name         Name des Profils.
+     * @param string $Icon         Name des Icon.
+     * @param string $Prefix       Prefix für die Darstellung.
+     * @param string $Suffix       Suffix für die Darstellung.
+     * @param array  $Associations Assoziationen der Werte als Array.
      */
     protected function RegisterProfileBooleanEx($Name, $Icon, $Prefix, $Suffix, $Associations)
     {
@@ -180,26 +179,25 @@ trait VariableProfile
     }
 
     /**
-     * Erstell und konfiguriert ein VariablenProfil für den Typ integer mit Assoziationen
+     * Erstell und konfiguriert ein VariablenProfil für den Typ integer mit Assoziationen.
      *
-     * @access protected
-     * @param string $Name Name des Profils.
-     * @param string $Icon Name des Icon.
-     * @param string $Prefix Prefix für die Darstellung.
-     * @param string $Suffix Suffix für die Darstellung.
-     * @param array $Associations Assoziationen der Werte als Array.
+     * @param string $Name         Name des Profils.
+     * @param string $Icon         Name des Icon.
+     * @param string $Prefix       Prefix für die Darstellung.
+     * @param string $Suffix       Suffix für die Darstellung.
+     * @param array  $Associations Assoziationen der Werte als Array.
      */
     protected function RegisterProfileIntegerEx($Name, $Icon, $Prefix, $Suffix, $Associations)
     {
-        if (sizeof($Associations) === 0) {
+        if (count($Associations) === 0) {
             $MinValue = 0;
             $MaxValue = 0;
         } else {
             $MinValue = $Associations[0][0];
-            $MaxValue = $Associations[sizeof($Associations) - 1][0];
+            $MaxValue = $Associations[count($Associations) - 1][0];
         }
         $this->RegisterProfileInteger($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, 0);
-        $old = IPS_GetVariableProfile($Name)["Associations"];
+        $old = IPS_GetVariableProfile($Name)['Associations'];
         $OldValues = array_column($old, 'Value');
         foreach ($Associations as $Association) {
             IPS_SetVariableProfileAssociation($Name, $Association[0], $Association[1], $Association[2], $Association[3]);
@@ -216,10 +214,10 @@ trait VariableProfile
     /**
      * Erstell und konfiguriert ein VariablenProfil für den Typ bool.
      *
-     * @param string $Name     Name des Profils.
-     * @param string $Icon     Name des Icon.
-     * @param string $Prefix   Prefix für die Darstellung.
-     * @param string $Suffix   Suffix für die Darstellung.
+     * @param string $Name   Name des Profils.
+     * @param string $Icon   Name des Icon.
+     * @param string $Prefix Prefix für die Darstellung.
+     * @param string $Suffix Suffix für die Darstellung.
      */
     protected function RegisterProfileBoolean($Name, $Icon, $Prefix, $Suffix)
     {
@@ -293,6 +291,7 @@ trait VariableProfile
 
     /**
      * Löscht ein Variablenprofile, sofern es nicht außerhalb dieser Instanz noch verwendet wird.
+     *
      * @param string $Name Name des zu löschenden Profils.
      */
     protected function UnregisterProfile(string $Name)
@@ -313,5 +312,4 @@ trait VariableProfile
         }
         IPS_DeleteVariableProfile($Name);
     }
-
 }

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -22,24 +22,22 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
 /**
  * PRTGConfigurator Klasse für ein PRTG Konfigurator.
  * Erweitert IPSModule.
- * 
- * @package       PRTG
+ *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.0 
+ *
+ * @version       1.0
+ *
  * @example <b>Ohne</b>
- * 
  */
 class PRTGConfigurator extends IPSModule
 {
-
     use BufferHelper,
         DebugHelper;
+
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function Create()
     {
@@ -50,8 +48,6 @@ class PRTGConfigurator extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     * 
-     * @access public
      */
     public function ApplyChanges()
     {
@@ -59,7 +55,8 @@ class PRTGConfigurator extends IPSModule
     }
 
     /**
-     * Liefert alle Sensoren
+     * Liefert alle Sensoren.
+     *
      * @return array Array mit allen Sensoren
      */
     private function GetSensors(): array
@@ -76,7 +73,8 @@ class PRTGConfigurator extends IPSModule
     }
 
     /**
-     * Liefert alle Geräte
+     * Liefert alle Geräte.
+     *
      * @return array Array mit allen Geräten
      */
     private function GetDevices(): array
@@ -94,8 +92,6 @@ class PRTGConfigurator extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function GetConfigurationForm(): string
     {
@@ -183,9 +179,8 @@ class PRTGConfigurator extends IPSModule
             ];
         }
 
-
         $Values = array_merge($Devices, $MissingDevices, $Sensors, $MissingSensors);
-        if (sizeof($Values) > 0) {
+        if (count($Values) > 0) {
             foreach ($Values as $key => $row) {
                 $SortDevice[$key] = $row['device'];
                 $SortType[$key] = $row['type'];
@@ -199,11 +194,12 @@ class PRTGConfigurator extends IPSModule
     }
 
     /**
-     * Sendet Eine Anfrage an den IO und liefert die Antwort
-     * 
-     * @param string $Uri URI der Anfrage
-     * @param array $QueryData Alle mit Allen GET-Parametern
-     * @param string $PostData String mit POST Daten
+     * Sendet Eine Anfrage an den IO und liefert die Antwort.
+     *
+     * @param string $Uri       URI der Anfrage
+     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string $PostData  String mit POST Daten
+     *
      * @return array Antwort ale Array
      */
     private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
@@ -228,7 +224,6 @@ class PRTGConfigurator extends IPSModule
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
     }
-
 }
 
-/** @} */
+/* @} */

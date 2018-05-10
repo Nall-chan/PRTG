@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -23,21 +23,21 @@ require_once __DIR__ . '/../libs/WebhookHelper.php';
 /**
  * PRTGIO Klasse für die Kommunikation mit PRTG.
  * Erweitert IPSModule.
- * 
- * @package       PRTG
+ *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.0 
+ *
+ * @version       1.0
+ *
  * @example <b>Ohne</b>
- * 
+ *
  * @property string $Url
  * @property string $Hash
  * @property self $State
  */
 class PRTGIO extends IPSModule
 {
-
     use BufferHelper,
         DebugHelper,
         WebhookHelper;
@@ -49,8 +49,6 @@ class PRTGIO extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function Create()
     {
@@ -67,8 +65,6 @@ class PRTGIO extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function ApplyChanges()
     {
@@ -97,7 +93,6 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      *
-     * @access public
      * @param type $TimeStamp
      * @param type $SenderID
      * @param type $Message
@@ -113,9 +108,8 @@ class PRTGIO extends IPSModule
     }
 
     /**
-     * IPS Instanz-Funktion PRTG_RequestState
+     * IPS Instanz-Funktion PRTG_RequestState.
      *
-     * @access public
      * @return bool True bei Erfolg, False im Fehlerfall
      */
 //    public function RequestState(): bool
@@ -138,8 +132,10 @@ class PRTGIO extends IPSModule
 //        }
 //        return true;
 //    }
+
     /**
-     * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook
+     * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook.
+     *
      * @return string JSON-String für PRTG HTTP-Daten-Sensor
      */
     private function FetchIPSSensorData(): string
@@ -158,7 +154,7 @@ class PRTGIO extends IPSModule
         $Channels[] = ['channel' => 'IPS Objects', 'value' => count(IPS_GetObjectList()), 'unit' => 'Count', 'limitmaxwarning' => 45000, 'limitmaxerror' => 50000, 'LimitMode' => 1];
 
         $UtilsId = IPS_GetInstanceListByModuleID('{B69010EA-96D5-46DF-B885-24821B8C8DBD}');
-        if (sizeof($UtilsId) > 0) {
+        if (count($UtilsId) > 0) {
             $VarId = @IPS_GetObjectIDByIdent('LicenseSubscription', $UtilsId[0]);
             if ($VarId > 0) {
                 $Channels[] = ['channel' => 'License Subscription', 'value' => GetValueInteger($VarId) - time(), 'unit' => 'TimeSeconds', 'limitminwarning' => 30 * 24 * 60 * 60, 'limitminerror' => 0, 'LimitMode' => 1];
@@ -226,8 +222,6 @@ class PRTGIO extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access protected
      */
     protected function ProcessHookdata()
     {
@@ -262,11 +256,12 @@ class PRTGIO extends IPSModule
     }
 
     /**
-     * Sendet Eine Anfrage an PRTG und liefert die Antwort
-     * 
-     * @param string $Uri URI der Abrage
-     * @param array $QueryData Alle mit Allen GET-Parametern
-     * @param string $PostData String mit POST Daten
+     * Sendet Eine Anfrage an PRTG und liefert die Antwort.
+     *
+     * @param string $Uri       URI der Abrage
+     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string $PostData  String mit POST Daten
+     *
      * @return array Antwort ale Array
      */
     private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
@@ -285,7 +280,7 @@ class PRTGIO extends IPSModule
             return ['Payload' => $ResultString, 'Error' => $HttpCode];
         }
         $Result = json_decode($ResultString, true);
-        if ($Result === NULL) {
+        if ($Result === null) {
             $Result['Error'] = 405;
         }
         array_walk_recursive($Result, [$this, 'ResultEncode']);
@@ -295,7 +290,8 @@ class PRTGIO extends IPSModule
 
     /**
      * Callback für array_walk_recursive. Dekodiert HTML-Kodierte Strings.
-     * @param mixed $item
+     *
+     * @param mixed  $item
      * @param string $key
      */
     private function ResultEncode(&$item, &$key)
@@ -307,6 +303,7 @@ class PRTGIO extends IPSModule
 
     /**
      * Prüft die Konfiguration der URL für PRTG und schreibt die berenigte URL in einen InstanceBuffer.
+     *
      * @return bool True wenn Host ok, sonst false.
      */
     private function CheckHost(): bool
@@ -323,11 +320,11 @@ class PRTGIO extends IPSModule
             return false;
         }
         $Scheme = parse_url($URL, PHP_URL_SCHEME);
-        if ($Scheme == NULL) {
+        if ($Scheme == null) {
             $Scheme = 'http';
         }
         $Host = parse_url($URL, PHP_URL_HOST);
-        if ($Host == NULL) {
+        if ($Host == null) {
             $this->SetStatus(203);
             $this->State = self::isDisconnected;
             return false;
@@ -342,14 +339,14 @@ class PRTGIO extends IPSModule
             }
         }
         $Port = parse_url($URL, PHP_URL_PORT);
-        if ($Port != NULL) {
+        if ($Port != null) {
             $Host .= ':' . $Port;
         }
         $Path = parse_url($URL, PHP_URL_PATH);
         if (is_null($Path)) {
             $Path = '';
         } else {
-            if ((strlen($Path) > 0) and ( substr($Path, -1) == '/')) {
+            if ((strlen($Path) > 0) and (substr($Path, -1) == '/')) {
                 $Path = substr($Path, 0, -1);
             }
         }
@@ -359,6 +356,7 @@ class PRTGIO extends IPSModule
 
     /**
      * Holt einen PAsswordHash von PRTG.
+     *
      * @return bool True bei Erfolg, sonst false
      */
     private function GetPasswordHash(): bool
@@ -392,17 +390,19 @@ class PRTGIO extends IPSModule
     /**
      * IPS Instanz-Funktion PRTG_GetGraph
      * Liefert einen Graphen aus PRTG.
-     * @param int $Type Typ des Graphen
-     *   enum[1=PNG, 2=SVG]
-     * @param int $SensorId Objekt-ID des Sensors
-     * @param int $GraphId Zeitbereich des Graphen
-     *   enum[0=live, 1=last 48 hours, 2=30 days, 3=365 days]
-     * @param int $Width Höhe des Graphen in Pixel.
-     * @param int $Height Höhe des Graphen in Pixel.
-     * @param int $Theme Darstellung
-     *   enum[0,1,2,3]
-     * @param int $BaseFontSize Schriftgröße, 10 ist Standard
-     * @param bool $ShowLegend Legende Anzeigen
+     *
+     * @param int  $Type         Typ des Graphen
+     *                           enum[1=PNG, 2=SVG]
+     * @param int  $SensorId     Objekt-ID des Sensors
+     * @param int  $GraphId      Zeitbereich des Graphen
+     *                           enum[0=live, 1=last 48 hours, 2=30 days, 3=365 days]
+     * @param int  $Width        Höhe des Graphen in Pixel.
+     * @param int  $Height       Höhe des Graphen in Pixel.
+     * @param int  $Theme        Darstellung
+     *                           enum[0,1,2,3]
+     * @param int  $BaseFontSize Schriftgröße, 10 ist Standard
+     * @param bool $ShowLegend   Legende Anzeigen
+     *
      * @return string
      */
     public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend)
@@ -412,30 +412,32 @@ class PRTGIO extends IPSModule
         }
         //'showLegend%3D%271%27+baseFontSize%3D%275%27'
         $QueryData = ['type'         => 'graph',
-            'graphid'      => $GraphId,
-            'width'        => $Width,
-            'height'       => $Height,
-            'theme'        => $Theme,
-            'refreshable'  => 'true',
-            'graphstyling' => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'           => $SensorId
+            'graphid'                => $GraphId,
+            'width'                  => $Width,
+            'height'                 => $Height,
+            'theme'                  => $Theme,
+            'refreshable'            => 'true',
+            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
+            'id'                     => $SensorId
         ];
         if ($Type == 1) {
             $URL = $this->CreateQueryURL('chart.png', $QueryData);
         } elseif ($Type == 2) {
             $URL = $this->CreateQueryURL('chart.svg', $QueryData);
         }
-        $Timeout = array(
+        $Timeout = [
             'Timeout' => 5000
-        );
+        ];
         $this->SendDebug('PRTG Graph URL', $URL, 0);
         return @Sys_GetURLContentEx($URL, $Timeout);
     }
 
     /**
      * Erstellt eine komplette URL für die Anfrage an den PRTG-Server.
-     * @param string $Uri URI für die URL
-     * @param array $QueryData Array mit allen GET-Parametern
+     *
+     * @param string $Uri       URI für die URL
+     * @param array  $QueryData Array mit allen GET-Parametern
+     *
      * @return string Die fertige URL
      */
     private function CreateQueryURL(string $Uri, array $QueryData): string
@@ -450,10 +452,11 @@ class PRTGIO extends IPSModule
 
     /**
      * Sendet Eine Anfrage an PRTG.
-     * 
-     * @param string $Url URL der Abrage
-     * @param int $HttpCode Enthält den HTTP-Code der Antwort
+     *
+     * @param string $Url      URL der Abrage
+     * @param int    $HttpCode Enthält den HTTP-Code der Antwort
      * @param string $PostData String mit POST Daten
+     *
      * @return string Antwort als String
      */
     private function SendRequest(string $Url, int &$HttpCode, string $PostData = ''): string
@@ -488,6 +491,7 @@ class PRTGIO extends IPSModule
 
     /**
      * Interne Funktion des SDK.
+     *
      * @param type $InstanceStatus
      */
     protected function SetStatus($InstanceStatus)
@@ -498,8 +502,9 @@ class PRTGIO extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     * @access public
+     *
      * @param type $JSONString Der IPS-Datenstring
+     *
      * @return string Die Antwort an den anfragenden Child
      */
     public function ForwardData($JSONString): string
@@ -512,7 +517,6 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      *
-     * @access public
      * @return string Konfigurationsform
      */
     public function GetConfigurationForm(): string
@@ -521,7 +525,6 @@ class PRTGIO extends IPSModule
         $Form['elements'][4]['label'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
         return json_encode($Form);
     }
-
 }
 
-/** @} */
+/* @} */
