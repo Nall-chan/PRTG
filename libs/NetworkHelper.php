@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 trait NetworkHelper
 {
     private function getadresses()
@@ -14,7 +15,7 @@ trait NetworkHelper
         foreach ($all as $res) {
             $addrinfo = socket_addrinfo_explain($res);
             if ($addrinfo['ai_family'] == 2) {
-                $IPs[] = $addrinfo["ai_addr"]["sin_addr"];
+                $IPs[] = $addrinfo['ai_addr']['sin_addr'];
             }
         }
         return $IPs;
@@ -27,10 +28,9 @@ trait NetworkHelper
         foreach ($all as $res) {
             $addrinfo = socket_addrinfo_explain($res);
             if ($addrinfo['ai_family'] == 23) {
-                $IPs[] = $addrinfo["ai_addr"]["sin6_addr"];
+                $IPs[] = $addrinfo['ai_addr']['sin6_addr'];
             }
         }
         return $IPs;
     }
-
 }

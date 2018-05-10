@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/VariableHelper.php';
@@ -24,27 +24,27 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
 /**
  * PRTGSensor Klasse für ein Sensor von PRTG.
  * Erweitert IPSModule.
- * 
- * @package       PRTG
+ *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.0 
+ *
+ * @version       1.0
+ *
  * @example <b>Ohne</b>
+ *
  * @property int $Interval
  */
 class PRTGSensor extends IPSModule
 {
-
     use VariableHelper,
         VariableProfile,
         DebugHelper,
         BufferHelper,
         PRTGPause;
+
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function Create()
     {
@@ -63,8 +63,6 @@ class PRTGSensor extends IPSModule
 
     /**
      * Interne Funktion des SDK.
-     *
-     * @access public
      */
     public function ApplyChanges()
     {
@@ -141,7 +139,7 @@ class PRTGSensor extends IPSModule
     }
 
     /**
-     * Setzt den Intervall-Timer
+     * Setzt den Intervall-Timer.
      */
     private function SetTimer(bool $Active)
     {
@@ -160,8 +158,8 @@ class PRTGSensor extends IPSModule
     }
 
     /**
-     * IPS Instanz-Funktion PRTG_RequestState
-     * @access public
+     * IPS Instanz-Funktion PRTG_RequestState.
+     *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function RequestState(): bool
@@ -174,6 +172,7 @@ class PRTGSensor extends IPSModule
 
     /**
      * Fragt den Zustand des Sensors aus PRTG ab.
+     *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     private function RequestSensorState(): bool
@@ -186,7 +185,7 @@ class PRTGSensor extends IPSModule
         if (!array_key_exists('sensors', $Result)) {
             return false;
         }
-        if (sizeof($Result['sensors']) != 1) {
+        if (count($Result['sensors']) != 1) {
             return false;
         }
         $Data = $Result['sensors'][0];
@@ -215,6 +214,7 @@ class PRTGSensor extends IPSModule
 
     /**
      * Fragt den Zustand aller Kanäle dieses Sensors aus PRTG ab.
+     *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     private function RequestChannelState(): bool
@@ -233,6 +233,7 @@ class PRTGSensor extends IPSModule
 
     /**
      * Dekodiert die Daten der Kanäle und schreibt diese in Statusvariablen.
+     *
      * @param array $Channels
      */
     private function DecodeChannelData(array $Channels)
@@ -257,7 +258,7 @@ class PRTGSensor extends IPSModule
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Profile'], $Channel['objid'], true);
             $vid = $this->GetIDForIdent($Ident);
 
-            if ($this->ReadPropertyBoolean('AutoRenameChannels') and ( IPS_GetName($vid)) != $Channel['name']) {
+            if ($this->ReadPropertyBoolean('AutoRenameChannels') and (IPS_GetName($vid)) != $Channel['name']) {
                 IPS_SetName($vid, $Channel['name']);
             }
             $this->SetValue($Ident, $Data['Data']);
@@ -265,11 +266,12 @@ class PRTGSensor extends IPSModule
     }
 
     /**
-     * Sendet Eine Anfrage an den IO und liefert die Antwort
-     * 
-     * @param string $Uri URI der Anfrage
-     * @param array $QueryData Alle mit Allen GET-Parametern
-     * @param string $PostData String mit POST Daten
+     * Sendet Eine Anfrage an den IO und liefert die Antwort.
+     *
+     * @param string $Uri       URI der Anfrage
+     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string $PostData  String mit POST Daten
+     *
      * @return array Antwort ale Array
      */
     private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
@@ -299,7 +301,7 @@ class PRTGSensor extends IPSModule
 
     /**
      * Verarbeitet empfangene Events des IO.
-     * @access public
+     *
      * @param string $JSONString
      */
     public function ReceiveData($JSONString)
@@ -313,7 +315,6 @@ class PRTGSensor extends IPSModule
     /**
      * Interne Funktion des SDK.
      *
-     * @access public
      * @return string Konfigurationsform
      */
     public function GetConfigurationForm(): string
@@ -328,7 +329,6 @@ class PRTGSensor extends IPSModule
     /**
      * Interne Funktion des SDK.
      *
-     * @access public
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function RequestAction($Ident, $Value): bool
@@ -349,7 +349,7 @@ class PRTGSensor extends IPSModule
 
     /**
      * Bestätigt einen Alarm in PRTG.
-     * @access public
+     *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function AcknowledgeAlarm(): bool
@@ -359,12 +359,13 @@ class PRTGSensor extends IPSModule
 
     /**
      * Bestätigt einen Alarm in PRT mit der in $Message übergebenen Nachricht.
+     *
      * @param string $Message Nachricht für PTRG.
+     *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function AcknowledgeAlarmEx(string $Message): bool
     {
-
         if (!is_string($Message)) {
             trigger_error($this->Translate('Message must be string.'), E_USER_NOTICE);
             return false;
@@ -385,7 +386,6 @@ class PRTGSensor extends IPSModule
         }
         return false;
     }
-
 }
 
-/** @} */
+/* @} */
