@@ -1,0 +1,37 @@
+{
+    "actions": [
+        {
+            "type": "Configurator",
+            "name": "Configuration",
+            "rowCount": 20,
+            "add": false,
+            "delete": true,
+            "sort": {
+                "column": "group",
+                "direction": "ascending"
+            },
+            "columns": [{
+                    "label": "ObjectID",
+                    "name": "objid",
+                    "width": "100px"
+                }, {
+                    "label": "Type",
+                    "name": "type",
+                    "width": "100px"
+                }, {
+                    "label": "Group",
+                    "name": "group",
+                    "width": "250px"
+                }, {
+                    "label": "Device",
+                    "name": "device",
+                    "width": "250px"
+                }, {
+                    "label": "Name",
+                    "name": "name",
+                    "width": "auto"
+                }
+            ],
+            "values": []
+        }]
+}

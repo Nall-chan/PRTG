@@ -1,0 +1,16 @@
+{
+    "translations": {
+        "de": {
+            "Open": "Öffnen",
+            "URL": "URL",
+            "Username": "Benutzername",
+            "Password": "Passwort",
+            "Read data": "Lese Daten",
+            "PRTG is accessible": "PRTG ist erreichbar",
+            "Instance is inactive": "Instanz ist inaktiv",
+            "PRTG not reachable": "PRTG nicht erreichbar",
+            "unauthorized": "Zugriff verweigert",
+            "URL not valid": "URL nicht gültig"
+        }
+    }
+}

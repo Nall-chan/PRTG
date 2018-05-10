@@ -1,0 +1,11 @@
+{
+	"id": "{67470842-FB5E-485B-92A2-4401E371E6FC}",
+	"name": "PRTGIO",
+	"type": 1,
+	"vendor": "PRTG",
+	"aliases": ["PRTG I/O"],
+	"parentRequirements": [],
+	"childRequirements": ["{45829008-026B-401E-829F-8384DD27619A}"],
+	"implemented": ["{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}"],
+	"prefix": "PRTG"
+}

@@ -1,0 +1,52 @@
+{
+    "elements":
+            [
+                {
+                    "type": "NumberSpinner",
+                    "name": "id",
+                    "caption": "Sensor ID"
+                },
+                {
+                    "name": "ShowActionButton",
+                    "type": "CheckBox",
+                    "caption": "Display pause/resume button"
+                },
+                {
+                    "name": "ShowAckButton",
+                    "type": "CheckBox",
+                    "caption": "Display acknowledge button"
+                },
+                {
+                    "name": "AutoRename",
+                    "type": "CheckBox",
+                    "caption": "Auto rename instance"
+                },
+                {
+                    "name": "AutoRenameChannels",
+                    "type": "CheckBox",
+                    "caption": "Auto rename channels"
+                },                
+                {
+                    "name": "ReadableState",
+                    "type": "CheckBox",
+                    "caption": "Readable state"
+                },
+                {
+                    "name": "UseInterval",
+                    "type": "CheckBox",
+                    "caption": "Use not sensor Interval"
+                }, {
+                    "type": "IntervalBox",
+                    "name": "Interval",
+                    "caption": "seconds"
+                }
+            ],
+    "actions":
+            [
+                {
+                    "type": "Button",
+                    "label": "Read data",
+                    "onClick": "PRTG_RequestState($id);"
+                }
+            ]
+}

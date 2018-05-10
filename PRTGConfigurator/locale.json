@@ -1,0 +1,12 @@
+{
+    "translations": {
+        "de": {
+            "PRTG Configurator": "PRTG Konfigurator",
+            "ObjectID": "ObjectID",
+            "Type": "Typ",
+            "Group": "Gruppe",
+            "Device": "Gerät",
+            "Name": "Name"
+        }
+    }
+}
