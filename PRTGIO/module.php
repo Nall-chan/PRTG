@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -38,7 +38,6 @@ require_once __DIR__ . '/../libs/WebhookHelper.php';
  */
 class PRTGIO extends IPSModule
 {
-
     use BufferHelper,
         DebugHelper,
         WebhookHelper;
@@ -133,6 +132,7 @@ class PRTGIO extends IPSModule
 //        }
 //        return true;
 //    }
+
     /**
      * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook.
      *
@@ -349,7 +349,7 @@ class PRTGIO extends IPSModule
         if (is_null($Path)) {
             $Path = '';
         } else {
-            if ((strlen($Path) > 0) and ( substr($Path, -1) == '/')) {
+            if ((strlen($Path) > 0) and (substr($Path, -1) == '/')) {
                 $Path = substr($Path, 0, -1);
             }
         }
@@ -418,13 +418,13 @@ class PRTGIO extends IPSModule
         }
         //'showLegend%3D%271%27+baseFontSize%3D%275%27'
         $QueryData = ['type'         => 'graph',
-            'graphid'      => $GraphId,
-            'width'        => $Width,
-            'height'       => $Height,
-            'theme'        => $Theme,
-            'refreshable'  => 'true',
-            'graphstyling' => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'           => $SensorId
+            'graphid'                => $GraphId,
+            'width'                  => $Width,
+            'height'                 => $Height,
+            'theme'                  => $Theme,
+            'refreshable'            => 'true',
+            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
+            'id'                     => $SensorId
         ];
         if ($Type == 1) {
             $URL = $this->CreateQueryURL('chart.png', $QueryData);
@@ -536,7 +536,6 @@ class PRTGIO extends IPSModule
         $Form['elements'][4]['label'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
         return json_encode($Form);
     }
-
 }
 
 /* @} */
