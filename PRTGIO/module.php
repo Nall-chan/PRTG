@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -38,6 +38,7 @@ require_once __DIR__ . '/../libs/WebhookHelper.php';
  */
 class PRTGIO extends IPSModule
 {
+
     use BufferHelper,
         DebugHelper,
         WebhookHelper;
@@ -132,7 +133,6 @@ class PRTGIO extends IPSModule
 //        }
 //        return true;
 //    }
-
     /**
      * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook.
      *
@@ -272,6 +272,9 @@ class PRTGIO extends IPSModule
         $url = $this->CreateQueryURL($Uri, $QueryData);
         $HttpCode = 0;
         $ResultString = $this->SendRequest($url, $HttpCode, $PostData);
+        if ($HttpCode == 0) {
+            return ['Error' => 404];
+        }
         if ($HttpCode >= 400) {
             return ['Error' => $HttpCode];
         }
@@ -328,15 +331,15 @@ class PRTGIO extends IPSModule
             $this->SetStatus(203);
             $this->State = self::isDisconnected;
             return false;
-        } else {
-            $HostL = gethostbynamel($Host);
-            if ($HostL === false) {
-                $this->SetStatus(201);
-                $this->State = self::isDisconnected;
-                return false;
-            } else {
-                $Host = $HostL[0];
-            }
+            /*        } else {
+              $HostL = gethostbynamel($Host);
+              if ($HostL === false) {
+              $this->SetStatus(201);
+              $this->State = self::isDisconnected;
+              return false;
+              } else {
+              $Host = $HostL[0];
+              } */
         }
         $Port = parse_url($URL, PHP_URL_PORT);
         if ($Port != null) {
@@ -346,7 +349,7 @@ class PRTGIO extends IPSModule
         if (is_null($Path)) {
             $Path = '';
         } else {
-            if ((strlen($Path) > 0) and (substr($Path, -1) == '/')) {
+            if ((strlen($Path) > 0) and ( substr($Path, -1) == '/')) {
                 $Path = substr($Path, 0, -1);
             }
         }
@@ -371,7 +374,10 @@ class PRTGIO extends IPSModule
         $HttpCode = 0;
         $Result = $this->SendRequest($QueryURL, $HttpCode);
         if ($Result === '') {
-            if ($HttpCode == 404) {
+            if ($HttpCode == 0) {
+                $this->SetStatus(201);
+                $this->State = self::isDisconnected;
+            } elseif ($HttpCode == 404) {
                 $this->SetStatus(201);
                 $this->State = self::isDisconnected;
             } else {
@@ -412,13 +418,13 @@ class PRTGIO extends IPSModule
         }
         //'showLegend%3D%271%27+baseFontSize%3D%275%27'
         $QueryData = ['type'         => 'graph',
-            'graphid'                => $GraphId,
-            'width'                  => $Width,
-            'height'                 => $Height,
-            'theme'                  => $Theme,
-            'refreshable'            => 'true',
-            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'                     => $SensorId
+            'graphid'      => $GraphId,
+            'width'        => $Width,
+            'height'       => $Height,
+            'theme'        => $Theme,
+            'refreshable'  => 'true',
+            'graphstyling' => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
+            'id'           => $SensorId
         ];
         if ($Type == 1) {
             $URL = $this->CreateQueryURL('chart.png', $QueryData);
@@ -470,12 +476,17 @@ class PRTGIO extends IPSModule
         }
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, 5000);
         $Result = curl_exec($ch);
         $HttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if (is_bool($Result)) {
+            $Result = '';
+        }
         curl_close($ch);
-        if ($HttpCode == 400) {
+        if ($HttpCode == 0) {
+            $this->SendDebug('Not connected', '', 0);
+        } elseif ($HttpCode == 400) {
             $this->SendDebug('Bad Request', $HttpCode, 0);
         } elseif ($HttpCode == 401) {
             $this->SendDebug('Unauthorized Error', $HttpCode, 0);
@@ -525,6 +536,7 @@ class PRTGIO extends IPSModule
         $Form['elements'][4]['label'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
         return json_encode($Form);
     }
+
 }
 
 /* @} */
