@@ -37,7 +37,7 @@ I/O zur Kommunikation mit PRTG
 
 ## 3. Software-Installation
 
- Dieses Modul ist Bestandteil der IPSPRTG-Library.
+ Dieses Modul ist Bestandteil der [IPSPRTG-Library](../).  
 
 **IPS 5.0:**  
    Bei privater Nutzung: Über das 'Module-Control' in IPS folgende URL hinzufügen.  
@@ -95,27 +95,32 @@ Folgende Parameter stehen zur Verfügung:
 ### 1. Events von PRTG empfangen  
 
 PRTG kann bei Statusänderungen eines Sensors eine Benachrichtigung an IPS senden, damit IPS den Zustand zeitnah darstellen kann und nicht um das Abfrageintervall verzögert in IPS dargestellt wird.  
-Hierzu zum zuerst in PRTG eine neue Benachrichtigung angelegt werden, min folgenden Parametern:  
+![PRTG Benachrichtigung](imgs/prtg_event1.png)  
+Hierzu zum zuerst in PRTG eine neue Benachrichtigung angelegt werden, mit folgenden Parametern:  
 Name: beliebig  z.B. IPS
 Status: gestartet  
 Verschieben: Nachrichten während Pausenzustand verwerfen  
-Methode: Immer sofort benachrichtigen, nie zusammenfassen
-HTTP-Aktion ausführen: URL von IPS nach folgendem Schema eintragen  
-http://<ips-ip>:<ips-port>/hook/PRTG<InstanzID>  
+Methode: Immer sofort benachrichtigen, nie zusammenfassen.  
+HTTP-Aktion ausführen: URL von IPS nach folgendem Schema eintragen:  
+```
+http://<ips-ip>:<ips-port>/hook/PRTG<InstanzID>
+```
 z.B. http://192.168.123.123:3777/hook/PRTG12345  
 
 Post-Daten:  
+```
 %deviceid
 %sensorid
-
+```
+![PRTG Benachrichtigung](imgs/prtg_event2.png)  
 Anschließend müssen noch Trigger definiert werden, welche diese Benachrichtigung auslösen.  
 PRTG vererbt Konfigurationen vom obersten Element nach unten. Somit können einzelne Objekte diese Benachrichtigung auslösen, oder auch alle.  
 Soll die Benachrichtung für alle Sensoren erfolgen, so ist werden die Trigger im Objekt 0 (oberstes Element im Gerätebaum von PRTG) unter Benachrichtigungen angelegt.  
 
 Hier sind vier Trigger anzulegen für die Zustände 'Fehler', 'Warnung', 'Ungewöhnlich' und 'Fehler (teilweise)'.  
 Als Aktion wird immer die oben erzeugte Benachrichtigung ausgewählt. Auch wenn die Bedingung nicht mehr zutrifft.  
-
 Wird in IPS eine Benachrichtigung empfange, so wird dies im Reiter Debug mit 'PRTG EVENT' ausgegeben.  
+![PRTG Benachrichtigung](imgs/prtg_event3.png)  
 
 ### 2. IPS in PRTG überwachen  
 

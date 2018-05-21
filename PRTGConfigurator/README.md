@@ -32,7 +32,9 @@ Vereinfacht das Anlegen von verschiedenen PRTG-Instanzen in IPS.
 
 ## 3. Software-Installation
 
- Dieses Modul ist Bestandteil der IPSPRTG-Library.
+ Dieses Modul ist Bestandteil der [IPSPRTG-Library](../).  
+
+**IPS 5.0:**  
    Bei privater Nutzung: Über das 'Module-Control' in IPS folgende URL hinzufügen.  
     `git://github.com/Nall-chan/IPSPRTG.git`  
 
