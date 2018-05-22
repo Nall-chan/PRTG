@@ -1,6 +1,10 @@
 <?php
 
 declare(strict_types=1);
+
+/**
+ * Trait mit Hilfsfunktionen für Variablen.
+ */
 trait VariableHelper
 {
     private function ConvertRuntime(int $Seconds)
@@ -63,7 +67,7 @@ trait VariableHelper
         switch ($data[1]) {
             case 'Tg.':
                 $Result = [
-                    'Data'    => $this->ConvertRuntime((int)$Value['lastvalue_raw']),
+                    'Data'    => $this->ConvertRuntime((int) $Value['lastvalue_raw']),
                     'Profile' => '',
                     'VarType' => vtString
                 ];
@@ -154,6 +158,7 @@ trait VariableHelper
             }
         }
     }
+
 }
 
 /**
@@ -312,4 +317,5 @@ trait VariableProfile
         }
         IPS_DeleteVariableProfile($Name);
     }
+
 }

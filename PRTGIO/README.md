@@ -1,5 +1,5 @@
 [![Version](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version](https://img.shields.io/badge/Modul%20Version-1.00-blue.svg)]()
+[![Version](https://img.shields.io/badge/Modul%20Version-1.10-blue.svg)]()
 [![Version](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
 [![Version](https://img.shields.io/badge/Symcon%20Version-5.0%20%3E-green.svg)](https://www.symcon.de/forum/threads/37412-IP-Symcon-5-0-%28Testing%29)
 
@@ -54,6 +54,7 @@ Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'P
 
 Folgende Parameter sind in der Instanz zu konfigurieren:  
 Dabei sollte der Benutzer in PRTG Administrative Rechte bekommen, um die Überwachung zu steuern und Alarme quittieren zu können.  
+Die Erweiterten SSL Einstellungen sind per default deaktiv.  Für z.B. selbst-signierte Zertifikate sind z.B. Option 1 und 2 zu aktiviern.  
 
 ![Konfigurator](imgs/conf.png)  
 **Konfigurationsseite:**  
@@ -64,6 +65,9 @@ Dabei sollte der Benutzer in PRTG Administrative Rechte bekommen, um die Überwa
 | Host                | string  |              | URL zum PRTG Webfront z.B. http://prtg:8081                            |
 | Username            | string  |              | Benutzername in PRTG                                                   |
 | Password            | string  |              | Passwort für den Benutzer                                              |
+| NoHostVerify        | bool    |              | Deaktiviere Prüfung des Hostnamen                                      |
+| NoPeerVerify        | bool    |              | Deaktiviere Prüfung der Gegenstelle                                    |
+| NoCertCheck         | bool    |              | Deaktiviere Prüfung des Zertifikat                                     |
 
 ## 5. Statusvariablen und Profile
 
@@ -139,6 +143,9 @@ Nach dem erzeugen und speichern der Sensoreinstellungen dauert es einen Augenbli
 
 
 ### 3. Changelog  
+
+Version 1.1:  
+ - SSL Checks sind deaktivierbar  
 
 Version 1.0:  
  - Erstes offizielles Release  
