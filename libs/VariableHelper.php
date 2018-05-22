@@ -3,7 +3,7 @@
 declare(strict_types=1);
 trait VariableHelper
 {
-    private function ConvertRuntime($Seconds)
+    private function ConvertRuntime(int $Seconds)
     {
         $t['sec'] = $Seconds % 60;
         $t['min'] = (($Seconds - $t['sec']) / 60) % 60;
