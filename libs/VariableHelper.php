@@ -3,7 +3,7 @@
 declare(strict_types=1);
 trait VariableHelper
 {
-    private function ConvertRuntime(int $Seconds)
+    private function ConvertRuntime($Seconds)
     {
         $t['sec'] = $Seconds % 60;
         $t['min'] = (($Seconds - $t['sec']) / 60) % 60;
@@ -63,7 +63,7 @@ trait VariableHelper
         switch ($data[1]) {
             case 'Tg.':
                 $Result = [
-                    'Data'    => $this->ConvertRuntime($Value['lastvalue_raw']),
+                    'Data'    => $this->ConvertRuntime((int)$Value['lastvalue_raw']),
                     'Profile' => '',
                     'VarType' => vtString
                 ];

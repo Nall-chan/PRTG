@@ -10,7 +10,11 @@
             "Instance is inactive": "Instanz ist inaktiv",
             "PRTG not reachable": "PRTG nicht erreichbar",
             "unauthorized": "Zugriff verweigert",
-            "URL not valid": "URL nicht gültig"
+            "URL not valid": "URL nicht gültig",
+            "Advanced SSL certificate settings:": "Erweiterte SSL Einstellungen:",
+            "Disable hostname verification": "Deaktiviere Prüfung des Hostnamen",
+            "Disable peer verification":"Deaktiviere Prüfung der Gegenstelle",
+            "Disable certificate validation":"Deaktiviere Prüfung des Zertifikat"
         }
     }
 }

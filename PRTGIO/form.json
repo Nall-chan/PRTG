@@ -23,6 +23,25 @@
                 },
                 {
                     "type": "Label",
+                    "label": "Advanced SSL certificate settings:"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "NoHostVerify",
+                    "caption": "Disable hostname verification"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "NoPeerVerify",
+                    "caption": "Disable peer verification"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "NoCertCheck",
+                    "caption": "Disable certificate validation"
+                },
+                {
+                    "type": "Label",
                     "label": ""
                 }
             ],		
