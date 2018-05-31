@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 /**
  * Trait mit Hilfsfunktionen für Variablen.
@@ -29,7 +29,12 @@ trait VariableHelper
             'VarType' => vtString
         ];
 
-        if (strpos($Value['lastvalue'], ' ') === false) {
+        if (is_numeric($Value['lastvalue'])) {
+            $Result = [
+                'Data'    => (float) $Value['lastvalue'],
+                'Profile' => '',
+                'VarType' => vtFloat
+            ];
             if (is_int($Value['lastvalue'])) {
                 $Result = [
                     'Data'    => $Value['lastvalue'],
@@ -39,12 +44,6 @@ trait VariableHelper
             } elseif (is_float($Value['lastvalue'])) {
                 $Result = [
                     'Data'    => $Value['lastvalue'],
-                    'Profile' => '',
-                    'VarType' => vtFloat
-                ];
-            } elseif (is_numeric($Value['lastvalue'])) {
-                $Result = [
-                    'Data'    => (float) $Value['lastvalue'],
                     'Profile' => '',
                     'VarType' => vtFloat
                 ];
@@ -158,6 +157,7 @@ trait VariableHelper
             }
         }
     }
+
 }
 
 /**
@@ -316,4 +316,5 @@ trait VariableProfile
         }
         IPS_DeleteVariableProfile($Name);
     }
+
 }
