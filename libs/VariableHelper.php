@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 /**
  * Trait mit Hilfsfunktionen für Variablen.
@@ -157,7 +157,6 @@ trait VariableHelper
             }
         }
     }
-
 }
 
 /**
@@ -316,5 +315,4 @@ trait VariableProfile
         }
         IPS_DeleteVariableProfile($Name);
     }
-
 }
