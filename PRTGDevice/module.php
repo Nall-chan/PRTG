@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/VariableHelper.php';
@@ -35,12 +35,12 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  */
 class PRTGDevice extends IPSModule
 {
-
     use VariableHelper,
         VariableProfile,
         DebugHelper,
         BufferHelper,
         PRTGPause;
+
     /**
      * Interne Funktion des SDK.
      */
@@ -273,7 +273,6 @@ class PRTGDevice extends IPSModule
         trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
         return false;
     }
-
 }
 
 /* @} */
