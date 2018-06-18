@@ -1,5 +1,5 @@
 [![Version](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version](https://img.shields.io/badge/Modul%20Version-1.10-blue.svg)]()
+[![Version](https://img.shields.io/badge/Modul%20Version-1.30-blue.svg)]()
 [![Version](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
 [![Version](https://img.shields.io/badge/Symcon%20Version-5.0%20%3E-green.svg)](https://www.symcon.de/forum/threads/37412-IP-Symcon-5-0-%28Testing%29)
 
@@ -168,7 +168,13 @@ Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.
 ## 8. Anhang
 
 **Changlog:** 
- 
+
+ Version 1.30:  
+ - Fehlerbehandlung Datenaustausch überarbeitet  
+
+Version 1.20:  
+ - Sensordaten eines SSL-Zertifikatssensor verursachten Fehler  
+
 Version 1.10:  
  - Sensorwerte mit Laufzeit Tage verursachten Fehler  
 

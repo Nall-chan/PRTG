@@ -1,4 +1,10 @@
 {
+    "elements": [{
+            "name": "RootId",
+            "type": "SelectCategory",
+            "caption": "Create under category"
+        }
+    ],
     "actions": [
         {
             "type": "Configurator",
@@ -11,23 +17,23 @@
                 "direction": "ascending"
             },
             "columns": [{
-                    "label": "ObjectID",
+                    "caption": "ObjectID",
                     "name": "objid",
                     "width": "100px"
                 }, {
-                    "label": "Type",
+                    "caption": "Type",
                     "name": "type",
                     "width": "100px"
                 }, {
-                    "label": "Group",
+                    "caption": "Group",
                     "name": "group",
                     "width": "250px"
                 }, {
-                    "label": "Device",
+                    "caption": "Device",
                     "name": "device",
                     "width": "250px"
                 }, {
-                    "label": "Name",
+                    "caption": "Name",
                     "name": "name",
                     "width": "auto"
                 }

@@ -1,13 +1,13 @@
 {
-	"id": "{542765D1-DFE6-4789-A81A-A6EF6F173F6B}",
-	"author": "Nall-chan",
-	"name": "PRTG-Library",
-	"url": "",
-	"compatibility": {
-		"version": "5.0",
-		"date": 1491343200
-	},
-	"version": "0.1",
-	"build": 0,
-	"date": 0
+    "id": "{542765D1-DFE6-4789-A81A-A6EF6F173F6B}",
+    "author": "Nall-chan",
+    "name": "PRTG-Library",
+    "url": "https://github.com/Nall-chan/IPSPRTG",
+    "compatibility": {
+        "version": "5.0",
+        "date": 1529057247
+    },
+    "version": "1.3",
+    "build": 0,
+    "date": 1529057247
 }

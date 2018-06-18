@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -16,7 +16,7 @@ require_once __DIR__ . '/../libs/WebhookHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.1
+ * @version       1.30
  *
  */
 
@@ -28,7 +28,7 @@ require_once __DIR__ . '/../libs/WebhookHelper.php';
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.1
+ * @version       1.30
  *
  * @example <b>Ohne</b>
  *
@@ -38,6 +38,7 @@ require_once __DIR__ . '/../libs/WebhookHelper.php';
  */
 class PRTGIO extends IPSModule
 {
+
     use BufferHelper,
         DebugHelper,
         WebhookHelper;
@@ -48,6 +49,7 @@ class PRTGIO extends IPSModule
     const isURLnotValid = IS_EBASE + 3;
 
     private static $SSLError = [
+        0  => 'no connect',
         1  => 'unspecified error',
         2  => 'unable to get issuer certificate',
         3  => 'unable to get certificate CRL',
@@ -85,6 +87,8 @@ class PRTGIO extends IPSModule
 
     /**
      * Interne Funktion des SDK.
+     * 
+     * @access public
      */
     public function Create()
     {
@@ -100,6 +104,19 @@ class PRTGIO extends IPSModule
         $this->Url = '';
         $this->Hash = '';
         $this->State = self::isInActive;
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     *
+     * @access public
+     */
+    public function Destroy()
+    {
+        if (!IPS_InstanceExists($this->InstanceID)) {
+            $this->UnregisterHook('/hook/PRTG' . $this->InstanceID);
+        }
+        parent::Destroy();
     }
 
     /**
@@ -145,32 +162,6 @@ class PRTGIO extends IPSModule
                 break;
         }
     }
-
-    /**
-     * IPS Instanz-Funktion PRTG_RequestState.
-     *
-     * @return bool True bei Erfolg, False im Fehlerfall
-     */
-//    public function RequestState(): bool
-//    {
-//        $Result = $this->SendData('api/table.json', [
-//            'content' => 'sensors',
-//            'columns' => 'objid'
-//        ]);
-//        if ($Result['Error'] != 200) {
-//            $this->SendDebug('Result Error:', $Result, 0);
-//            trigger_error('Error: ' . $Result['Error'], E_USER_NOTICE);
-//            return false;
-//        }
-//        if (!array_key_exists('sensors', $Result)) {
-//            return false;
-//        }
-//        foreach ($Result['sensors'] as $Sensor) {
-//            $Sensor = array_merge($Sensor, ['DataID' => '{45829008-026B-401E-829F-8384DD27619A}']);
-//            $this->SendDataToChildren(json_encode($Sensor));
-//        }
-//        return true;
-//    }
 
     /**
      * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook.
@@ -370,15 +361,6 @@ class PRTGIO extends IPSModule
             $this->SetStatus(203);
             $this->State = self::isDisconnected;
             return false;
-            /*        } else {
-              $HostL = gethostbynamel($Host);
-              if ($HostL === false) {
-              $this->SetStatus(201);
-              $this->State = self::isDisconnected;
-              return false;
-              } else {
-              $Host = $HostL[0];
-              } */
         }
         $Port = parse_url($URL, PHP_URL_PORT);
         if ($Port != null) {
@@ -388,7 +370,7 @@ class PRTGIO extends IPSModule
         if (is_null($Path)) {
             $Path = '';
         } else {
-            if ((strlen($Path) > 0) and (substr($Path, -1) == '/')) {
+            if ((strlen($Path) > 0) and ( substr($Path, -1) == '/')) {
                 $Path = substr($Path, 0, -1);
             }
         }
@@ -457,13 +439,13 @@ class PRTGIO extends IPSModule
         }
         //'showLegend%3D%271%27+baseFontSize%3D%275%27'
         $QueryData = ['type'         => 'graph',
-            'graphid'                => $GraphId,
-            'width'                  => $Width,
-            'height'                 => $Height,
-            'theme'                  => $Theme,
-            'refreshable'            => 'true',
-            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'                     => $SensorId
+            'graphid'      => $GraphId,
+            'width'        => $Width,
+            'height'       => $Height,
+            'theme'        => $Theme,
+            'refreshable'  => 'true',
+            'graphstyling' => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
+            'id'           => $SensorId
         ];
         if ($Type == 1) {
             $URL = $this->CreateQueryURL('chart.png', $QueryData);
@@ -563,6 +545,11 @@ class PRTGIO extends IPSModule
         parent::SetStatus($InstanceStatus);
     }
 
+    protected function ModulErrorHandler($errno, $errstr)
+    {
+        echo $errstr . PHP_EOL;
+    }
+
     /**
      * Interne Funktion des SDK.
      *
@@ -570,11 +557,37 @@ class PRTGIO extends IPSModule
      *
      * @return string Die Antwort an den anfragenden Child
      */
-    public function ForwardData($JSONString): string
+    public function ForwardData($JSONString)
     {
         $Json = json_decode($JSONString, true);
         $Result = $this->SendData($Json['Uri'], $Json['QueryData'], $Json['PostData']);
-        return serialize($Result);
+        set_error_handler([$this, 'ModulErrorHandler']);
+        switch ($Result['Error']) {
+            case self::isConnected:
+            case self::isInActive:
+            case 200:
+                restore_error_handler();
+                return serialize($Result);
+            case self::isDisconnected:
+                trigger_error('IO not connected', E_USER_WARNING);
+                break;
+            case self::isURLnotValid:
+            case 400:
+                trigger_error('Bad Request', E_USER_WARNING);
+                break;
+            case self::isUnauthorized:
+            case 401:
+                trigger_error('Unauthorized', E_USER_WARNING);
+                break;
+            case 404: // not Found
+                trigger_error('Not found', E_USER_WARNING);
+                break;
+            case 500:
+                trigger_error('Server error', E_USER_WARNING);
+                break;
+        }
+        restore_error_handler();
+        return false;
     }
 
     /**
@@ -585,9 +598,10 @@ class PRTGIO extends IPSModule
     public function GetConfigurationForm(): string
     {
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
-        $Form['elements'][8]['label'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
+        $Form['elements'][8]['caption'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
         return json_encode($Form);
     }
+
 }
 
 /* @} */

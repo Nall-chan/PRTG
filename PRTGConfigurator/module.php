@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -15,7 +15,7 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.0
+ * @version       1.30
  *
  */
 
@@ -27,15 +27,15 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.0
+ * @version       1.30
  *
  * @example <b>Ohne</b>
  */
 class PRTGConfigurator extends IPSModule
 {
+
     use BufferHelper,
         DebugHelper;
-
     /**
      * Interne Funktion des SDK.
      */
@@ -44,6 +44,7 @@ class PRTGConfigurator extends IPSModule
         parent::Create();
         $this->ConnectParent('{67470842-FB5E-485B-92A2-4401E371E6FC}');
         $this->SetReceiveDataFilter('.*"nothingtoreceive":.*');
+        $this->RegisterPropertyInteger('RootId', 0);
     }
 
     /**
@@ -97,6 +98,11 @@ class PRTGConfigurator extends IPSModule
     {
         $Sensors = $this->GetSensors();
         $Devices = $this->GetDevices();
+        $RootName = [];
+        $RootId = $this->ReadPropertyInteger('RootId');
+        if ($RootId != 0) {
+            $RootName = [IPS_GetName($RootId)];
+        }
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         $InstanceIDListSensors = IPS_GetInstanceListByModuleID('{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}');
 
@@ -111,6 +117,7 @@ class PRTGConfigurator extends IPSModule
         foreach ($Sensors as &$Sensor) {
             $InstanceIDSensor = array_search($Sensor['objid'], $InstancesSensors);
             $Sensor['type'] = 'Sensor';
+            $Sensor['location'] = array_merge($RootName, [$Sensor['device']]);
             if ($InstanceIDSensor === false) {
                 $Sensor['instanceID'] = 0;
             } else {
@@ -152,6 +159,7 @@ class PRTGConfigurator extends IPSModule
             $InstanceIDDevice = array_search($Device['objid'], $InstancesDevices);
             $Device['type'] = 'Device';
             $Device['id'] = $Device['objid'];
+            $Device['location'] = array_merge($RootName, [$Device['device']]);
             if ($InstanceIDDevice === false) {
                 $Device['instanceID'] = 0;
                 $Device['name'] = '';
@@ -224,6 +232,7 @@ class PRTGConfigurator extends IPSModule
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
     }
+
 }
 
 /* @} */

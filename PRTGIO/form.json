@@ -23,7 +23,7 @@
                 },
                 {
                     "type": "Label",
-                    "label": "Advanced SSL certificate settings:"
+                    "caption": "Advanced SSL certificate settings:"
                 },
                 {
                     "type": "CheckBox",
@@ -42,7 +42,7 @@
                 },
                 {
                     "type": "Label",
-                    "label": ""
+                    "caption": ""
                 }
             ],		
     "status":

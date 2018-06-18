@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/VariableHelper.php';
@@ -17,7 +17,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.0
+ * @version       1.30
  *
  */
 
@@ -29,18 +29,18 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.0
+ * @version       1.30
  *
  * @example <b>Ohne</b>
  */
 class PRTGDevice extends IPSModule
 {
+
     use VariableHelper,
         VariableProfile,
         DebugHelper,
         BufferHelper,
         PRTGPause;
-
     /**
      * Interne Funktion des SDK.
      */
@@ -231,14 +231,14 @@ class PRTGDevice extends IPSModule
         $Data['QueryData'] = $QueryData;
         $Data['PostData'] = $PostData;
         $ResultString = $this->SendDataToParent(json_encode($Data));
-        if ($ResultString === null) {
-            trigger_error($this->Translate('No answer'), E_USER_NOTICE);
+        if ($ResultString === false) {
             return [];
         }
         $Result = unserialize($ResultString);
+
         if ($Result['Error'] != 200) {
             $this->SendDebug('Result Error', $Result, 0);
-            trigger_error('Error: ' . $Result['Error'], E_USER_NOTICE);
+            //trigger_error('Error: ' . $Result['Error'], E_USER_NOTICE);
             return [];
         }
         unset($Result['Error']);
@@ -273,6 +273,7 @@ class PRTGDevice extends IPSModule
         trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
         return false;
     }
+
 }
 
 /* @} */
