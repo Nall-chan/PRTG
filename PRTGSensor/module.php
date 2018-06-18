@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/VariableHelper.php';
@@ -37,12 +37,12 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  */
 class PRTGSensor extends IPSModule
 {
-
     use VariableHelper,
         VariableProfile,
         DebugHelper,
         BufferHelper,
         PRTGPause;
+
     /**
      * Interne Funktion des SDK.
      */
@@ -258,7 +258,7 @@ class PRTGSensor extends IPSModule
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Profile'], $Channel['objid'], true);
             $vid = $this->GetIDForIdent($Ident);
 
-            if ($this->ReadPropertyBoolean('AutoRenameChannels') and ( IPS_GetName($vid)) != $Channel['name']) {
+            if ($this->ReadPropertyBoolean('AutoRenameChannels') and (IPS_GetName($vid)) != $Channel['name']) {
                 IPS_SetName($vid, $Channel['name']);
             }
             $this->SetValue($Ident, $Data['Data']);
@@ -385,7 +385,6 @@ class PRTGSensor extends IPSModule
         }
         return false;
     }
-
 }
 
 /* @} */
