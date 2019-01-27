@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -33,9 +33,9 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  */
 class PRTGConfigurator extends IPSModule
 {
-
     use BufferHelper,
         DebugHelper;
+
     /**
      * Interne Funktion des SDK.
      */
@@ -233,7 +233,6 @@ class PRTGConfigurator extends IPSModule
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
     }
-
 }
 
 /* @} */
