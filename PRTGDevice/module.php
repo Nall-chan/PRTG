@@ -17,7 +17,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.30
+ * @version       1.31
  *
  */
 
@@ -29,7 +29,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.30
+ * @version       1.31
  *
  * @example <b>Ohne</b>
  */

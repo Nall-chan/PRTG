@@ -487,7 +487,7 @@ class PRTGIO extends IPSModule
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $Url);
         if ($PostData != '') {
-            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $PostData);
         }
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -495,7 +495,7 @@ class PRTGIO extends IPSModule
             curl_setopt($ch, CURLOPT_SSL_VERIFYSTATUS, false);
         }
         if ($this->ReadPropertyBoolean('NoHostVerify')) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         }
         if ($this->ReadPropertyBoolean('NoPeerVerify')) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);

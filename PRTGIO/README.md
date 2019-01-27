@@ -144,6 +144,10 @@ Nach dem erzeugen und speichern der Sensoreinstellungen dauert es einen Augenbli
 
 ### 3. Changelog  
 
+Version 1.31:
+ - Darstellungsfehler im Konfigurator beseitigt  
+ - Formen nutzen jetzt NumberSpinner mit Suffix anstatt IntervalBox  
+
 Version 1.30:  
  - Fehlerbehandlung Datenaustausch überarbeitet  
 

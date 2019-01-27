@@ -36,9 +36,10 @@
                     "type": "CheckBox",
                     "caption": "Use not sensor Interval"
                 }, {
-                    "type": "IntervalBox",
+                    "type": "NumberSpinner",
                     "name": "Interval",
-                    "caption": "seconds"
+                    "caption": "Interval",
+                    "suffix": "seconds"
                 }
             ],
     "actions":

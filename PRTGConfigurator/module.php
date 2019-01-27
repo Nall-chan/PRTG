@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -15,7 +15,7 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.30
+ * @version       1.31
  *
  */
 
@@ -27,15 +27,15 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @copyright     2018 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.30
+ * @version       1.31
  *
  * @example <b>Ohne</b>
  */
 class PRTGConfigurator extends IPSModule
 {
+
     use BufferHelper,
         DebugHelper;
-
     /**
      * Interne Funktion des SDK.
      */
@@ -117,6 +117,7 @@ class PRTGConfigurator extends IPSModule
         foreach ($Sensors as &$Sensor) {
             $InstanceIDSensor = array_search($Sensor['objid'], $InstancesSensors);
             $Sensor['type'] = 'Sensor';
+            $Sensor['group'] = '';
             $Sensor['location'] = array_merge($RootName, [$Sensor['device']]);
             if ($InstanceIDSensor === false) {
                 $Sensor['instanceID'] = 0;
@@ -232,6 +233,7 @@ class PRTGConfigurator extends IPSModule
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
     }
+
 }
 
 /* @} */

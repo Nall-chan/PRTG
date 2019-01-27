@@ -26,9 +26,10 @@
                     "type": "CheckBox",
                     "caption": "Show sensor summaray"
                 }, {
-                    "type": "IntervalBox",
+                    "type": "NumberSpinner",
                     "name": "Interval",
-                    "caption": "seconds"
+                    "caption": "Interval",
+                    "suffix": "seconds"
                 }
             ],
     "actions":
