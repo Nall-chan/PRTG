@@ -2,11 +2,14 @@
     "translations": {
         "de": {
             "PRTG Configurator": "PRTG Konfigurator",
+            "Create under category": "Unter folgender Kategorie erzeugen",
             "ObjectID": "ObjectID",
             "Type": "Typ",
             "Group": "Gruppe",
             "Device": "Gerät",
-            "Name": "Name"
+            "Name": "Name",
+            "Not connected to IO.": "Nicht mit einem IO verbunden.",
+            "Instance has no active parent.": "Instanz hat keinen aktiven Parent."
         }
     }
 }

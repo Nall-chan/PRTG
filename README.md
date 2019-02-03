@@ -1,5 +1,5 @@
 [![Version](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version](https://img.shields.io/badge/Modul%20Version-1.31-blue.svg)]()
+[![Version](https://img.shields.io/badge/Modul%20Version-1.35-blue.svg)]()
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
 [![Version](https://img.shields.io/badge/Symcon%20Version-5.0%20%3E-green.svg)](https://www.symcon.de/forum/threads/37412-IP-Symcon-5-0-%28Testing%29)
 [![StyleCI](https://styleci.io/repos/132882302/shield?style=flat)](https://styleci.io/repos/132882302)  
@@ -91,6 +91,11 @@ Hierzu ist PRTG und die URL im [PRTG IO:](PRTGIO/) entsprechend zu konfigurieren
 Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem externen PRTG-Server genutzt werden, da die Logindaten dann nicht verschlüsselt übertragen werden!  
 
 ### 3. Changlog
+
+Version 1.35:
+ - Fehler im Konfigurator, wenn die Kategorie in der Kategorieauswahl nicht auf oberster Ebene war.  
+ - Fehlende Übersetzung ergänzt.  
+ - Konfigurator meldet wenn IO nicht aktiv ist.  
 
 Version 1.31:
  - Darstellungsfehler im Konfigurator beseitigt  

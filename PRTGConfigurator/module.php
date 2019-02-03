@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -13,9 +13,9 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2018 Michael Tröger
+ * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.31
+ * @version       1.35
  *
  */
 
@@ -24,18 +24,18 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2018 Michael Tröger
+ * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.31
+ * @version       1.35
  *
  * @example <b>Ohne</b>
  */
 class PRTGConfigurator extends IPSModule
 {
+
     use BufferHelper,
         DebugHelper;
-
     /**
      * Interne Funktion des SDK.
      */
@@ -96,14 +96,41 @@ class PRTGConfigurator extends IPSModule
      */
     public function GetConfigurationForm(): string
     {
-        $Sensors = $this->GetSensors();
-        $Devices = $this->GetDevices();
-        $RootName = [];
-        $RootId = $this->ReadPropertyInteger('RootId');
-        if ($RootId != 0) {
-            $RootName = [IPS_GetName($RootId)];
+        $IOID = $this->GetIO();
+        if ($IOID === false) {
+            $Form['actions'][] = [
+                "type"  => "PopupAlert",
+                "popup" => [
+                    "items" => [[
+                    "type"    => "Label",
+                    "caption" => "Not connected to IO."
+                        ]]
+                ]
+            ];
         }
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        if (IPS_GetInstance($IOID)['InstanceStatus'] != IS_ACTIVE) {
+            $Form['actions'][] = [
+                "type"  => "PopupAlert",
+                "popup" => [
+                    "items" => [[
+                    "type"    => "Label",
+                    "caption" => "Instance has no active parent."
+                        ]]
+                ]
+            ];
+        }
+        $Sensors = $this->GetSensors();
+        $Devices = $this->GetDevices();
+        $RootNames = [];
+        $RootId = $this->ReadPropertyInteger('RootId');
+        while ($RootId != 0) {
+            if ($RootId != 0) {
+                $RootNames[] = IPS_GetName($RootId);
+            }
+            $RootId = IPS_GetParent($RootId);
+        }
+        $RootNames = array_reverse($RootNames);
         $InstanceIDListSensors = IPS_GetInstanceListByModuleID('{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}');
 
         $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
@@ -118,7 +145,7 @@ class PRTGConfigurator extends IPSModule
             $InstanceIDSensor = array_search($Sensor['objid'], $InstancesSensors);
             $Sensor['type'] = 'Sensor';
             $Sensor['group'] = '';
-            $Sensor['location'] = array_merge($RootName, [$Sensor['device']]);
+            $Sensor['location'] = array_merge($RootNames, [$Sensor['device']]);
             if ($InstanceIDSensor === false) {
                 $Sensor['instanceID'] = 0;
             } else {
@@ -160,7 +187,7 @@ class PRTGConfigurator extends IPSModule
             $InstanceIDDevice = array_search($Device['objid'], $InstancesDevices);
             $Device['type'] = 'Device';
             $Device['id'] = $Device['objid'];
-            $Device['location'] = array_merge($RootName, [$Device['device']]);
+            $Device['location'] = array_merge($RootNames, [$Device['device']]);
             if ($InstanceIDDevice === false) {
                 $Device['instanceID'] = 0;
                 $Device['name'] = '';
@@ -233,6 +260,22 @@ class PRTGConfigurator extends IPSModule
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
     }
+
+    /**
+     * Liefert den aktuell verbundenen Splitter.
+     *
+     * @access private
+     * @return bool|int FALSE wenn kein Splitter vorhanden, sonst die ID des Splitter.
+     */
+    private function GetIO()
+    {
+        $SplitterID = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($SplitterID == 0) {
+            return false;
+        }
+        return $SplitterID;
+    }
+
 }
 
 /* @} */
