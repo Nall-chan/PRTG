@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -33,9 +33,9 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  */
 class PRTGConfigurator extends IPSModule
 {
-
     use BufferHelper,
         DebugHelper;
+
     /**
      * Interne Funktion des SDK.
      */
@@ -99,11 +99,11 @@ class PRTGConfigurator extends IPSModule
         $IOID = $this->GetIO();
         if ($IOID === false) {
             $Form['actions'][] = [
-                "type"  => "PopupAlert",
-                "popup" => [
-                    "items" => [[
-                    "type"    => "Label",
-                    "caption" => "Not connected to IO."
+                'type'  => 'PopupAlert',
+                'popup' => [
+                    'items' => [[
+                    'type'    => 'Label',
+                    'caption' => 'Not connected to IO.'
                         ]]
                 ]
             ];
@@ -111,11 +111,11 @@ class PRTGConfigurator extends IPSModule
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         if (IPS_GetInstance($IOID)['InstanceStatus'] != IS_ACTIVE) {
             $Form['actions'][] = [
-                "type"  => "PopupAlert",
-                "popup" => [
-                    "items" => [[
-                    "type"    => "Label",
-                    "caption" => "Instance has no active parent."
+                'type'  => 'PopupAlert',
+                'popup' => [
+                    'items' => [[
+                    'type'    => 'Label',
+                    'caption' => 'Instance has no active parent.'
                         ]]
                 ]
             ];
@@ -264,7 +264,6 @@ class PRTGConfigurator extends IPSModule
     /**
      * Liefert den aktuell verbundenen Splitter.
      *
-     * @access private
      * @return bool|int FALSE wenn kein Splitter vorhanden, sonst die ID des Splitter.
      */
     private function GetIO()
@@ -275,7 +274,6 @@ class PRTGConfigurator extends IPSModule
         }
         return $SplitterID;
     }
-
 }
 
 /* @} */
