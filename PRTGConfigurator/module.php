@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
 require_once __DIR__ . '/../libs/BufferHelper.php';
@@ -15,7 +15,7 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.35
+ * @version       1.36
  *
  */
 
@@ -27,15 +27,15 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.35
+ * @version       1.36
  *
  * @example <b>Ohne</b>
  */
 class PRTGConfigurator extends IPSModule
 {
+
     use BufferHelper,
         DebugHelper;
-
     /**
      * Interne Funktion des SDK.
      */
@@ -145,7 +145,6 @@ class PRTGConfigurator extends IPSModule
             $InstanceIDSensor = array_search($Sensor['objid'], $InstancesSensors);
             $Sensor['type'] = 'Sensor';
             $Sensor['group'] = '';
-            $Sensor['location'] = array_merge($RootNames, [$Sensor['device']]);
             if ($InstanceIDSensor === false) {
                 $Sensor['instanceID'] = 0;
             } else {
@@ -159,7 +158,8 @@ class PRTGConfigurator extends IPSModule
                 'moduleID'      => '{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}',
                 'configuration' => [
                     'id' => $Sensor['objid']
-                ]
+                ],
+                'location'      => array_merge($RootNames, [$Sensor['device']])
             ];
         }
 
@@ -187,7 +187,6 @@ class PRTGConfigurator extends IPSModule
             $InstanceIDDevice = array_search($Device['objid'], $InstancesDevices);
             $Device['type'] = 'Device';
             $Device['id'] = $Device['objid'];
-            $Device['location'] = array_merge($RootNames, [$Device['device']]);
             if ($InstanceIDDevice === false) {
                 $Device['instanceID'] = 0;
                 $Device['name'] = '';
@@ -200,7 +199,8 @@ class PRTGConfigurator extends IPSModule
                 'moduleID'      => '{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}',
                 'configuration' => [
                     'id' => $Device['objid']
-                ]
+                ],
+                'location'      => array_merge($RootNames, [$Device['device']])
             ];
         }
         $MissingDevices = [];
@@ -274,6 +274,7 @@ class PRTGConfigurator extends IPSModule
         }
         return $SplitterID;
     }
+
 }
 
 /* @} */
