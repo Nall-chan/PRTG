@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace prtg;
+
 /*
  * @addtogroup prtg
  * @{
@@ -124,6 +126,152 @@ trait PRTGPause
         }
         return false;
     }
+
+}
+
+/**
+ * Trait mit Hilfsfunktionen für Variablen.
+ */
+trait VariableConverter
+{
+    private function ConvertRuntime(int $Seconds)
+    {
+        $t['sec'] = $Seconds % 60;
+        $t['min'] = (($Seconds - $t['sec']) / 60) % 60;
+        $t['std'] = (((($Seconds - $t['sec']) / 60) - $t['min']) / 60) % 24;
+        $t['day'] = floor(((((($Seconds - $t['sec']) / 60) - $t['min']) / 60) / 24));
+        return sprintf($this->Translate('%d Tg. %02d Std. %02d Min. %02d Sek.'), $t['day'], $t['std'], $t['min'], $t['sec']);
+    }
+
+    private function ConvertPRTGTimestamp(float $Timestamp)
+    {
+        return -2209165200 + (86400 * $Timestamp);
+    }
+
+    private function ConvertValue($Value)
+    {
+        $Result = [
+            'Data'    => $Value['lastvalue'],
+            'Profile' => '',
+            'VarType' => VARIABLETYPE_STRING
+        ];
+
+        if (is_numeric($Value['lastvalue'])) {
+            $Result = [
+                'Data'    => (float) $Value['lastvalue'],
+                'Profile' => '',
+                'VarType' => VARIABLETYPE_FLOAT
+            ];
+            if (is_int($Value['lastvalue'])) {
+                $Result = [
+                    'Data'    => $Value['lastvalue'],
+                    'Profile' => '',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+            } elseif (is_float($Value['lastvalue'])) {
+                $Result = [
+                    'Data'    => $Value['lastvalue'],
+                    'Profile' => '',
+                    'VarType' => VARIABLETYPE_FLOAT
+                ];
+            }
+            return $Result;
+        }
+        if (!array_key_exists('lastvalue_raw', $Value)) {
+            return false;
+        }
+        $data = explode(' ', $Value['lastvalue']);
+        if ($data[0] == '<') {
+            array_shift($data);
+        }
+        if (count($data) > 3) {
+            return $Result;
+        }
+        if (count($data) < 2) {
+            return $Result;
+        }
+        switch ($data[1]) {
+            case 'Tg.':
+                $Result = [
+                    'Data'    => $this->ConvertRuntime((int) $Value['lastvalue_raw']),
+                    'Profile' => '',
+                    'VarType' => VARIABLETYPE_STRING
+                ];
+                break;
+            case 'ms':
+                $Result = [
+                    'Data'    => $Value['lastvalue_raw'],
+                    'Profile' => 'PRTG.ms',
+                    'VarType' => VARIABLETYPE_FLOAT
+                ];
+                break;
+            case '#':
+                $Result = [
+                    'Data'    => $Value['lastvalue_raw'],
+                    'Profile' => 'PRTG.No',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+            case 'MByte':
+                $Result = [
+                    'Data'    => $Value['lastvalue_raw'] / 1048576,
+                    'Profile' => 'PRTG.MByte',
+                    'VarType' => VARIABLETYPE_FLOAT
+                ];
+                break;
+            case 'Sek.':
+                $Result = [
+                    'Data'    => floor($Value['lastvalue_raw'] / 10),
+                    'Profile' => 'PRTG.Sec',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+            case '%':
+                $Result = [
+                    'Data'    => $Value['lastvalue_raw'],
+                    'Profile' => 'PRTG.Intensity',
+                    'VarType' => VARIABLETYPE_FLOAT
+                ];
+                break;
+            case 'Mbit/Sek.':
+                $Result = [
+                    'Data'    => floor($Value['lastvalue_raw'] / 1250000),
+                    'Profile' => 'PRTG.MBitSec',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+            case 'kbit/Sek.':
+                $Result = [
+                    'Data'    => floor($Value['lastvalue_raw'] / 1250),
+                    'Profile' => 'PRTG.kBitSec',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+            case '#/Sek.':
+                $Result = [
+                    'Data'    => floor($Value['lastvalue_raw'] / 10),
+                    'Profile' => 'PRTG.IpS',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+            case '#/Min.':
+                $Result = [
+                    'Data'    => floor($Value['lastvalue_raw'] / 10),
+                    'Profile' => 'PRTG.IpM',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+            case 'Items':
+                $Result = [
+                    'Data'    => floor($Value['lastvalue_raw'] / 10),
+                    'Profile' => 'PRTG.Items',
+                    'VarType' => VARIABLETYPE_INTEGER
+                ];
+                break;
+        }
+        return $Result;
+    }
+
 }
 
 /* @} */

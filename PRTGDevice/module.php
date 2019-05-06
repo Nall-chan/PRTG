@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../libs/ConstHelper.php';
-require_once __DIR__ . '/../libs/VariableHelper.php';
-require_once __DIR__ . '/../libs/DebugHelper.php';
-require_once __DIR__ . '/../libs/BufferHelper.php';
 require_once __DIR__ . '/../libs/PRTGHelper.php';
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableProfileHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
 /*
  * @addtogroup prtg
@@ -35,12 +35,13 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  */
 class PRTGDevice extends IPSModule
 {
-    use VariableHelper,
-        VariableProfile,
-        DebugHelper,
-        BufferHelper,
-        PRTGPause;
 
+    use prtg\VariableHelper,
+        prtg\VariableProfileHelper,
+        prtg\DebugHelper,
+        prtg\BufferHelper,
+        prtg\PRTGPause,
+        prtg\VariableConverter;
     /**
      * Interne Funktion des SDK.
      */
@@ -88,36 +89,36 @@ class PRTGDevice extends IPSModule
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
 
         if (!@$this->GetIDForIdent('State')) {
-            $this->MaintainVariable('State', $this->Translate('State'), vtInteger, 'PRTG.Sensor', -2, true);
+            $this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true);
             $this->SetValue('State', 6);
         }
 
         if ($this->ReadPropertyBoolean('ReadableState')) {
-            $this->MaintainVariable('ReadableState', $this->Translate('Readable state'), vtString, '', -2, true);
+            $this->MaintainVariable('ReadableState', $this->Translate('Readable state'), VARIABLETYPE_STRING, '', -2, true);
         } else {
             $this->UnregisterVariable('ReadableState');
         }
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
-            $this->MaintainVariable('ActionButton', $this->Translate('Control'), vtBoolean, 'PRTG.Action', -4, true);
+            $this->MaintainVariable('ActionButton', $this->Translate('Control'), VARIABLETYPE_BOOLEAN, 'PRTG.Action', -4, true);
             $this->EnableAction('ActionButton');
         } else {
             $this->UnregisterVariable('ActionButton');
         }
 
         if ($this->ReadPropertyBoolean('DisplayTotalSensors')) {
-            $this->MaintainVariable('TotalSens', $this->Translate('Sens Total'), vtInteger, '', 0, true);
+            $this->MaintainVariable('TotalSens', $this->Translate('Sens Total'), VARIABLETYPE_INTEGER, '', 0, true);
         } else {
             $this->UnregisterVariable('TotalSens');
         }
         if ($this->ReadPropertyBoolean('DisplaySensorState')) {
-            $this->MaintainVariable('UpSens', $this->Translate('Sensors Up'), vtInteger, '', 1, true);
-            $this->MaintainVariable('WarnSens', $this->Translate('Sensors Warn'), vtInteger, '', 2, true);
-            $this->MaintainVariable('UnusualSens', $this->Translate('Sensors Unusual'), vtInteger, '', 3, true);
-            $this->MaintainVariable('UndefinedSens', $this->Translate('Sensors Undefined'), vtInteger, '', 4, true);
-            $this->MaintainVariable('PartialDownSens', $this->Translate('Sensors PartialDown'), vtInteger, '', 5, true);
-            $this->MaintainVariable('DownSens', $this->Translate('Sensors Down'), vtInteger, '', 6, true);
-            $this->MaintainVariable('DownAckSens', $this->Translate('Sensors Down Acknowledged'), vtInteger, '', 7, true);
-            $this->MaintainVariable('PausedSens', $this->Translate('Sensors Paused'), vtInteger, '', 8, true);
+            $this->MaintainVariable('UpSens', $this->Translate('Sensors Up'), VARIABLETYPE_INTEGER, '', 1, true);
+            $this->MaintainVariable('WarnSens', $this->Translate('Sensors Warn'), VARIABLETYPE_INTEGER, '', 2, true);
+            $this->MaintainVariable('UnusualSens', $this->Translate('Sensors Unusual'), VARIABLETYPE_INTEGER, '', 3, true);
+            $this->MaintainVariable('UndefinedSens', $this->Translate('Sensors Undefined'), VARIABLETYPE_INTEGER, '', 4, true);
+            $this->MaintainVariable('PartialDownSens', $this->Translate('Sensors PartialDown'), VARIABLETYPE_INTEGER, '', 5, true);
+            $this->MaintainVariable('DownSens', $this->Translate('Sensors Down'), VARIABLETYPE_INTEGER, '', 6, true);
+            $this->MaintainVariable('DownAckSens', $this->Translate('Sensors Down Acknowledged'), VARIABLETYPE_INTEGER, '', 7, true);
+            $this->MaintainVariable('PausedSens', $this->Translate('Sensors Paused'), VARIABLETYPE_INTEGER, '', 8, true);
         } else {
             $this->UnregisterVariable('DownSens');
             $this->UnregisterVariable('PartialDownSens');
@@ -273,6 +274,7 @@ class PRTGDevice extends IPSModule
         trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
         return false;
     }
+
 }
 
 /* @} */

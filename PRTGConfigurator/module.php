@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../libs/ConstHelper.php';
-require_once __DIR__ . '/../libs/BufferHelper.php';
-require_once __DIR__ . '/../libs/DebugHelper.php';
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
 /*
  * @addtogroup prtg
@@ -33,9 +32,9 @@ require_once __DIR__ . '/../libs/DebugHelper.php';
  */
 class PRTGConfigurator extends IPSModule
 {
-    use BufferHelper,
-        DebugHelper;
 
+    use prtg\BufferHelper,
+        prtg\DebugHelper;
     /**
      * Interne Funktion des SDK.
      */
@@ -274,6 +273,7 @@ class PRTGConfigurator extends IPSModule
         }
         return $SplitterID;
     }
+
 }
 
 /* @} */

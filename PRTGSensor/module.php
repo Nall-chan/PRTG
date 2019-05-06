@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../libs/ConstHelper.php';
-require_once __DIR__ . '/../libs/VariableHelper.php';
-require_once __DIR__ . '/../libs/DebugHelper.php';
-require_once __DIR__ . '/../libs/BufferHelper.php';
 require_once __DIR__ . '/../libs/PRTGHelper.php';
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableProfileHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
 /*
  * @addtogroup prtg
@@ -37,12 +37,13 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  */
 class PRTGSensor extends IPSModule
 {
-    use VariableHelper,
-        VariableProfile,
-        DebugHelper,
-        BufferHelper,
-        PRTGPause;
 
+    use prtg\VariableHelper,
+        prtg\VariableProfileHelper,
+        prtg\DebugHelper,
+        prtg\BufferHelper,
+        prtg\PRTGPause,
+        prtg\VariableConverter;
     /**
      * Interne Funktion des SDK.
      */
@@ -104,23 +105,23 @@ class PRTGSensor extends IPSModule
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
 
         if (!@$this->GetIDForIdent('State')) {
-            $this->MaintainVariable('State', $this->Translate('State'), vtInteger, 'PRTG.Sensor', -2, true);
+            $this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true);
             $this->SetValue('State', 6);
         }
 
         if ($this->ReadPropertyBoolean('ReadableState')) {
-            $this->MaintainVariable('ReadableState', $this->Translate('Readable State'), vtString, '', -2, true);
+            $this->MaintainVariable('ReadableState', $this->Translate('Readable State'), VARIABLETYPE_STRING, '', -2, true);
         } else {
             $this->UnregisterVariable('ReadableState');
         }
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
-            $this->MaintainVariable('ActionButton', $this->Translate('Control'), vtBoolean, 'PRTG.Action', -4, true);
+            $this->MaintainVariable('ActionButton', $this->Translate('Control'), VARIABLETYPE_BOOLEAN, 'PRTG.Action', -4, true);
             $this->EnableAction('ActionButton');
         } else {
             $this->UnregisterVariable('ActionButton');
         }
         if ($this->ReadPropertyBoolean('ShowAckButton')) {
-            $this->MaintainVariable('AckButton', $this->Translate('Alarm Control'), vtInteger, 'PRTG.Ack', -3, true);
+            $this->MaintainVariable('AckButton', $this->Translate('Alarm Control'), VARIABLETYPE_INTEGER, 'PRTG.Ack', -3, true);
             $this->EnableAction('AckButton');
         } else {
             $this->UnregisterVariable('AckButton');
@@ -258,7 +259,7 @@ class PRTGSensor extends IPSModule
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Profile'], $Channel['objid'], true);
             $vid = $this->GetIDForIdent($Ident);
 
-            if ($this->ReadPropertyBoolean('AutoRenameChannels') and (IPS_GetName($vid)) != $Channel['name']) {
+            if ($this->ReadPropertyBoolean('AutoRenameChannels') and ( IPS_GetName($vid)) != $Channel['name']) {
                 IPS_SetName($vid, $Channel['name']);
             }
             $this->SetValue($Ident, $Data['Data']);
@@ -385,6 +386,7 @@ class PRTGSensor extends IPSModule
         }
         return false;
     }
+
 }
 
 /* @} */
