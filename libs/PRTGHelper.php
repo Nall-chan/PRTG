@@ -130,7 +130,6 @@ trait PRTGPause
         }
         return false;
     }
-
 }
 
 /**
@@ -275,7 +274,6 @@ trait VariableConverter
         }
         return $Result;
     }
-
 }
 
 /* @} */

@@ -32,9 +32,9 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  */
 class PRTGConfigurator extends IPSModule
 {
-
     use \PRTGConfigurator\BufferHelper,
         \PRTGConfigurator\DebugHelper;
+
     /**
      * Interne Funktion des SDK.
      */
@@ -273,7 +273,6 @@ class PRTGConfigurator extends IPSModule
         }
         return $SplitterID;
     }
-
 }
 
 /* @} */
