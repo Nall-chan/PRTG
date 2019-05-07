@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/WebhookHelper.php') . '}');
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
+eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ . '/../libs/helper/WebhookHelper.php') . '}');
+eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
+eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
 /*
  * @addtogroup prtg
@@ -13,9 +13,9 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2018 Michael Tröger
+ * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.30
+ * @version       2.0
  *
  */
 
@@ -24,10 +24,10 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2018 Michael Tröger
+ * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.30
+ * @version       2.0
  *
  * @example <b>Ohne</b>
  *
@@ -38,9 +38,9 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
 class PRTGIO extends IPSModule
 {
 
-    use prtg\BufferHelper,
-        prtg\DebugHelper,
-        prtg\WebhookHelper;
+    use \PRTGIO\BufferHelper,
+        \PRTGIO\DebugHelper,
+        \PRTGIO\WebhookHelper;
     const isConnected = IS_ACTIVE;
     const isInActive = IS_INACTIVE;
     const isDisconnected = IS_EBASE + 1;

@@ -3,10 +3,6 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/PRTGHelper.php';
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableHelper.php') . '}');
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableProfileHelper.php') . '}');
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
 /*
  * @addtogroup prtg
@@ -15,9 +11,9 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2018 Michael Tröger
+ * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.31
+ * @version       2.0
  *
  */
 
@@ -26,22 +22,22 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2018 Michael Tröger
+ * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.31
+ * @version       2.0
  *
  * @example <b>Ohne</b>
  */
 class PRTGDevice extends IPSModule
 {
 
-    use prtg\VariableHelper,
-        prtg\VariableProfileHelper,
-        prtg\DebugHelper,
-        prtg\BufferHelper,
-        prtg\PRTGPause,
-        prtg\VariableConverter;
+    use \prtg\VariableHelper,
+        \prtg\VariableProfileHelper,
+        \prtg\DebugHelper,
+        \prtg\BufferHelper,
+        \prtg\PRTGPause,
+        \prtg\VariableConverter;
     /**
      * Interne Funktion des SDK.
      */

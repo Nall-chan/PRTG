@@ -1,7 +1,8 @@
-[![Version](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version](https://img.shields.io/badge/Modul%20Version-1.31-blue.svg)]()
-[![Version](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
-[![Version](https://img.shields.io/badge/Symcon%20Version-5.0%20%3E-green.svg)](https://www.symcon.de/forum/threads/37412-IP-Symcon-5-0-%28Testing%29)
+[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
+[![Version](https://img.shields.io/badge/Modul%20Version-2.0-blue.svg)]()
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
+[![Version](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)
+[![StyleCI](https://styleci.io/repos/132882302/shield?style=flat)](https://styleci.io/repos/132882302)  
 
 # PRTG Device
 Einbindung eines PRTG-Sensors in IPS.  
@@ -28,17 +29,16 @@ Einbindung eines PRTG-Sensors in IPS.
 
 ## 2. Voraussetzungen
 
- - IPS 5.0 oder höher  
+ - IPS 5.1 oder höher  
  - PRTG
 
 ## 3. Software-Installation
 
- Dieses Modul ist Bestandteil der IPSPRTG-Library.
+ Dieses Modul ist Bestandteil des [PRTG-Library](../).  
 
-**IPS 5.0:**  
-   Bei privater Nutzung: Über das 'Module-Control' in IPS folgende URL hinzufügen.  
-    `git://github.com/Nall-chan/IPSPRTG.git`  
-
+**IPS 5.1:**  
+   Bei privater Nutzung:
+     Über den 'Module-Store' in IPS.  
    **Bei kommerzieller Nutzung (z.B. als Errichter oder Integrator) wenden Sie sich bitte an den Autor.**  
 
 ## 4. Einrichten der Instanzen in IP-Symcon
@@ -167,7 +167,10 @@ Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.
 
 ## 8. Anhang
 
-**Changlog:** 
+**Changlog:**  
+
+Version 2.00:  
+ - Release für IPS 5.1 und den Module-Store   
 
 Version 1.31:
  - Darstellungsfehler im Konfigurator beseitigt  

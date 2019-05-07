@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
-eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
+eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
+eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
 /*
  * @addtogroup prtg
@@ -14,7 +14,7 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       1.36
+ * @version       2.0
  *
  */
 
@@ -26,15 +26,15 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       1.36
+ * @version       2.0
  *
  * @example <b>Ohne</b>
  */
 class PRTGConfigurator extends IPSModule
 {
 
-    use prtg\BufferHelper,
-        prtg\DebugHelper;
+    use \PRTGConfigurator\BufferHelper,
+        \PRTGConfigurator\DebugHelper;
     /**
      * Interne Funktion des SDK.
      */
