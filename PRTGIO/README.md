@@ -1,5 +1,5 @@
 [![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version](https://img.shields.io/badge/Modul%20Version-2.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/Modul%20Version-2.1-blue.svg)]()
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
 [![Version](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)
 [![StyleCI](https://styleci.io/repos/132882302/shield?style=flat)](https://styleci.io/repos/132882302)  
@@ -144,6 +144,9 @@ Nach dem erzeugen und speichern der Sensoreinstellungen dauert es einen Augenbli
 
 ### 3. Changelog  
 
+Version 2.1 :
+ - Fehler im IPS-Sensor wenn Laufwerke keine Bezeichnung hatten  
+  
 Version 2.00:  
  - Release für IPS 5.1 und den Module-Store   
 

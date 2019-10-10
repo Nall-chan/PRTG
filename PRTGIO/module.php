@@ -15,7 +15,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.0
+ * @version       2.1
  *
  */
 
@@ -27,7 +27,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.0
+ * @version       2.1
  *
  * @example <b>Ohne</b>
  *
@@ -234,7 +234,7 @@ class PRTGIO extends IPSModule
             if ($Value['LABEL'] == '') {
                 $Name = $Value['LETTER'];
             } else {
-                $Value['LABEL'] . '(' . $Value['LETTER'] . ')';
+                $Name = $Value['LABEL'] . '(' . $Value['LETTER'] . ')';
             }
             $Channels[] = ['channel' => 'Disk ' . $Name, 'value' => $Value['FREE'] / $Value['TOTAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
             $Channels[] = ['channel' => 'Disk ' . $Name . ' Free', 'value' => (int) $Value['FREE'], 'unit' => 'BytesDisk'];
