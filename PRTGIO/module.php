@@ -15,7 +15,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.1
+ * @version       2.10
  *
  */
 
@@ -27,7 +27,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @copyright     2019 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.1
+ * @version       2.10
  *
  * @example <b>Ohne</b>
  *
@@ -37,6 +37,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  */
 class PRTGIO extends IPSModule
 {
+
     use \PRTGIO\BufferHelper,
         \PRTGIO\DebugHelper,
         \PRTGIO\WebhookHelper;
@@ -222,6 +223,10 @@ class PRTGIO extends IPSModule
         $Channels[] = ['channel' => 'Process Count', 'value' => $ProcessInfo['PROCESSCOUNT'], 'unit' => 'Count'];
         $MemoryInfo = Sys_GetMemoryInfo();
         $Channels[] = ['channel' => 'System RAM Physical Free', 'value' => $MemoryInfo['AVAILPHYSICAL'] / $MemoryInfo['TOTALPHYSICAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
+        if ($MemoryInfo['TOTALPAGEFILE'] == 0) {
+            $MemoryInfo['AVAILPAGEFILE'] = 1;
+            $MemoryInfo['TOTALPAGEFILE'] = 1;
+        }
         $Channels[] = ['channel' => 'System RAM Pagefile Free', 'value' => $MemoryInfo['AVAILPAGEFILE'] / $MemoryInfo['TOTALPAGEFILE'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
         $Channels[] = ['channel' => 'System RAM Virtual Free', 'value' => $MemoryInfo['AVAILVIRTUAL'] / $MemoryInfo['TOTALVIRTUAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
         $CPUs = Sys_GetCPUInfo();
@@ -363,7 +368,7 @@ class PRTGIO extends IPSModule
         if (is_null($Path)) {
             $Path = '';
         } else {
-            if ((strlen($Path) > 0) and (substr($Path, -1) == '/')) {
+            if ((strlen($Path) > 0) and ( substr($Path, -1) == '/')) {
                 $Path = substr($Path, 0, -1);
             }
         }
@@ -432,13 +437,13 @@ class PRTGIO extends IPSModule
         }
         //'showLegend%3D%271%27+baseFontSize%3D%275%27'
         $QueryData = ['type'         => 'graph',
-            'graphid'                => $GraphId,
-            'width'                  => $Width,
-            'height'                 => $Height,
-            'theme'                  => $Theme,
-            'refreshable'            => 'true',
-            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'                     => $SensorId
+            'graphid'      => $GraphId,
+            'width'        => $Width,
+            'height'       => $Height,
+            'theme'        => $Theme,
+            'refreshable'  => 'true',
+            'graphstyling' => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
+            'id'           => $SensorId
         ];
         if ($Type == 1) {
             $URL = $this->CreateQueryURL('chart.png', $QueryData);
@@ -594,6 +599,7 @@ class PRTGIO extends IPSModule
         $Form['elements'][8]['caption'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
         return json_encode($Form);
     }
+
 }
 
 /* @} */

@@ -91,6 +91,10 @@ Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem extern
 
 ### 3. Changlog
 
+Version 2.10 :
+ - Fehler im IPS-Sensor behoben, wenn Laufwerke keine Bezeichnung hatten  
+ - Fehler im IPS-Sensor behoben, wenn Pagefile genutzt wird  
+ 
 Version 2.00:  
  - Release für IPS 5.1 und den Module-Store   
 
