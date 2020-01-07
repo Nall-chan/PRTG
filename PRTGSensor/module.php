@@ -33,11 +33,16 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  */
 class PRTGSensor extends IPSModule
 {
-    use \prtg\VariableHelper,
-        \prtg\VariableProfileHelper,
-        \prtg\DebugHelper,
-        \prtg\BufferHelper,
-        \prtg\PRTGPause,
+    use \prtg\VariableHelper;
+    use
+        \prtg\VariableProfileHelper;
+    use
+        \prtg\DebugHelper;
+    use
+        \prtg\BufferHelper;
+    use
+        \prtg\PRTGPause;
+    use
         \prtg\VariableConverter;
 
     /**
@@ -136,6 +141,108 @@ class PRTGSensor extends IPSModule
     }
 
     /**
+     * IPS Instanz-Funktion PRTG_RequestState.
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall
+     */
+    public function RequestState(): bool
+    {
+        if ($this->RequestSensorState()) {
+            return $this->RequestChannelState();
+        }
+        return false;
+    }
+
+    /**
+     * Verarbeitet empfangene Events des IO.
+     *
+     * @param string $JSONString
+     */
+    public function ReceiveData($JSONString)
+    {
+        $Data = json_decode($JSONString, true);
+        $this->SendDebug('Got Event', $Data, 0);
+        $this->RequestState();
+        $this->SendDebug('End Event', $Data, 0);
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     *
+     * @return string Konfigurationsform
+     */
+    public function GetConfigurationForm(): string
+    {
+        $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        if (!$this->ReadPropertyBoolean('UseInterval')) {
+            unset($Form['elements'][7]);
+        }
+        return json_encode($Form);
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall
+     */
+    public function RequestAction($Ident, $Value): bool
+    {
+        switch ($Ident) {
+            case 'ActionButton':
+                if ($Value) {
+                    return $this->SetResume();
+                } else {
+                    return $this->SetPause();
+                }
+                // FIXME: No break. Please add proper comment if intentional
+            case 'AckButton':
+                return $this->AcknowledgeAlarm();
+        }
+        trigger_error('Invalid Ident', E_USER_NOTICE);
+        return false;
+    }
+
+    /**
+     * Bestätigt einen Alarm in PRTG.
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall
+     */
+    public function AcknowledgeAlarm(): bool
+    {
+        return $this->AcknowledgeAlarmEx('');
+    }
+
+    /**
+     * Bestätigt einen Alarm in PRT mit der in $Message übergebenen Nachricht.
+     *
+     * @param string $Message Nachricht für PTRG.
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall
+     */
+    public function AcknowledgeAlarmEx(string $Message): bool
+    {
+        if (!is_string($Message)) {
+            trigger_error($this->Translate('Message must be string.'), E_USER_NOTICE);
+            return false;
+        }
+        $QueryData = [
+            'action' => 0,
+            'id'     => $this->ReadPropertyInteger('id')
+        ];
+
+        if ($Message != '') {
+            $QueryData['ackmsg'] = $Message;
+        }
+
+        $Result = $this->SendData('api/acknowledgealarm.htm', $QueryData);
+
+        if (array_key_exists('Payload', $Result)) {
+            return $this->RequestState();
+        }
+        return false;
+    }
+
+    /**
      * Setzt den Intervall-Timer.
      */
     private function SetTimer(bool $Active)
@@ -152,19 +259,6 @@ class PRTGSensor extends IPSModule
         }
 
         $this->SetTimerInterval('RequestState', $Interval);
-    }
-
-    /**
-     * IPS Instanz-Funktion PRTG_RequestState.
-     *
-     * @return bool True bei Erfolg, False im Fehlerfall
-     */
-    public function RequestState(): bool
-    {
-        if ($this->RequestSensorState()) {
-            return $this->RequestChannelState();
-        }
-        return false;
     }
 
     /**
@@ -255,7 +349,7 @@ class PRTGSensor extends IPSModule
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Profile'], $Channel['objid'], true);
             $vid = $this->GetIDForIdent($Ident);
 
-            if ($this->ReadPropertyBoolean('AutoRenameChannels') and (IPS_GetName($vid)) != $Channel['name']) {
+            if ($this->ReadPropertyBoolean('AutoRenameChannels') && (IPS_GetName($vid)) != $Channel['name']) {
                 IPS_SetName($vid, $Channel['name']);
             }
             $this->SetValue($Ident, $Data['Data']);
@@ -293,94 +387,6 @@ class PRTGSensor extends IPSModule
         unset($Result['Error']);
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
-    }
-
-    /**
-     * Verarbeitet empfangene Events des IO.
-     *
-     * @param string $JSONString
-     */
-    public function ReceiveData($JSONString)
-    {
-        $Data = json_decode($JSONString, true);
-        $this->SendDebug('Got Event', $Data, 0);
-        $this->RequestState();
-        $this->SendDebug('End Event', $Data, 0);
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     *
-     * @return string Konfigurationsform
-     */
-    public function GetConfigurationForm(): string
-    {
-        $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
-        if (!$this->ReadPropertyBoolean('UseInterval')) {
-            unset($Form['elements'][7]);
-        }
-        return json_encode($Form);
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     *
-     * @return bool True bei Erfolg, False im Fehlerfall
-     */
-    public function RequestAction($Ident, $Value): bool
-    {
-        switch ($Ident) {
-            case 'ActionButton':
-                if ($Value) {
-                    return $this->SetResume();
-                } else {
-                    return $this->SetPause();
-                }
-            case 'AckButton':
-                return $this->AcknowledgeAlarm();
-        }
-        trigger_error('Invalid Ident', E_USER_NOTICE);
-        return false;
-    }
-
-    /**
-     * Bestätigt einen Alarm in PRTG.
-     *
-     * @return bool True bei Erfolg, False im Fehlerfall
-     */
-    public function AcknowledgeAlarm(): bool
-    {
-        return $this->AcknowledgeAlarmEx('');
-    }
-
-    /**
-     * Bestätigt einen Alarm in PRT mit der in $Message übergebenen Nachricht.
-     *
-     * @param string $Message Nachricht für PTRG.
-     *
-     * @return bool True bei Erfolg, False im Fehlerfall
-     */
-    public function AcknowledgeAlarmEx(string $Message): bool
-    {
-        if (!is_string($Message)) {
-            trigger_error($this->Translate('Message must be string.'), E_USER_NOTICE);
-            return false;
-        }
-        $QueryData = [
-            'action' => 0,
-            'id'     => $this->ReadPropertyInteger('id')
-        ];
-
-        if ($Message != '') {
-            $QueryData['ackmsg'] = $Message;
-        }
-
-        $Result = $this->SendData('api/acknowledgealarm.htm', $QueryData);
-
-        if (array_key_exists('Payload', $Result)) {
-            return $this->RequestState();
-        }
-        return false;
     }
 }
 

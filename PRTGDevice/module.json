@@ -7,5 +7,6 @@
 	"parentRequirements": ["{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}"],
 	"childRequirements": [],
 	"implemented": ["{45829008-026B-401E-829F-8384DD27619A}"],
-	"prefix": "PRTG"
+	"prefix": "PRTG",
+	"url":"https://github.com/Nall-chan/IPSPRTG/README.md"
 }

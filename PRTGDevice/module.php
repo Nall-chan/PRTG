@@ -31,11 +31,16 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  */
 class PRTGDevice extends IPSModule
 {
-    use \prtg\VariableHelper,
-        \prtg\VariableProfileHelper,
-        \prtg\DebugHelper,
-        \prtg\BufferHelper,
-        \prtg\PRTGPause,
+    use \prtg\VariableHelper;
+    use
+        \prtg\VariableProfileHelper;
+    use
+        \prtg\DebugHelper;
+    use
+        \prtg\BufferHelper;
+    use
+        \prtg\PRTGPause;
+    use
         \prtg\VariableConverter;
 
     /**
@@ -138,6 +143,44 @@ class PRTGDevice extends IPSModule
     }
 
     /**
+     * IPS Instanz-Funktion PRTG_RequestState.
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall
+     */
+    public function RequestState(): bool
+    {
+        return $this->RequestDeviceState();
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     */
+    public function ReceiveData($JSONString)
+    {
+        $Data = json_decode($JSONString, true);
+        $this->SendDebug('Got Event', $Data, 0);
+        $this->RequestState();
+        $this->SendDebug('End Event', $Data, 0);
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     */
+    public function RequestAction($Ident, $Value)
+    {
+        switch ($Ident) {
+            case 'ActionButton':
+                if ($Value) {
+                    return $this->SetResume();
+                } else {
+                    return $this->SetPause();
+                }
+        }
+        trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
+        return false;
+    }
+
+    /**
      * Setzt den Intervall-Timer.
      */
     private function SetTimer(bool $Active)
@@ -149,16 +192,6 @@ class PRTGDevice extends IPSModule
             $Interval = 0;
         }
         $this->SetTimerInterval('RequestState', $Interval);
-    }
-
-    /**
-     * IPS Instanz-Funktion PRTG_RequestState.
-     *
-     * @return bool True bei Erfolg, False im Fehlerfall
-     */
-    public function RequestState(): bool
-    {
-        return $this->RequestDeviceState();
     }
 
     /**
@@ -241,34 +274,6 @@ class PRTGDevice extends IPSModule
         unset($Result['Error']);
         $this->SendDebug('Request Result', $Result, 0);
         return $Result;
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     */
-    public function ReceiveData($JSONString)
-    {
-        $Data = json_decode($JSONString, true);
-        $this->SendDebug('Got Event', $Data, 0);
-        $this->RequestState();
-        $this->SendDebug('End Event', $Data, 0);
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     */
-    public function RequestAction($Ident, $Value)
-    {
-        switch ($Ident) {
-            case 'ActionButton':
-                if ($Value) {
-                    return $this->SetResume();
-                } else {
-                    return $this->SetPause();
-                }
-        }
-        trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
-        return false;
     }
 }
 

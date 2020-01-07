@@ -37,8 +37,10 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  */
 class PRTGIO extends IPSModule
 {
-    use \PRTGIO\BufferHelper,
-        \PRTGIO\DebugHelper,
+    use \PRTGIO\BufferHelper;
+    use
+        \PRTGIO\DebugHelper;
+    use
         \PRTGIO\WebhookHelper;
     const isConnected = IS_ACTIVE;
     const isInActive = IS_INACTIVE;
@@ -157,6 +159,154 @@ class PRTGIO extends IPSModule
     }
 
     /**
+     * IPS Instanz-Funktion PRTG_GetGraph
+     * Liefert einen Graphen aus PRTG.
+     *
+     * @param int  $Type         Typ des Graphen
+     *                           enum[1=PNG, 2=SVG]
+     * @param int  $SensorId     Objekt-ID des Sensors
+     * @param int  $GraphId      Zeitbereich des Graphen
+     *                           enum[0=live, 1=last 48 hours, 2=30 days, 3=365 days]
+     * @param int  $Width        Höhe des Graphen in Pixel.
+     * @param int  $Height       Höhe des Graphen in Pixel.
+     * @param int  $Theme        Darstellung
+     *                           enum[0,1,2,3]
+     * @param int  $BaseFontSize Schriftgröße, 10 ist Standard
+     * @param bool $ShowLegend   Legende Anzeigen
+     *
+     * @return string
+     */
+    public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend)
+    {
+        if ($this->State != self::isConnected) {
+            return false;
+        }
+        //'showLegend%3D%271%27+baseFontSize%3D%275%27'
+        $QueryData = ['type'         => 'graph',
+            'graphid'                => $GraphId,
+            'width'                  => $Width,
+            'height'                 => $Height,
+            'theme'                  => $Theme,
+            'refreshable'            => 'true',
+            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
+            'id'                     => $SensorId
+        ];
+        if ($Type == 1) {
+            $URL = $this->CreateQueryURL('chart.png', $QueryData);
+        } elseif ($Type == 2) {
+            $URL = $this->CreateQueryURL('chart.svg', $QueryData);
+        }
+        $Timeout = [
+            'Timeout' => 5000
+        ];
+        $this->SendDebug('PRTG Graph URL', $URL, 0);
+        return @Sys_GetURLContentEx($URL, $Timeout);
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     *
+     * @param type $JSONString Der IPS-Datenstring
+     *
+     * @return string Die Antwort an den anfragenden Child
+     */
+    public function ForwardData($JSONString)
+    {
+        $Json = json_decode($JSONString, true);
+        $Result = $this->SendData($Json['Uri'], $Json['QueryData'], $Json['PostData']);
+        set_error_handler([$this, 'ModulErrorHandler']);
+        switch ($Result['Error']) {
+            case self::isConnected:
+            case self::isInActive:
+            case 200:
+                restore_error_handler();
+                return serialize($Result);
+            case self::isDisconnected:
+                trigger_error('IO not connected', E_USER_WARNING);
+                break;
+            case self::isURLnotValid:
+            case 400:
+                trigger_error('Bad Request', E_USER_WARNING);
+                break;
+            case self::isUnauthorized:
+            case 401:
+                trigger_error('Unauthorized', E_USER_WARNING);
+                break;
+            case 404: // not Found
+                trigger_error('Not found', E_USER_WARNING);
+                break;
+            case 500:
+                trigger_error('Server error', E_USER_WARNING);
+                break;
+        }
+        restore_error_handler();
+        return false;
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     *
+     * @return string Konfigurationsform
+     */
+    public function GetConfigurationForm(): string
+    {
+        $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        $Form['elements'][8]['caption'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
+        return json_encode($Form);
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     */
+    protected function ProcessHookdata()
+    {
+        switch ($_SERVER['REQUEST_METHOD']) {
+            case 'GET':
+                if (isset($_GET['graph']) && ($_GET['graph'] == 'png')) {
+                    header('Content-type: image/png');
+                    echo $this->GetGraph(1, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling']);
+                    return;
+                }
+                if (isset($_GET['graph']) && ($_GET['graph'] == 'svg')) {
+                    header('Content-Type: image/svg+xml');
+                    echo $this->GetGraph(2, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling']);
+                    return;
+                }
+                if (isset($_SERVER['HTTP_SENSORID'])) {
+                    echo $this->FetchIPSSensorData();
+                    return;
+                }
+                header('HTTP/1.0 404 Not Found');
+                echo 'Not Found!';
+                return;
+            case 'POST':
+                $Data = explode("\r\n", rawurldecode(file_get_contents('php://input')));
+                $this->SendDebug('PRTG EVENT', $Data, 0);
+                foreach ($Data as $ObjId) {
+                    $Sensor = ['objid' => (int) $ObjId, 'DataID' => '{45829008-026B-401E-829F-8384DD27619A}'];
+                    $this->SendDataToChildren(json_encode($Sensor));
+                }
+                break;
+        }
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     *
+     * @param type $InstanceStatus
+     */
+    protected function SetStatus($InstanceStatus)
+    {
+        $this->State = $InstanceStatus;
+        parent::SetStatus($InstanceStatus);
+    }
+
+    protected function ModulErrorHandler($errno, $errstr)
+    {
+        echo $errstr . PHP_EOL;
+    }
+
+    /**
      * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook.
      *
      * @return string JSON-String für PRTG HTTP-Daten-Sensor
@@ -248,41 +398,6 @@ class PRTGIO extends IPSModule
     }
 
     /**
-     * Interne Funktion des SDK.
-     */
-    protected function ProcessHookdata()
-    {
-        switch ($_SERVER['REQUEST_METHOD']) {
-            case 'GET':
-                if (isset($_GET['graph']) && ($_GET['graph'] == 'png')) {
-                    header('Content-type: image/png');
-                    echo $this->GetGraph(1, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling']);
-                    return;
-                }
-                if (isset($_GET['graph']) && ($_GET['graph'] == 'svg')) {
-                    header('Content-Type: image/svg+xml');
-                    echo $this->GetGraph(2, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling']);
-                    return;
-                }
-                if (isset($_SERVER['HTTP_SENSORID'])) {
-                    echo $this->FetchIPSSensorData();
-                    return;
-                }
-                header('HTTP/1.0 404 Not Found');
-                echo 'Not Found!';
-                return;
-            case 'POST':
-                $Data = explode("\r\n", rawurldecode(file_get_contents('php://input')));
-                $this->SendDebug('PRTG EVENT', $Data, 0);
-                foreach ($Data as $ObjId) {
-                    $Sensor = ['objid' => (int) $ObjId, 'DataID' => '{45829008-026B-401E-829F-8384DD27619A}'];
-                    $this->SendDataToChildren(json_encode($Sensor));
-                }
-                break;
-        }
-    }
-
-    /**
      * Sendet Eine Anfrage an PRTG und liefert die Antwort.
      *
      * @param string $Uri       URI der Abrage
@@ -367,7 +482,7 @@ class PRTGIO extends IPSModule
         if (is_null($Path)) {
             $Path = '';
         } else {
-            if ((strlen($Path) > 0) and (substr($Path, -1) == '/')) {
+            if ((strlen($Path) > 0) && (substr($Path, -1) == '/')) {
                 $Path = substr($Path, 0, -1);
             }
         }
@@ -409,51 +524,6 @@ class PRTGIO extends IPSModule
         $this->SetStatus(102);
         $this->State = self::isConnected;
         return true;
-    }
-
-    /**
-     * IPS Instanz-Funktion PRTG_GetGraph
-     * Liefert einen Graphen aus PRTG.
-     *
-     * @param int  $Type         Typ des Graphen
-     *                           enum[1=PNG, 2=SVG]
-     * @param int  $SensorId     Objekt-ID des Sensors
-     * @param int  $GraphId      Zeitbereich des Graphen
-     *                           enum[0=live, 1=last 48 hours, 2=30 days, 3=365 days]
-     * @param int  $Width        Höhe des Graphen in Pixel.
-     * @param int  $Height       Höhe des Graphen in Pixel.
-     * @param int  $Theme        Darstellung
-     *                           enum[0,1,2,3]
-     * @param int  $BaseFontSize Schriftgröße, 10 ist Standard
-     * @param bool $ShowLegend   Legende Anzeigen
-     *
-     * @return string
-     */
-    public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend)
-    {
-        if ($this->State != self::isConnected) {
-            return false;
-        }
-        //'showLegend%3D%271%27+baseFontSize%3D%275%27'
-        $QueryData = ['type'         => 'graph',
-            'graphid'                => $GraphId,
-            'width'                  => $Width,
-            'height'                 => $Height,
-            'theme'                  => $Theme,
-            'refreshable'            => 'true',
-            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'                     => $SensorId
-        ];
-        if ($Type == 1) {
-            $URL = $this->CreateQueryURL('chart.png', $QueryData);
-        } elseif ($Type == 2) {
-            $URL = $this->CreateQueryURL('chart.svg', $QueryData);
-        }
-        $Timeout = [
-            'Timeout' => 5000
-        ];
-        $this->SendDebug('PRTG Graph URL', $URL, 0);
-        return @Sys_GetURLContentEx($URL, $Timeout);
     }
 
     /**
@@ -529,74 +599,6 @@ class PRTGIO extends IPSModule
             $this->SendDebug('Request Result:' . $HttpCode, $Result, 0);
         }
         return $Result;
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     *
-     * @param type $InstanceStatus
-     */
-    protected function SetStatus($InstanceStatus)
-    {
-        $this->State = $InstanceStatus;
-        parent::SetStatus($InstanceStatus);
-    }
-
-    protected function ModulErrorHandler($errno, $errstr)
-    {
-        echo $errstr . PHP_EOL;
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     *
-     * @param type $JSONString Der IPS-Datenstring
-     *
-     * @return string Die Antwort an den anfragenden Child
-     */
-    public function ForwardData($JSONString)
-    {
-        $Json = json_decode($JSONString, true);
-        $Result = $this->SendData($Json['Uri'], $Json['QueryData'], $Json['PostData']);
-        set_error_handler([$this, 'ModulErrorHandler']);
-        switch ($Result['Error']) {
-            case self::isConnected:
-            case self::isInActive:
-            case 200:
-                restore_error_handler();
-                return serialize($Result);
-            case self::isDisconnected:
-                trigger_error('IO not connected', E_USER_WARNING);
-                break;
-            case self::isURLnotValid:
-            case 400:
-                trigger_error('Bad Request', E_USER_WARNING);
-                break;
-            case self::isUnauthorized:
-            case 401:
-                trigger_error('Unauthorized', E_USER_WARNING);
-                break;
-            case 404: // not Found
-                trigger_error('Not found', E_USER_WARNING);
-                break;
-            case 500:
-                trigger_error('Server error', E_USER_WARNING);
-                break;
-        }
-        restore_error_handler();
-        return false;
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     *
-     * @return string Konfigurationsform
-     */
-    public function GetConfigurationForm(): string
-    {
-        $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
-        $Form['elements'][8]['caption'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
-        return json_encode($Form);
     }
 }
 

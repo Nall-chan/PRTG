@@ -32,7 +32,8 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  */
 class PRTGConfigurator extends IPSModule
 {
-    use \PRTGConfigurator\BufferHelper,
+    use \PRTGConfigurator\BufferHelper;
+    use
         \PRTGConfigurator\DebugHelper;
 
     /**
@@ -55,42 +56,6 @@ class PRTGConfigurator extends IPSModule
     }
 
     /**
-     * Liefert alle Sensoren.
-     *
-     * @return array Array mit allen Sensoren
-     */
-    private function GetSensors(): array
-    {
-        $Result = $this->SendData('api/table.json', [
-            'content' => 'sensors',
-            'columns' => 'objid,device,name,parentid'
-        ]);
-
-        if (!array_key_exists('sensors', $Result)) {
-            return [];
-        }
-        return $Result['sensors'];
-    }
-
-    /**
-     * Liefert alle Geräte.
-     *
-     * @return array Array mit allen Geräten
-     */
-    private function GetDevices(): array
-    {
-        $Result = $this->SendData('api/table.json', [
-            'content' => 'devices',
-            'columns' => 'objid,group,device'
-        ]);
-
-        if (!array_key_exists('devices', $Result)) {
-            return [];
-        }
-        return $Result['devices'];
-    }
-
-    /**
      * Interne Funktion des SDK.
      */
     public function GetConfigurationForm(): string
@@ -101,9 +66,9 @@ class PRTGConfigurator extends IPSModule
                 'type'  => 'PopupAlert',
                 'popup' => [
                     'items' => [[
-                    'type'    => 'Label',
-                    'caption' => 'Not connected to IO.'
-                        ]]
+                        'type'    => 'Label',
+                        'caption' => 'Not connected to IO.'
+                    ]]
                 ]
             ];
         }
@@ -113,9 +78,9 @@ class PRTGConfigurator extends IPSModule
                 'type'  => 'PopupAlert',
                 'popup' => [
                     'items' => [[
-                    'type'    => 'Label',
-                    'caption' => 'Instance has no active parent.'
-                        ]]
+                        'type'    => 'Label',
+                        'caption' => 'Instance has no active parent.'
+                    ]]
                 ]
             ];
         }
@@ -226,6 +191,42 @@ class PRTGConfigurator extends IPSModule
         $this->SendDebug('FORM', json_encode($Form), 0);
         $this->SendDebug('FORM', json_last_error_msg(), 0);
         return json_encode($Form);
+    }
+
+    /**
+     * Liefert alle Sensoren.
+     *
+     * @return array Array mit allen Sensoren
+     */
+    private function GetSensors(): array
+    {
+        $Result = $this->SendData('api/table.json', [
+            'content' => 'sensors',
+            'columns' => 'objid,device,name,parentid'
+        ]);
+
+        if (!array_key_exists('sensors', $Result)) {
+            return [];
+        }
+        return $Result['sensors'];
+    }
+
+    /**
+     * Liefert alle Geräte.
+     *
+     * @return array Array mit allen Geräten
+     */
+    private function GetDevices(): array
+    {
+        $Result = $this->SendData('api/table.json', [
+            'content' => 'devices',
+            'columns' => 'objid,group,device'
+        ]);
+
+        if (!array_key_exists('devices', $Result)) {
+            return [];
+        }
+        return $Result['devices'];
     }
 
     /**

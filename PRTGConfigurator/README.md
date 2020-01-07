@@ -1,8 +1,9 @@
-[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version](https://img.shields.io/badge/Modul%20Version-2.0-blue.svg)]()
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
-[![Version](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)
-[![StyleCI](https://styleci.io/repos/132882302/shield?style=flat)](https://styleci.io/repos/132882302)  
+[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/) 
+[![Version 2.20](https://img.shields.io/badge/Modul%20Version-2.20-blue.svg)]() 
+[![Version 5.1](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)  
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
+[![Check Style](https://github.com/Nall-chan/IPSPRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions) 
+[![Run Tests](https://github.com/Nall-chan/IPSPRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions)  
 
 # PRTG Konfigurator  
 Vereinfacht das Anlegen von verschiedenen PRTG-Instanzen in IPS.  
@@ -11,15 +12,16 @@ Vereinfacht das Anlegen von verschiedenen PRTG-Instanzen in IPS.
 
 **Inhaltsverzeichnis**
 
-1. [Funktionsumfang](#1-funktionsumfang)  
-2. [Voraussetzungen](#2-voraussetzungen)  
-3. [Software-Installation](#3-software-installation) 
-4. [Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
-5. [Statusvariablen und Profile](#5-statusvariablen-und-profile)
-6. [WebFront](#6-webfront)
-7. [PHP-Befehlsreferenz](#7-php-befehlsreferenz) 
-8. [Anhang](#8-anhang)  
-9. [Lizenz](#9-lizenz)
+- [PRTG Konfigurator](#prtg-konfigurator)
+  - [Dokumentation](#dokumentation)
+  - [1. Funktionsumfang](#1-funktionsumfang)
+  - [2. Voraussetzungen](#2-voraussetzungen)
+  - [3. Software-Installation](#3-software-installation)
+  - [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
+  - [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
+  - [6. WebFront](#6-webfront)
+  - [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
+  - [8. Lizenz](#8-lizenz)
 
 ## 1. Funktionsumfang
 
@@ -73,25 +75,7 @@ Der Konfigurator besitzt keine im WebFront darstellbaren Elemente.
 
 Der Konfigurator besitzt keine Instanz-Funktionen.  
 
-## 8. Anhang
-
-**Changlog:**  
-
-Version 2.00:  
- - Release für IPS 5.1 und den Module-Store   
-
-Version 1.31:
- - Darstellungsfehler im Konfigurator beseitigt  
- - Formen nutzen jetzt NumberSpinner mit Suffix anstatt IntervalBox  
-
-Version 1.30:  
- - Fehlerbehandlung Datenaustausch überarbeitet  
- - Konfigurator erstellt Instanz unterhalb von Kategorien mit dem Namen des jeweiligen Gerätes  
-
-Version 1.0:  
- - Erstes offizielles Release  
-
-## 9. Lizenz
+## 8. Lizenz
 
   IPS-Modul:  
   [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
