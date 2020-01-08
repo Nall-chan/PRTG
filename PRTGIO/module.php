@@ -264,12 +264,12 @@ class PRTGIO extends IPSModule
             case 'GET':
                 if (isset($_GET['graph']) && ($_GET['graph'] == 'png')) {
                     header('Content-type: image/png');
-                    echo $this->GetGraph(1, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling']);
+                    echo $this->GetGraph(1, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling'], true);
                     return;
                 }
                 if (isset($_GET['graph']) && ($_GET['graph'] == 'svg')) {
                     header('Content-Type: image/svg+xml');
-                    echo $this->GetGraph(2, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling']);
+                    echo $this->GetGraph(2, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling'], true);
                     return;
                 }
                 if (isset($_SERVER['HTTP_SENSORID'])) {
