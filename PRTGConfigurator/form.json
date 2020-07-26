@@ -1,5 +1,6 @@
 {
-    "elements": [{
+    "elements": [
+        {
             "name": "RootId",
             "type": "SelectCategory",
             "caption": "Create under category"
@@ -16,28 +17,34 @@
                 "column": "group",
                 "direction": "ascending"
             },
-            "columns": [{
+            "columns": [
+                {
                     "caption": "ObjectID",
                     "name": "objid",
                     "width": "100px"
-                }, {
+                },
+                {
                     "caption": "Type",
                     "name": "type",
                     "width": "100px"
-                }, {
+                },
+                {
                     "caption": "Group",
                     "name": "group",
                     "width": "250px"
-                }, {
+                },
+                {
                     "caption": "Device",
                     "name": "device",
                     "width": "250px"
-                }, {
+                },
+                {
                     "caption": "Name",
                     "name": "name",
                     "width": "auto"
                 }
             ],
             "values": []
-        }]
+        }
+    ]
 }

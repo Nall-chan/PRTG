@@ -3,10 +3,16 @@
 	"name": "PRTGIO",
 	"type": 1,
 	"vendor": "PRTG",
-	"aliases": ["PRTG I/O"],
+	"aliases": [
+		"PRTG I/O"
+	],
 	"parentRequirements": [],
-	"childRequirements": ["{45829008-026B-401E-829F-8384DD27619A}"],
-	"implemented": ["{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}"],
+	"childRequirements": [
+		"{45829008-026B-401E-829F-8384DD27619A}"
+	],
+	"implemented": [
+		"{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}"
+	],
 	"prefix": "PRTG",
-	"url":"https://github.com/Nall-chan/IPSPRTG/README.md"
+	"url": "https://github.com/Nall-chan/PRTG/master/blob/PRTGIO/"
 }

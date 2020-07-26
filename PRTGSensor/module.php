@@ -34,16 +34,11 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
 class PRTGSensor extends IPSModule
 {
     use \prtg\VariableHelper;
-    use
-        \prtg\VariableProfileHelper;
-    use
-        \prtg\DebugHelper;
-    use
-        \prtg\BufferHelper;
-    use
-        \prtg\PRTGPause;
-    use
-        \prtg\VariableConverter;
+    use \prtg\VariableProfileHelper;
+    use \prtg\DebugHelper;
+    use \prtg\BufferHelper;
+    use \prtg\PRTGPause;
+    use \prtg\VariableConverter;
 
     /**
      * Interne Funktion des SDK.
@@ -215,7 +210,7 @@ class PRTGSensor extends IPSModule
     /**
      * Bestätigt einen Alarm in PRT mit der in $Message übergebenen Nachricht.
      *
-     * @param string $Message Nachricht für PTRG.
+     * @param string $Message Nachricht für PRTG.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
      */

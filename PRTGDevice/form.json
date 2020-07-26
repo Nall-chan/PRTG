@@ -1,43 +1,47 @@
 {
-    "elements":
-            [
-                {
-                    "type": "NumberSpinner",
-                    "name": "id",
-                    "caption": "Device ID"
-                }, {
-                    "name": "ShowActionButton",
-                    "type": "CheckBox",
-                    "caption": "Display pause/resume button"
-                }, {
-                    "name": "AutoRename",
-                    "type": "CheckBox",
-                    "caption": "Auto rename instance"
-                }, {
-                    "name": "ReadableState",
-                    "type": "CheckBox",
-                    "caption": "Readable state"
-                }, {
-                    "name": "DisplayTotalSensors",
-                    "type": "CheckBox",
-                    "caption": "Show number of sensors"
-                }, {
-                    "name": "DisplaySensorState",
-                    "type": "CheckBox",
-                    "caption": "Show sensor summaray"
-                }, {
-                    "type": "NumberSpinner",
-                    "name": "Interval",
-                    "caption": "Interval",
-                    "suffix": "seconds"
-                }
-            ],
-    "actions":
-            [
-                {
-                    "type": "Button",
-                    "caption": "Read data",
-                    "onClick": "PRTG_RequestState($id);"
-                }
-            ]
+    "elements": [
+        {
+            "type": "NumberSpinner",
+            "name": "id",
+            "caption": "Device ID"
+        },
+        {
+            "name": "ShowActionButton",
+            "type": "CheckBox",
+            "caption": "Display pause/resume button"
+        },
+        {
+            "name": "AutoRename",
+            "type": "CheckBox",
+            "caption": "Auto rename instance"
+        },
+        {
+            "name": "ReadableState",
+            "type": "CheckBox",
+            "caption": "Readable state"
+        },
+        {
+            "name": "DisplayTotalSensors",
+            "type": "CheckBox",
+            "caption": "Show number of sensors"
+        },
+        {
+            "name": "DisplaySensorState",
+            "type": "CheckBox",
+            "caption": "Show sensor summary"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "Interval",
+            "caption": "Interval",
+            "suffix": "seconds"
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Read data",
+            "onClick": "PRTG_RequestState($id);"
+        }
+    ]
 }

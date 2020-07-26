@@ -2,26 +2,22 @@
 [![Version 2.20](https://img.shields.io/badge/Modul%20Version-2.20-blue.svg)]() 
 [![Version 5.1](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
-[![Check Style](https://github.com/Nall-chan/IPSPRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions) 
-[![Run Tests](https://github.com/Nall-chan/IPSPRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions)  
+[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions) 
+[![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
 
 # PRTG Device
 Einbindung eines PRTG-Sensors in IPS.  
 
-## Dokumentation
+## Inhaltsverzeichnis <!-- omit in toc -->
 
-**Inhaltsverzeichnis**
-
-- [PRTG Device](#prtg-device)
-  - [Dokumentation](#dokumentation)
-  - [1. Funktionsumfang](#1-funktionsumfang)
-  - [2. Voraussetzungen](#2-voraussetzungen)
-  - [3. Software-Installation](#3-software-installation)
-  - [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
-  - [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
-  - [6. WebFront](#6-webfront)
-  - [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
-  - [8. Lizenz](#8-lizenz)
+- [1. Funktionsumfang](#1-funktionsumfang)
+- [2. Voraussetzungen](#2-voraussetzungen)
+- [3. Software-Installation](#3-software-installation)
+- [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
+- [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
+- [6. WebFront](#6-webfront)
+- [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
+- [8. Lizenz](#8-lizenz)
 
 ## 1. Funktionsumfang
 
@@ -47,7 +43,7 @@ Einbindung eines PRTG-Sensors in IPS.
 
 Das Anlegen von neuen Instanzen kann komfortabel über den [PRTG Konfigurator:](../PRTGConfigurator/) erfolgen.  
 
-Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zufinden.  
+Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zu finden.  
 ![Instanz hinzufügen](imgs/add.png)  
 
 Es wird automatisch ein PRTGIO Instanz erzeugt, wenn noch keine vorhanden ist.  
@@ -59,48 +55,48 @@ Folgende Parameter sind in der Instanz zu konfigurieren:
 ![Konfigurator](imgs/conf.png)  
 **Konfigurationsseite:**  
 
-| Eigenschaft         | Typ     | Standardwert | Funktion                                                               |
-| :-----------------: | :-----: | :----------: | :--------------------------------------------------------------------: |
-| id                  | integer |              | PRTG ObjektID des Sensor                                               |
-| AutoRename          | bool    | true         | Instanz automatisch an den Namen in PRTG anpassen                      |
-| ShowActionButton    | bool    | true         | Aktionsbutton zum pausieren der Überwachung                            |
-| ShowAckButton       | bool    | true         | Aktionsbutton zum Quittieren des Alarm                                 |
-| ReadableState       | bool    | true         | Status als Klartext in String-Variable                                 |
-| AutoRenameChannels  | bool    | true         | Statusvariablen der Kanäle automatisch an den Namen in PRTG anpassen   |
-| UseInterval         | bool    | true         | Abfrageintervall aus Interval benutzen, sonst PRTG-Intervall nutzen    |
-| Interval            | integer | 60           | Abfrageintervall in Sekunden                                           |
+|    Eigenschaft     |   Typ   | Standardwert |                               Funktion                               |
+| :----------------: | :-----: | :----------: | :------------------------------------------------------------------: |
+|         id         | integer |              |                       PRTG ObjektID des Sensor                       |
+|     AutoRename     |  bool   |     true     |          Instanz automatisch an den Namen in PRTG anpassen           |
+|  ShowActionButton  |  bool   |     true     |             Aktionsbutton zum pausieren der Überwachung              |
+|   ShowAckButton    |  bool   |     true     |                Aktionsbutton zum Quittieren des Alarm                |
+|   ReadableState    |  bool   |     true     |                Status als Klartext in String-Variable                |
+| AutoRenameChannels |  bool   |     true     | Statusvariablen der Kanäle automatisch an den Namen in PRTG anpassen |
+|    UseInterval     |  bool   |     true     | Abfrageintervall aus Interval benutzen, sonst PRTG-Intervall nutzen  |
+|      Interval      | integer |      60      |                     Abfrageintervall in Sekunden                     |
 
 ## 5. Statusvariablen und Profile
 
 Folgende Statusvariablen werden automatisch angelegt.  
-Zusätzlich werden dynamisch Statusvariablen für die einzelen Kanäle erstellt.  
+Zusätzlich werden dynamisch Statusvariablen für die einzelnen Kanäle erstellt.  
 
-| Name                              | Typ     | Ident           | Beschreibung                                                  |
-| :-------------------------------: | :-----: | :-------------: | :-----------------------------------------------------------: |
-| Status                            | integer | State           | Status des Sensor                                             |
-| Status Klartext                   | string  | ReadableState   | Status des Sensor als String wie er von PRTG übertragen wird  |
-| Steuerung                         | integer | ActionButton    | Pause / Resume Button zum Steuern der Überwachung             |
-| Alarmsteuerung                    | integer | AckButton       | Bestätigen Button zum Quittieren des Alarm                    |
+|      Name       |   Typ   |     Ident     |                         Beschreibung                         |
+| :-------------: | :-----: | :-----------: | :----------------------------------------------------------: |
+|     Status      | integer |     State     |                      Status des Sensor                       |
+| Status Klartext | string  | ReadableState | Status des Sensor als String wie er von PRTG übertragen wird |
+|    Steuerung    | integer | ActionButton  |      Pause / Resume Button zum Steuern der Überwachung       |
+| Alarmsteuerung  | integer |   AckButton   |          Bestätigen Button zum Quittieren des Alarm          |
 
 
 
 **Profile**:
 
-| Name            | Typ     | verwendet von Statusvariablen |
-| :-------------: | :-----: | :---------------------------: |
-| PRTG.Sensor     | integer | State                         |
-| PRTG.Action     | integer | ActionButton                  |
-| PRTG.Ack        | integer | AckButton                     |
-| PRTG.ms         | float   | Sensorvariablen               |
-| PRTG.Intensity  | float   | Sensorvariablen               |
-| PRTG.No         | integer | Sensorvariablen               |
-| PRTG.MByte      | float   | Sensorvariablen               |
-| PRTG.Sec        | integer | Sensorvariablen               |
-| PRTG.MBitSec    | integer | Sensorvariablen               |
-| PRTG.kBitSec    | integer | Sensorvariablen               |
-| PRTG.IpS        | integer | Sensorvariablen               |
-| PRTG.IpM        | integer | Sensorvariablen               |
-| PRTG.Items      | integer | Sensorvariablen               |
+|      Name      |   Typ   | verwendet von Statusvariablen |
+| :------------: | :-----: | :---------------------------: |
+|  PRTG.Sensor   | integer |             State             |
+|  PRTG.Action   | integer |         ActionButton          |
+|    PRTG.Ack    | integer |           AckButton           |
+|    PRTG.ms     |  float  |        Sensorvariablen        |
+| PRTG.Intensity |  float  |        Sensorvariablen        |
+|    PRTG.No     | integer |        Sensorvariablen        |
+|   PRTG.MByte   |  float  |        Sensorvariablen        |
+|    PRTG.Sec    | integer |        Sensorvariablen        |
+|  PRTG.MBitSec  | integer |        Sensorvariablen        |
+|  PRTG.kBitSec  | integer |        Sensorvariablen        |
+|    PRTG.IpS    | integer |        Sensorvariablen        |
+|    PRTG.IpM    | integer |        Sensorvariablen        |
+|   PRTG.Items   | integer |        Sensorvariablen        |
 
 ## 6. WebFront
 

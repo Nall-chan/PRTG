@@ -1,77 +1,74 @@
 {
-    "elements":
-            [
-                {
-                    "name": "Open",
-                    "type": "CheckBox",
-                    "caption": "Open"
-                },
-                {
-                    "type": "ValidationTextBox",
-                    "name": "Host",
-                    "caption": "URL"
-                },
-                {
-                    "type": "ValidationTextBox",
-                    "name": "Username",
-                    "caption": "Username"
-                },
-                {
-                    "type": "PasswordTextBox",
-                    "name": "Password",
-                    "caption": "Password"
-                },
-                {
-                    "type": "Label",
-                    "caption": "Advanced SSL certificate settings:"
-                },
-                {
-                    "type": "CheckBox",
-                    "name": "NoHostVerify",
-                    "caption": "Disable hostname verification"
-                },
-                {
-                    "type": "CheckBox",
-                    "name": "NoPeerVerify",
-                    "caption": "Disable peer verification"
-                },
-                {
-                    "type": "CheckBox",
-                    "name": "NoCertCheck",
-                    "caption": "Disable certificate validation"
-                },
-                {
-                    "type": "Label",
-                    "caption": ""
-                }
-            ],		
-    "status":
-            [
-                {
-                    "code": 102,
-                    "icon": "active",
-                    "caption": "PRTG is accessible"
-                },
-                {
-                    "code": 104,
-                    "icon": "inactive",
-                    "caption": "Instance is inactive"
-                },
-
-                {
-                    "code": 201,
-                    "icon": "error",
-                    "caption": "PRTG not reachable"
-                },
-                {
-                    "code": 202,
-                    "icon": "error",
-                    "caption": "unauthorized"
-                },
-                {
-                    "code": 203,
-                    "icon": "error",
-                    "caption": "URL not valid"
-                }
-            ]
+    "elements": [
+        {
+            "name": "Open",
+            "type": "CheckBox",
+            "caption": "Open"
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "Host",
+            "caption": "URL"
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "Username",
+            "caption": "Username"
+        },
+        {
+            "type": "PasswordTextBox",
+            "name": "Password",
+            "caption": "Password"
+        },
+        {
+            "type": "Label",
+            "caption": "Advanced SSL certificate settings:"
+        },
+        {
+            "type": "CheckBox",
+            "name": "NoHostVerify",
+            "caption": "Disable hostname verification"
+        },
+        {
+            "type": "CheckBox",
+            "name": "NoPeerVerify",
+            "caption": "Disable peer verification"
+        },
+        {
+            "type": "CheckBox",
+            "name": "NoCertCheck",
+            "caption": "Disable certificate validation"
+        },
+        {
+            "type": "Label",
+            "caption": ""
+        }
+    ],
+    "status": [
+        {
+            "code": 102,
+            "icon": "active",
+            "caption": "PRTG is accessible"
+        },
+        {
+            "code": 104,
+            "icon": "inactive",
+            "caption": "Instance is inactive"
+        },
+        {
+            "code": 201,
+            "icon": "error",
+            "caption": "PRTG not reachable"
+        },
+        {
+            "code": 202,
+            "icon": "error",
+            "caption": "unauthorized"
+        },
+        {
+            "code": 203,
+            "icon": "error",
+            "caption": "URL not valid"
+        }
+    ]
 }

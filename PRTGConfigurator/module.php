@@ -33,8 +33,7 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
 class PRTGConfigurator extends IPSModule
 {
     use \PRTGConfigurator\BufferHelper;
-    use
-        \PRTGConfigurator\DebugHelper;
+    use \PRTGConfigurator\DebugHelper;
 
     /**
      * Interne Funktion des SDK.

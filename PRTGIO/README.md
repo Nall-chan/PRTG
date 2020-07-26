@@ -2,30 +2,26 @@
 [![Version 2.20](https://img.shields.io/badge/Modul%20Version-2.20-blue.svg)]() 
 [![Version 5.1](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
-[![Check Style](https://github.com/Nall-chan/IPSPRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions) 
-[![Run Tests](https://github.com/Nall-chan/IPSPRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions)  
+[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions) 
+[![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
 
 
 # PRTG I/O
 I/O zur Kommunikation mit PRTG  
 
-## Dokumentation
+## Inhaltsverzeichnis <!-- omit in toc -->
 
-**Inhaltsverzeichnis**
-
-- [PRTG I/O](#prtg-io)
-  - [Dokumentation](#dokumentation)
-  - [1. Funktionsumfang](#1-funktionsumfang)
-  - [2. Voraussetzungen](#2-voraussetzungen)
-  - [3. Software-Installation](#3-software-installation)
-  - [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
-  - [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
-  - [6. WebFront](#6-webfront)
-  - [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
-  - [8. Anhang](#8-anhang)
-    - [1. Events von PRTG empfangen](#1-events-von-prtg-empfangen)
-    - [2. IPS in PRTG überwachen](#2-ips-in-prtg-überwachen)
-  - [9. Lizenz](#9-lizenz)
+- [1. Funktionsumfang](#1-funktionsumfang)
+- [2. Voraussetzungen](#2-voraussetzungen)
+- [3. Software-Installation](#3-software-installation)
+- [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
+- [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
+- [6. WebFront](#6-webfront)
+- [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
+- [8. Anhang](#8-anhang)
+  - [1. Events von PRTG empfangen](#1-events-von-prtg-empfangen)
+  - [2. IPS in PRTG überwachen](#2-ips-in-prtg-überwachen)
+- [9. Lizenz](#9-lizenz)
 
 ## 1. Funktionsumfang
 
@@ -52,25 +48,25 @@ I/O zur Kommunikation mit PRTG
 
 Diese Instanz wird automatisch erzeugt sobald z.B. der [PRTG Konfigurator:](../PRTGConfigurator/) erstellt wird.  
 
-Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zufinden.  
+Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zu finden.  
 ![Instanz hinzufügen](imgs/add.png)  
 
 Folgende Parameter sind in der Instanz zu konfigurieren:  
 Dabei sollte der Benutzer in PRTG Administrative Rechte bekommen, um die Überwachung zu steuern und Alarme quittieren zu können.  
-Die Erweiterten SSL Einstellungen sind per default deaktiv.  Für z.B. selbst-signierte Zertifikate sind z.B. Option 1 und 2 zu aktiviern.  
+Die Erweiterten SSL Einstellungen sind per default inaktiv.  Für z.B. selbst-signierte Zertifikate sind z.B. Option 1 und 2 zu aktivieren.  
 
 ![Konfigurator](imgs/conf.png)  
 **Konfigurationsseite:**  
 
-| Eigenschaft         | Typ     | Standardwert | Funktion                                                               |
-| :-----------------: | :-----: | :----------: | :--------------------------------------------------------------------: |
-| Open                | bool    | false        | I/O öffnen oder schließen                                              |
-| Host                | string  |              | URL zum PRTG Webfront z.B. http://prtg:8081                            |
-| Username            | string  |              | Benutzername in PRTG                                                   |
-| Password            | string  |              | Passwort für den Benutzer                                              |
-| NoHostVerify        | bool    |              | Deaktiviere Prüfung des Hostnamen                                      |
-| NoPeerVerify        | bool    |              | Deaktiviere Prüfung der Gegenstelle                                    |
-| NoCertCheck         | bool    |              | Deaktiviere Prüfung des Zertifikat                                     |
+| Eigenschaft  |  Typ   | Standardwert |                  Funktion                   |
+| :----------: | :----: | :----------: | :-----------------------------------------: |
+|     Open     |  bool  |    false     |          I/O öffnen oder schließen          |
+|     Host     | string |              | URL zum PRTG Webfront z.B. http://prtg:8081 |
+|   Username   | string |              |            Benutzername in PRTG             |
+|   Password   | string |              |          Passwort für den Benutzer          |
+| NoHostVerify |  bool  |              |      Deaktiviere Prüfung des Hostnamen      |
+| NoPeerVerify |  bool  |              |     Deaktiviere Prüfung der Gegenstelle     |
+| NoCertCheck  |  bool  |              |     Deaktiviere Prüfung des Zertifikat      |
 
 ## 5. Statusvariablen und Profile
 
@@ -93,9 +89,9 @@ Folgende Parameter stehen zur Verfügung:
  - $GraphId Zeitbereich des Graphen: 0=live, 1=last 48 hours, 2=30 days, 3=365 days  
  - $Width Höhe des Graphen in Pixel.  
  - $Height Höhe des Graphen in Pixel.  
- - $Theme Darstellungstheme (0,1,2,3)  
+ - $Theme Darstellungschema (0,1,2,3)  
  - $BaseFontSize Schriftgröße, 10 ist Standard.  
- - $ShowLegend true für Legende Anzeigen, fals zum verbergen.  
+ - $ShowLegend true für Legende Anzeigen, false zum verbergen.  
 
 ## 8. Anhang
 

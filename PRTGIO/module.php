@@ -38,10 +38,8 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
 class PRTGIO extends IPSModule
 {
     use \PRTGIO\BufferHelper;
-    use
-        \PRTGIO\DebugHelper;
-    use
-        \PRTGIO\WebhookHelper;
+    use \PRTGIO\DebugHelper;
+    use \PRTGIO\WebhookHelper;
     const isConnected = IS_ACTIVE;
     const isInActive = IS_INACTIVE;
     const isDisconnected = IS_EBASE + 1;
@@ -400,7 +398,7 @@ class PRTGIO extends IPSModule
     /**
      * Sendet Eine Anfrage an PRTG und liefert die Antwort.
      *
-     * @param string $Uri       URI der Abrage
+     * @param string $Uri       URI der Abfrage
      * @param array  $QueryData Alle mit Allen GET-Parametern
      * @param string $PostData  String mit POST Daten
      *
@@ -447,7 +445,7 @@ class PRTGIO extends IPSModule
     }
 
     /**
-     * Prüft die Konfiguration der URL für PRTG und schreibt die berenigte URL in einen InstanceBuffer.
+     * Prüft die Konfiguration der URL für PRTG und schreibt die bereinigte URL in einen InstanceBuffer.
      *
      * @return bool True wenn Host ok, sonst false.
      */
@@ -547,7 +545,7 @@ class PRTGIO extends IPSModule
     /**
      * Sendet Eine Anfrage an PRTG.
      *
-     * @param string $Url      URL der Abrage
+     * @param string $Url      URL der Abfrage
      * @param int    $HttpCode Enthält den HTTP-Code der Antwort
      * @param string $PostData String mit POST Daten
      *

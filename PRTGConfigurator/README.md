@@ -2,26 +2,22 @@
 [![Version 2.20](https://img.shields.io/badge/Modul%20Version-2.20-blue.svg)]() 
 [![Version 5.1](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
-[![Check Style](https://github.com/Nall-chan/IPSPRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions) 
-[![Run Tests](https://github.com/Nall-chan/IPSPRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/IPSPRTG/actions)  
+[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions) 
+[![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
 
 # PRTG Konfigurator  
 Vereinfacht das Anlegen von verschiedenen PRTG-Instanzen in IPS.  
 
-## Dokumentation
+## Inhaltsverzeichnis <!-- omit in toc -->
 
-**Inhaltsverzeichnis**
-
-- [PRTG Konfigurator](#prtg-konfigurator)
-  - [Dokumentation](#dokumentation)
-  - [1. Funktionsumfang](#1-funktionsumfang)
-  - [2. Voraussetzungen](#2-voraussetzungen)
-  - [3. Software-Installation](#3-software-installation)
-  - [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
-  - [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
-  - [6. WebFront](#6-webfront)
-  - [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
-  - [8. Lizenz](#8-lizenz)
+- [1. Funktionsumfang](#1-funktionsumfang)
+- [2. Voraussetzungen](#2-voraussetzungen)
+- [3. Software-Installation](#3-software-installation)
+- [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
+- [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
+- [6. WebFront](#6-webfront)
+- [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
+- [8. Lizenz](#8-lizenz)
 
 ## 1. Funktionsumfang
 
@@ -44,7 +40,7 @@ Vereinfacht das Anlegen von verschiedenen PRTG-Instanzen in IPS.
 
 ## 4. Einrichten der Instanzen in IP-Symcon
 
-Das Modul ist im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zufinden.  
+Das Modul ist im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zu finden.  
 ![Instanz hinzufügen](imgs/add.png)  
 
 Es wird automatisch ein PRTGIO Instanz erzeugt, wenn noch keine vorhanden ist.  
@@ -59,7 +55,7 @@ Alternativ können auch alle fehlenden Instanzen auf einmal erstellt werden.
 Erstelle Instanzen werden unterhalb einer Kategorie mit dem Namen des jeweiligen Gerätes erstellt.  
 Diese Kategorien werden im logischen Baum direkt im Root erstellt.  
 Es kann jedoch eine andere Ursprungskategorie ausgewählt werden.  
-Diese Struktur dient dem schellen auffinden der erstellten Instanzen im logischen Baum, anschließend können die Instanzen frfei im Baum verschoben werden.  
+Diese Struktur dient dem schellen auffinden der erstellten Instanzen im logischen Baum, anschließend können die Instanzen frei im Baum verschoben werden.  
 ![Konfigurator](imgs/conf2.png)  
 
 

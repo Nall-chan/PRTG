@@ -32,16 +32,11 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
 class PRTGDevice extends IPSModule
 {
     use \prtg\VariableHelper;
-    use
-        \prtg\VariableProfileHelper;
-    use
-        \prtg\DebugHelper;
-    use
-        \prtg\BufferHelper;
-    use
-        \prtg\PRTGPause;
-    use
-        \prtg\VariableConverter;
+    use \prtg\VariableProfileHelper;
+    use \prtg\DebugHelper;
+    use \prtg\BufferHelper;
+    use \prtg\PRTGPause;
+    use \prtg\VariableConverter;
 
     /**
      * Interne Funktion des SDK.
