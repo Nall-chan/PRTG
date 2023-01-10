@@ -241,14 +241,14 @@ trait VariableConverter
                 break;
             case 'Mbit/Sek.':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 1250000),
+                    'Data'    => floor($Value['lastvalue_raw'] / 125000),
                     'Profile' => 'PRTG.MBitSec',
                     'VarType' => VARIABLETYPE_INTEGER
                 ];
                 break;
             case 'kbit/Sek.':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 1250),
+                    'Data'    => floor($Value['lastvalue_raw'] / 125),
                     'Profile' => 'PRTG.kBitSec',
                     'VarType' => VARIABLETYPE_INTEGER
                 ];
