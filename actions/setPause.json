@@ -1,0 +1,24 @@
+{
+    "id": "{C3BAF792-B287-4120-9125-C11A4AF3509F}",
+    "caption": "Set device or sensor on pause",
+    "form": [],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}",
+            "{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_SetPause($_IPS['TARGET']);",
+    "locale": {
+        "de": {
+            "Set device or sensor on pause": "Setze das Gerät oder den Sensor auf Pause"
+        }
+    }
+}

@@ -1,58 +1,50 @@
-[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/) 
-[![Version 2.20](https://img.shields.io/badge/Modul%20Version-2.20-blue.svg)]() 
-[![Version 5.1](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)  
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
-[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions) 
+[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
+[![Version 2.50](https://img.shields.io/badge/Modul%20Version-2.50-blue.svg)]()
+[![Version 6.2](https://img.shields.io/badge/Symcon%20Version-6.2%20%3E-green.svg)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v61-v62-q2-2022/)  
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions)
 [![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
+[![Spenden](https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_SM.gif)](../README.md#4-spenden)  
 
-# PRTG Device
-Einbindung eines PRTG-Sensors in IPS.  
+# PRTG Device <!-- omit in toc -->
+Einbindung eines PRTG-Sensor in IPS.  
 
 ## Inhaltsverzeichnis <!-- omit in toc -->
 
 - [1. Funktionsumfang](#1-funktionsumfang)
-- [2. Voraussetzungen](#2-voraussetzungen)
-- [3. Software-Installation](#3-software-installation)
-- [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
-- [5. Statusvariablen und Profile](#5-statusvariablen-und-profile)
-- [6. WebFront](#6-webfront)
-- [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
-- [8. Lizenz](#8-lizenz)
+- [2. Installation](#2-installation)
+- [3. Einrichten der Instanzen in IP-Symcon](#3-einrichten-der-instanzen-in-ip-symcon)
+- [4. Statusvariablen und Profile](#4-statusvariablen-und-profile)
+- [5. WebFront](#5-webfront)
+- [6. PHP-Befehlsreferenz](#6-php-befehlsreferenz)
+- [7. Lizenz](#7-lizenz)
 
 ## 1. Funktionsumfang
 
- - Empfangen und darstellen des aktuellen Zustand in IPS.  
- - Pausieren und Fortsetzen der Überwachung aus IPS über WebFront und PHP-Scripten.  
- - Quittieren von Alarmmeldungen aus IPS über WebFront und PHP-Scripten.  
+ - Empfangen und darstellen des aktuellen Zustand.  
+ - Pausieren und Fortsetzen der Überwachung über die Frontends, Aktionen und PHP-Scripten.  
+ - Quittieren von Alarmmeldungen über die Frontends, Aktionen und PHP-Scripten.  
 
-## 2. Voraussetzungen
+## 2. Installation
 
- - IPS 5.1 oder höher  
- - PRTG
+ Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installation).  
 
-## 3. Software-Installation
+## 3. Einrichten der Instanzen in IP-Symcon
 
- Dieses Modul ist Bestandteil des [PRTG-Library](../).  
-
-**IPS 5.1:**  
-   Bei privater Nutzung:
-     Über den 'Module-Store' in IPS.  
-   **Bei kommerzieller Nutzung (z.B. als Errichter oder Integrator) wenden Sie sich bitte an den Autor.**  
-
-## 4. Einrichten der Instanzen in IP-Symcon
-
-Das Anlegen von neuen Instanzen kann komfortabel über den [PRTG Konfigurator:](../PRTGConfigurator/) erfolgen.  
+Das Anlegen von neuen Instanzen kann komfortabel über den [PRTG Konfigurator:](../PRTGConfigurator/README.md#3-einrichten-der-instanzen-in-ip-symcon) erfolgen.  
 
 Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zu finden.  
 ![Instanz hinzufügen](imgs/add.png)  
 
 Es wird automatisch ein PRTGIO Instanz erzeugt, wenn noch keine vorhanden ist.  
-Erscheint im dem sich öffnenden Konfigurationsformular der Hinweis 'Eine übergeordnete Instanz ist inaktiv', so ist zuerst der IO zu konfigurieren.  
+Erscheint im dem sich öffnenden Konfigurationsformular der Hinweis 'Eine übergeordnete Instanz ist inaktiv', so ist zuerst der [IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) zu konfigurieren.  
 Dieser kann über die Schaltfläche 'Gateway konfigurieren' erreicht werden.  
-Details zur Konfiguration des IO sind der Dokumentation des IO zu entnehmen.
+Details zur Konfiguration des [IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) sind der Dokumentation des [IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) zu entnehmen.
 
 Folgende Parameter sind in der Instanz zu konfigurieren:  
+
 ![Konfigurator](imgs/conf.png)  
+
 **Konfigurationsseite:**  
 
 |    Eigenschaft     |   Typ   | Standardwert |                               Funktion                               |
@@ -66,7 +58,7 @@ Folgende Parameter sind in der Instanz zu konfigurieren:
 |    UseInterval     |  bool   |     true     | Abfrageintervall aus Interval benutzen, sonst PRTG-Intervall nutzen  |
 |      Interval      | integer |      60      |                     Abfrageintervall in Sekunden                     |
 
-## 5. Statusvariablen und Profile
+## 4. Statusvariablen und Profile
 
 Folgende Statusvariablen werden automatisch angelegt.  
 Zusätzlich werden dynamisch Statusvariablen für die einzelnen Kanäle erstellt.  
@@ -98,14 +90,14 @@ Zusätzlich werden dynamisch Statusvariablen für die einzelnen Kanäle erstellt
 |    PRTG.IpM    | integer |        Sensorvariablen        |
 |   PRTG.Items   | integer |        Sensorvariablen        |
 
-## 6. WebFront
+## 5. WebFront
 
 Die direkte Darstellung und Steuerung im WebFront ist möglich.  
 Hier ein Beispiel eines HTTP Sensors für IPS.  
 ![WebFront Beispiel](imgs/wf.png)  
 
 
-## 7. PHP-Befehlsreferenz
+## 6. PHP-Befehlsreferenz
 
 ```php
 bool PRTG_RequestState(integer $InstanzID)
@@ -163,7 +155,7 @@ Bestätigt den Alarm des Sensor in PRTG mit einer in '$Message' übergebenen Mel
 Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
 Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
 
-## 8. Lizenz
+## 7. Lizenz
 
   IPS-Modul:  
   [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  

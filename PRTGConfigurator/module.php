@@ -12,9 +12,9 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.0
+ * @version       2.50
  *
  */
 
@@ -23,10 +23,10 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.0
+ * @version       2.50
  *
  * @example <b>Ohne</b>
  */
@@ -43,7 +43,7 @@ class PRTGConfigurator extends IPSModule
         parent::Create();
         $this->ConnectParent('{67470842-FB5E-485B-92A2-4401E371E6FC}');
         $this->SetReceiveDataFilter('.*"nothingtoreceive":.*');
-        $this->RegisterPropertyInteger('RootId', 0);
+        $this->RegisterPropertyInteger('RootId', 1);
     }
 
     /**
@@ -87,11 +87,13 @@ class PRTGConfigurator extends IPSModule
         $Devices = $this->GetDevices();
         $RootNames = [];
         $RootId = $this->ReadPropertyInteger('RootId');
-        while ($RootId != 0) {
-            if ($RootId != 0) {
-                $RootNames[] = IPS_GetName($RootId);
+        if (IPS_CategoryExists($RootId)) {
+            while ($RootId != 0) {
+                if ($RootId != 0) {
+                    $RootNames[] = IPS_GetName($RootId);
+                }
+                $RootId = IPS_GetParent($RootId);
             }
-            $RootId = IPS_GetParent($RootId);
         }
         $RootNames = array_reverse($RootNames);
         $InstanceIDListSensors = IPS_GetInstanceListByModuleID('{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}');

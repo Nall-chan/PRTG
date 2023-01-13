@@ -1,0 +1,39 @@
+{
+    "id": "{5C353F22-2FC4-4623-9F7A-FD2E049C940F}",
+    "caption": "Set device or sensor on pause with message for specific duration",
+    "form": [
+        {
+            "type": "NumberSpinner",
+            "caption": "Interval",
+            "name": "DURATION",
+            "suffix": "minutes",
+            "minimum ": 0
+        },
+        {
+            "type": "ValidationTextBox",
+            "caption": "Message",
+            "name": "MESSAGE"
+        }
+    ],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}",
+            "{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_SetPauseDurationEx($_IPS['TARGET'],$_IPS['DURATION'],$_IPS['MESSAGE']);",
+    "locale": {
+        "de": {
+            "Set device or sensor on pause with message for specific duration": "Setze das Gerät oder den Sensor für eine bestimmte Zeit mit einer Nachricht auf Pause",
+            "minutes": "Minuten",
+            "Message": "Nachricht"
+        }
+    }
+}

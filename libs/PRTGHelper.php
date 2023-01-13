@@ -11,9 +11,9 @@ namespace prtg;
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2020 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.20
+ * @version       2.50
  *
  */
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableHelper.php') . '}');
@@ -25,10 +25,10 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2020 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.20
+ * @version       2.50
  *
  * @example <b>Ohne</b>
  */

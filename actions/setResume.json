@@ -1,0 +1,24 @@
+{
+    "id": "{4BF3DF6F-3981-4D99-B88A-378A23090682}",
+    "caption": "Set device or sensor to resume",
+    "form": [],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}",
+            "{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_SetResume($_IPS['TARGET']);",
+    "locale": {
+        "de": {
+            "Set device or sensor to resumr": "Setze das Gerät oder den Sensor auf Fortsetzen"
+        }
+    }
+}

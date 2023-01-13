@@ -1,12 +1,12 @@
 {
     "id": "{542765D1-DFE6-4789-A81A-A6EF6F173F6B}",
-    "author": "Michael Tr\u00f6ger",
+    "author": "Michael Tröger",
     "name": "PRTG-Library",
     "url": "https://github.com/Nall-chan/PRTG",
     "compatibility": {
-        "version": "5.1"
+        "version": "6.2"
     },
-    "version": "2.20",
-    "build": 195,
+    "version": "2.50",
+    "build": 200,
     "date": 1595786870
 }

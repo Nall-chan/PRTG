@@ -1,0 +1,30 @@
+{
+    "id": "{41CDEAA5-E7F4-49C1-8693-4F87D96303AA}",
+    "caption": "Acknowledge alarm from sensor with message",
+    "form": [
+        {
+            "type": "ValidationTextBox",
+            "caption": "Message",
+            "name": "MESSAGE"
+        }
+    ],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_AcknowledgeAlarmEx($_IPS['TARGET'],$_IPS['MESSAGE']);",
+    "locale": {
+        "de": {
+            "Acknowledge alarm from sensor with message": "Bestätige Alarm des Sensors mit einer Nachricht",
+            "Message": "Nachricht"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "id": "{D1C9FBCB-2696-4AE4-BAE8-9C12C27D8C17}",
+    "caption": "Acknowledge alarm from sensor",
+    "form": [],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_AcknowledgeAlarm($_IPS['TARGET']);",
+    "locale": {
+        "de": {
+            "Acknowledge alarm from sensor": "Bestätige Alarm des Sensors"
+        }
+    }
+}

@@ -11,9 +11,9 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.0
+ * @version       2.50
  *
  */
 
@@ -22,10 +22,10 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.0
+ * @version       2.50
  *
  * @example <b>Ohne</b>
  */
@@ -95,14 +95,14 @@ class PRTGDevice extends IPSModule
             $this->UnregisterVariable('ReadableState');
         }
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
-            $this->MaintainVariable('ActionButton', $this->Translate('Control'), VARIABLETYPE_BOOLEAN, 'PRTG.Action', -4, true);
+            $this->MaintainVariable('ActionButton', $this->Translate('Monitoring'), VARIABLETYPE_BOOLEAN, 'PRTG.Action', -4, true);
             $this->EnableAction('ActionButton');
         } else {
             $this->UnregisterVariable('ActionButton');
         }
 
         if ($this->ReadPropertyBoolean('DisplayTotalSensors')) {
-            $this->MaintainVariable('TotalSens', $this->Translate('Sens Total'), VARIABLETYPE_INTEGER, '', 0, true);
+            $this->MaintainVariable('TotalSens', $this->Translate('Sensors Total'), VARIABLETYPE_INTEGER, '', 0, true);
         } else {
             $this->UnregisterVariable('TotalSens');
         }
