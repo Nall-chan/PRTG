@@ -43,10 +43,12 @@ trait PRTGPause
     public function SetResume(): bool
     {
         $Result = $this->SendData('api/pause.htm', [
-            'action' => 1,
-            'id'     => $this->ReadPropertyInteger('id')
+            'id'     => $this->ReadPropertyInteger('id'),
+            'action' => 1
+
         ]);
         if (array_key_exists('Payload', $Result)) {
+            IPS_Sleep(50);
             return $this->RequestState();
         }
         return false;
@@ -126,6 +128,7 @@ trait PRTGPause
 
         $Result = $this->SendData($Uri, $QueryData);
         if (array_key_exists('Payload', $Result)) {
+            IPS_Sleep(50);
             return $this->RequestState();
         }
         return false;
@@ -184,6 +187,9 @@ trait VariableConverter
             return false;
         }
         if ($Value['lastvalue_raw'] === 'Keine Daten') {
+            return false;
+        }
+        if (($Value['lastvalue_raw'] === '') && ($Value['lastvalue'] === '')) {
             return false;
         }
         $data = explode(' ', $Value['lastvalue']);

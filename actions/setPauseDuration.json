@@ -23,7 +23,7 @@
             "Default"
         ]
     },
-    "action": "PRTG_SetPauseDuration($_IPS['TARGET'],$_IPS['DURATION'],$_IPS['MESSAGE']);",
+    "action": "PRTG_SetPauseDuration($_IPS['TARGET'],$_IPS['DURATION']);",
     "locale": {
         "de": {
             "Set device or sensor on pause for specific duration": "Setze das Gerät oder den Sensor für eine bestimmte Zeit auf Pause",

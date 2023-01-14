@@ -701,7 +701,7 @@ class PRTGIO extends IPSModule
             $this->SendDebug('Not Found Error', $HttpCode, 0);
             return '';
         } else {
-            $this->SendDebug('Request Result:' . $HttpCode, $Result, 0);
+            $this->SendDebug('Result:' . $HttpCode, $Result, 0);
         }
         return $Result;
     }

@@ -1,6 +1,7 @@
 {
     "translations": {
         "de": {
+            "PRTG Device": "PRTG Gerät",
             "Device ID": "Geräte ID",
             "Show monitoring control": "Zeige Steuerung der Überwachung",
             "Auto rename instance": "Instanz automatisch umbenennen",

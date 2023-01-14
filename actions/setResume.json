@@ -18,7 +18,7 @@
     "action": "PRTG_SetResume($_IPS['TARGET']);",
     "locale": {
         "de": {
-            "Set device or sensor to resumr": "Setze das Gerät oder den Sensor auf Fortsetzen"
+            "Set device or sensor to resume": "Setze das Gerät oder den Sensor auf Fortsetzen"
         }
     }
 }

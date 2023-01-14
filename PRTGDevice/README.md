@@ -15,8 +15,9 @@ Einbindung eines PRTG-Gerätes in IPS.
 - [3. Einrichten der Instanzen in IP-Symcon](#3-einrichten-der-instanzen-in-ip-symcon)
 - [4. Statusvariablen und Profile](#4-statusvariablen-und-profile)
 - [5. WebFront](#5-webfront)
-- [6. PHP-Befehlsreferenz](#6-php-befehlsreferenz)
-- [7. Lizenz](#7-lizenz)
+- [6. Aktionen](#6-aktionen)
+- [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
+- [8. Lizenz](#8-lizenz)
 
 ## 1. Funktionsumfang
 
@@ -86,8 +87,15 @@ Folgende Statusvariablen werden automatisch angelegt.
 Die direkte Darstellung und Steuerung im WebFront ist möglich.  
 ![WebFront Beispiel](imgs/wf.png)  
 
+## 6. Aktionen
 
-## 6. PHP-Befehlsreferenz
+__Grundsätzlich können alle bedienbaren Statusvariablen als Ziel einer [`Aktion`](https://www.symcon.de/service/dokumentation/konzepte/automationen/ablaufplaene/aktionen/) mit 'Auf Wert schalten' angesteuert werden, so das hier keine speziellen Aktionen benutzt werden müssen.__
+
+Dennoch gibt es diverse Aktionen für die 'PRTG Device' Instanz.  
+Wenn so eine Instanz als Ziel einer Aktion ausgewählt wurde, stehen folgende Aktionen zur Verfügung:  
+![Aktionen](imgs/actions.png)  
+
+## 7. PHP-Befehlsreferenz
 
 ```php
 bool PRTG_RequestState(integer $InstanzID)
@@ -131,7 +139,7 @@ Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergebe
 Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
 Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
 
-## 7. Lizenz
+## 8. Lizenz
 
   IPS-Modul:  
   [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  

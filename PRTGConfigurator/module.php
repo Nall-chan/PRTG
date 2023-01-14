@@ -258,7 +258,7 @@ class PRTGConfigurator extends IPSModule
             return [];
         }
         unset($Result['Error']);
-        $this->SendDebug('Request Result', $Result, 0);
+        $this->SendDebug('Result', $Result, 0);
         return $Result;
     }
 

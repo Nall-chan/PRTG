@@ -101,8 +101,9 @@ Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem extern
 ### 3. Changelog
 
 Version 2.50:  
+ - Wurde ein Sensor pausiert, so wurden alle Statusvariablen neu als String angelegt und die alten somit gelöscht.  
  - Aktionen hinzugefügt.  
- - Dynamischere und hierdurch einfachere Konfigurationsformulare.  
+ - Dynamische Konfigurationsformulare und somit einfacher zu konfigurieren.  
  - IO zeigt den Event Webhook für PRTG an.  
  - Event Webhook mit verbesserten NAT Support.  
  - Event Webhook unterstützt abweichenden Port (z.B. für NAT).  
