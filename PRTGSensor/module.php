@@ -293,7 +293,7 @@ class PRTGSensor extends IPSModule
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
             $this->SetValue('ActionButton', (bool) $Data['active_raw']);
         }
-        if ($this->ReadPropertyBoolean('AutoRename')) {
+        if ($this->ReadPropertyBoolean('AutoRename') && (IPS_GetName($this->InstanceID)) != $Data['name']) {
             IPS_SetName($this->InstanceID, $Data['name']);
         }
         if ($this->Interval != (int) $Data['interval_raw']) {
