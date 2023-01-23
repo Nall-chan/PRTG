@@ -15,7 +15,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.50
+ * @version       2.51
  *
  */
 
@@ -27,7 +27,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.50
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  *
@@ -366,9 +366,9 @@ class PRTGIO extends IPSModule
         $Port = $this->ReadPropertyInteger('ReturnPort');
         $Protocol = $this->ReadPropertyBoolean('ReturnProtocol') ? 'https' : 'http';
         if (IPS_GetOption('NATSupport')) {
-            $ip = IPS_GetOption('NATPublicIP');
+            $ip = $this->ReadPropertyString('ReturnIP');
             if ($ip == '') {
-                $ip = $this->ReadPropertyString('ReturnIP');
+                $ip = IPS_GetOption('NATPublicIP');
                 if ($ip == '') {
                     $this->SendDebug('NAT enabled ConsumerAddress', 'Invalid', 0);
                     $this->UpdateFormField('EventHook', 'caption', $this->Translate('NATPublicIP is missing in special switches!'));
@@ -559,13 +559,13 @@ class PRTGIO extends IPSModule
     private function CheckHost(): bool
     {
         if (!$this->ReadPropertyBoolean('Open')) {
-            $this->SetStatus(104);
+            $this->SetStatus(IS_INACTIVE);
             $this->State = self::isInActive;
             return false;
         }
         $URL = $this->ReadPropertyString('Host');
         if ($URL == 'http://') {
-            $this->SetStatus(104);
+            $this->SetStatus(IS_INACTIVE);
             $this->State = self::isInActive;
             return false;
         }
@@ -575,7 +575,7 @@ class PRTGIO extends IPSModule
         }
         $Host = parse_url($URL, PHP_URL_HOST);
         if ($Host == null) {
-            $this->SetStatus(203);
+            $this->SetStatus(IS_EBASE + 3);
             $this->State = self::isDisconnected;
             return false;
         }
@@ -613,20 +613,20 @@ class PRTGIO extends IPSModule
         $Result = $this->SendRequest($QueryURL, $HttpCode);
         if ($Result === '') {
             if ($HttpCode == 0) {
-                $this->SetStatus(201);
+                $this->SetStatus(IS_EBASE + 1);
                 $this->State = self::isDisconnected;
             } elseif ($HttpCode == 404) {
-                $this->SetStatus(201);
+                $this->SetStatus(S_EBASE + 1);
                 $this->State = self::isDisconnected;
             } else {
-                $this->SetStatus(202);
+                $this->SetStatus(S_EBASE + 2);
                 $this->State = self::isUnauthorized;
             }
             $this->Hash = '';
             return false;
         }
         $this->Hash = $Result;
-        $this->SetStatus(102);
+        $this->SetStatus(IS_ACTIVE);
         $this->State = self::isConnected;
         return true;
     }

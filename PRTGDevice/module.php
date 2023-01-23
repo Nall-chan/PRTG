@@ -13,7 +13,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.50
+ * @version       2.51
  *
  */
 
@@ -25,7 +25,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.50
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  */
@@ -37,7 +37,11 @@ class PRTGDevice extends IPSModule
     use \prtg\BufferHelper;
     use \prtg\PRTGPause;
     use \prtg\VariableConverter;
-
+    use \prtg\InstanceStatus {
+        \prtg\InstanceStatus::MessageSink as IOMessageSink; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
+        //\prtg\InstanceStatus::RegisterParent as IORegisterParent;
+        \prtg\InstanceStatus::RequestAction as IORequestAction;
+    }
     /**
      * Interne Funktion des SDK.
      */
@@ -125,18 +129,33 @@ class PRTGDevice extends IPSModule
             $this->UnregisterVariable('UnusualSens');
             $this->UnregisterVariable('UndefinedSens');
         }
+
+        if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
+            $this->RegisterParent();
+            $this->RequestDeviceState();
+        } else {
+            $this->RegisterMessage(0, IPS_KERNELSTARTED);
+            return;
+        }
+
         if ($this->ReadPropertyInteger('id') > 0) {
             $this->SetStatus(IS_ACTIVE);
-            if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
-                $this->RequestDeviceState();
-            }
             $this->SetTimer(true);
         } else {
             $this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
         }
     }
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
 
+        switch ($Message) {
+            case IPS_KERNELSTARTED:
+                $this->KernelReady();
+                break;
+        }
+    }
     /**
      * IPS Instanz-Funktion PRTG_RequestState.
      *
@@ -163,6 +182,9 @@ class PRTGDevice extends IPSModule
      */
     public function RequestAction($Ident, $Value)
     {
+        if ($this->IORequestAction($Ident, $Value)) {
+            return true;
+        }
         switch ($Ident) {
             case 'ActionButton':
                 if ($Value) {
@@ -173,6 +195,22 @@ class PRTGDevice extends IPSModule
         }
         trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
         return false;
+    }
+    /**
+     * Wird ausgeführt wenn sich der Status vom Parent ändert.
+     */
+    protected function IOChangeState($State)
+    {
+        if ($State == IS_ACTIVE) {
+            if ($this->ReadPropertyInteger('id') > 0) {
+                $this->SetTimer(true);
+            }
+        }
+    }
+    private function KernelReady()
+    {
+        $this->UnregisterMessage(0, IPS_KERNELSTARTED);
+        $this->ApplyChanges();
     }
 
     /**
@@ -196,6 +234,9 @@ class PRTGDevice extends IPSModule
      */
     private function RequestDeviceState(): bool
     {
+        if ($this->ReadPropertyInteger('id') == 0) {
+            return false;
+        }
         $Result = $this->SendData('api/table.json', [
             'content'      => 'devices',
             'columns'      => 'group,name,status,totalsens,active' . ($this->ReadPropertyBoolean('DisplaySensorState') ? ',downsens,partialdownsens,downacksens,upsens,warnsens,pausedsens,unusualsens,undefinedsens' : ''),

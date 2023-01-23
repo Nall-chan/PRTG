@@ -13,7 +13,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.50
+ * @version       2.51
  *
  */
 
@@ -25,7 +25,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.50
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  *
@@ -39,7 +39,11 @@ class PRTGSensor extends IPSModule
     use \prtg\BufferHelper;
     use \prtg\PRTGPause;
     use \prtg\VariableConverter;
-
+    use \prtg\InstanceStatus {
+        \prtg\InstanceStatus::MessageSink as IOMessageSink; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
+        //\prtg\InstanceStatus::RegisterParent as IORegisterParent;
+        \prtg\InstanceStatus::RequestAction as IORequestAction;
+    }
     /**
      * Interne Funktion des SDK.
      */
@@ -123,19 +127,33 @@ class PRTGSensor extends IPSModule
         } else {
             $this->UnregisterVariable('AckButton');
         }
+        if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
+            $this->RegisterParent();
+            $this->RequestSensorState();
+            $this->RequestChannelState();
+        } else {
+            $this->RegisterMessage(0, IPS_KERNELSTARTED);
+            return;
+        }
+
         if ($this->ReadPropertyInteger('id') > 0) {
             $this->SetStatus(IS_ACTIVE);
-            if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
-                $this->RequestSensorState();
-                $this->RequestChannelState();
-            }
             $this->SetTimer(true);
         } else {
             $this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
         }
     }
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
 
+        switch ($Message) {
+            case IPS_KERNELSTARTED:
+                $this->KernelReady();
+                break;
+        }
+    }
     /**
      * IPS Instanz-Funktion PRTG_RequestState.
      *
@@ -184,15 +202,15 @@ class PRTGSensor extends IPSModule
      */
     public function RequestAction($Ident, $Value): bool
     {
+        if ($this->IORequestAction($Ident, $Value)) {
+            return true;
+        }
         switch ($Ident) {
             case 'ActionButton':
                 if ($Value) {
                     return $this->SetResume();
-                } else {
-                    return $this->SetPause();
                 }
-                // FIXME: No break. Please add proper comment if intentional
-                // No break. Add additional comment above this line if intentional
+                    return $this->SetPause();
             case 'AckButton':
                 return $this->AcknowledgeAlarm();
                 case 'ShowIntervall':
@@ -242,6 +260,22 @@ class PRTGSensor extends IPSModule
         }
         return false;
     }
+    /**
+     * Wird ausgeführt wenn sich der Status vom Parent ändert.
+     */
+    protected function IOChangeState($State)
+    {
+        if ($State == IS_ACTIVE) {
+            if ($this->ReadPropertyInteger('id') > 0) {
+                $this->SetTimer(true);
+            }
+        }
+    }
+    private function KernelReady()
+    {
+        $this->UnregisterMessage(0, IPS_KERNELSTARTED);
+        $this->ApplyChanges();
+    }
 
     /**
      * Setzt den Intervall-Timer.
@@ -253,6 +287,9 @@ class PRTGSensor extends IPSModule
                 $Sec = $this->ReadPropertyInteger('Interval');
             } else {
                 $Sec = $this->Interval;
+                if ($Sec == 0) {
+                    $Sec = $this->ReadPropertyInteger('Interval');
+                }
             }
             $Interval = ($Sec < 5) ? 0 : $Sec * 1000;
         } else {

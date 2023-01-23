@@ -14,7 +14,7 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.50
+ * @version       2.51
  *
  */
 
@@ -26,7 +26,7 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.50
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  */

@@ -34,7 +34,8 @@
             "type": "NumberSpinner",
             "name": "Interval",
             "caption": "Interval",
-            "suffix": "seconds"
+            "suffix": "seconds",
+            "minimum": 5
         }
     ],
     "actions": [
