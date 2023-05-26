@@ -1,9 +1,10 @@
-[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/) 
-[![Version 2.20](https://img.shields.io/badge/Modul%20Version-2.20-blue.svg)]() 
-[![Version 5.1](https://img.shields.io/badge/Symcon%20Version-5.1%20%3E-green.svg)](https://www.symcon.de/forum/threads/30857-IP-Symcon-5-1-%28Stable%29-Changelog)  
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) 
-[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions) 
+[![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
+[![Version 2.51](https://img.shields.io/badge/Modul%20Version-2.51-blue.svg)]()
+[![Version 6.2](https://img.shields.io/badge/Symcon%20Version-6.2%20%3E-green.svg)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v61-v62-q2-2022/)  
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions)
 [![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
+[![Spenden](https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_SM.gif)](#4-spenden)  
 
 # Symcon-Modul: PRTG  <!-- omit in toc -->
 Einbinden von PRTG Geräten und Sensoren in IPS.  
@@ -39,39 +40,42 @@ Einbinden von PRTG Geräten und Sensoren in IPS.
 ### [PRTG Konfigurator:](PRTGConfigurator/)  
 
  - Auflisten alle in PRTG verfügbaren Geräte und Sensoren.  
- - Erstellen von neuen PRTG-Instanzen in IPS.  
+ - Erstellen von neuen Device und Sensor Instanzen in IPS.  
 
 ### [PRTG Gerät:](PRTGDevice/)  
 
- - Empfangen und darstellen des aktuellen Zustände in IPS.  
- - Pausieren und Fortsetzen der Überwachung aus IPS über WebFront und PHP-Scripten.  
+ - Empfangen und darstellen des aktuellen Zustand.  
+ - Pausieren und Fortsetzen der Überwachung über die Frontends, Aktionen und PHP-Scripten.  
 
 ### [PRTG Sensor:](PRTGSensor/)  
 
- - Empfangen und darstellen des aktuellen Zustand in IPS.  
- - Pausieren und Fortsetzen der Überwachung aus IPS über WebFront und PHP-Scripten.  
- - Quittieren von Alarmmeldungen aus IPS über WebFront und PHP-Scripten.  
+ - Empfangen und darstellen des aktuellen Zustand.  
+ - Pausieren und Fortsetzen der Überwachung über die Frontends, Aktionen und PHP-Scripten.  
+ - Quittieren von Alarmmeldungen über die Frontends, Aktionen und PHP-Scripten.  
 
 ## 2. Voraussetzungen
 
- - IPS 5.1 oder höher  
+ - IP-Symcon ab Version 6.2
  - PRTG
 
 ## 3. Software-Installation
 
-**IPS 5.1:**  
-   Bei privater Nutzung:
-     Über den 'Module-Store' in IPS.  
+  Über den 'Module-Store' in IPS das Modul 'PRTG' hinzufügen.  
    **Bei kommerzieller Nutzung (z.B. als Errichter oder Integrator) wenden Sie sich bitte an den Autor.**  
+![Module-Store](imgs/install.png)  
 
+Die Abfrage ob ein [Konfigurator](PRTGConfigurator/README.md#3-einrichten-der-instanzen-in-ip-symcon) Modul angelegt werden soll, ist zu bestätigen.
+Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) abgefragt.
+
+  
 ## 4. Einrichten der Instanzen in IP-Symcon
 
 Details sind in der Dokumentation der jeweiligen Module beschrieben.  
 
-In der Dokumentation des [PRTG IO:](PRTGIO/) wird im Anhang erläutert wie eine Überwachung von IPS aus PRTG erfolgen kann.  
+In der Dokumentation des [PRTG IO](PRTGIO/) wird im Anhang erläutert wie eine Überwachung von IPS aus PRTG erfolgen kann.  
 Ebenso wird dort das Empfangen von Statusänderungen eines Sensors in IPS erläutert, damit IPS den Zustand zeitnah darstellen kann.  
 
-Es wird dingend empfohlen somit zuerst den [PRTG IO:](PRTGIO/) zu erstellen und fertig zu konfigurieren, sowie in PRTG alle gewünschten Einstellungen vorzunehmen, bevor weitere Instanzen in IPS über den [PRTG Konfigurator:](PRTGConfigurator/) angelegt werden.  
+Es wird dingend empfohlen somit zuerst den [PRTG IO](PRTGIO/) zu erstellen und fertig zu konfigurieren, sowie in PRTG alle gewünschten Einstellungen vorzunehmen, bevor weitere Instanzen in IPS über den [PRTG Konfigurator](PRTGConfigurator/) angelegt werden.  
 
 
 ## 5. Anhang
@@ -89,12 +93,26 @@ Es wird dingend empfohlen somit zuerst den [PRTG IO:](PRTGIO/) zu erstellen und 
 
 ### 2. Hinweise  
 
-Der im [PRTG IO:](PRTGIO/) verwendete Benutzer sollte in PRTG Administrative Rechte bekommen, um die Überwachung zu steuern und Alarme quittieren zu können.  
-Die Kommunikation zwischen IPs und PRTG kann sowohl per HTTP als auch per HTTPS (SSL/TLS) erfolgen.  
-Hierzu ist PRTG und die URL im [PRTG IO:](PRTGIO/) entsprechend zu konfigurieren.
-Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem externen PRTG-Server genutzt werden, da die Logindaten dann nicht verschlüsselt übertragen werden!  
+Der im [PRTG IO](PRTGIO/) verwendete Benutzer sollte in PRTG Administrative Rechte bekommen, um die Überwachung zu steuern und Alarme quittieren zu können.  
+Die Kommunikation zwischen IPS und PRTG kann sowohl per HTTP als auch per HTTPS (SSL/TLS) erfolgen.  
+Hierzu ist PRTG und die URL im [PRTG IO](PRTGIO/) entsprechend zu anzupassen.
+Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem externen PRTG-Server genutzt werden, da die Login-Informationen dann nicht verschlüsselt übertragen werden!  
 
 ### 3. Changelog
+
+Version 2.51:
+ - Sensor und Device Intervall konnte beim starten von Symcon falsch sein.
+
+Version 2.50:  
+ - Wurde ein Sensor pausiert, so wurden alle Statusvariablen neu als String angelegt und die alten somit gelöscht.  
+ - Aktionen hinzugefügt.  
+ - Dynamische Konfigurationsformulare und somit einfacher zu konfigurieren.  
+ - IO zeigt den Event Webhook für PRTG an.  
+ - Event Webhook mit verbesserten NAT Support.  
+ - Event Webhook unterstützt abweichenden Port (z.B. für NAT).  
+
+Version 2.30:  
+ - Werte für Mbit/sek. und kbit/sek. waren um den Faktor 10 zu groß.  
 
 Version 2.20:  
  - Fehler im IPS-Sensor behoben, wenn PRTG 'Keine Daten' als Nutzdaten übertragen hat.  
@@ -136,7 +154,12 @@ Version 1.0:
   
   Die Library ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als Unterstützung für den Autor werden hier akzeptiert:  
 
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G2SLW2MEMQZH2" target="_blank"><img src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_LG.gif" border="0" /></a>
+
+  PayPal:  
+<a href="https://www.paypal.com/donate?hosted_button_id=G2SLW2MEMQZH2" target="_blank"><img src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_LG.gif" border="0" /></a>  
+
+  Wunschliste:  
+<a href="https://www.amazon.de/hz/wishlist/ls/YU4AI9AQT9F?ref_=wl_share" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Amazon_icon.svg" border="0" width="100"/></a>  
 
 ## 6. Lizenz
 

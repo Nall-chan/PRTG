@@ -1,0 +1,34 @@
+{
+    "id": "{93591E02-231A-4796-A88E-C5A0B902D76A}",
+    "caption": "Set device or sensor on pause for specific duration",
+    "form": [
+        {
+            "type": "NumberSpinner",
+            "caption": "Interval",
+            "name": "DURATION",
+            "suffix": "minutes",
+            "minimum ": 0
+        }
+    ],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}",
+            "{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_SetPauseDuration($_IPS['TARGET'],$_IPS['DURATION']);",
+    "locale": {
+        "de": {
+            "Set device or sensor on pause for specific duration": "Setze das Gerät oder den Sensor für eine bestimmte Zeit auf Pause",
+            "minutes": "Minuten",
+            "Message": "Nachricht"
+        }
+    }
+}

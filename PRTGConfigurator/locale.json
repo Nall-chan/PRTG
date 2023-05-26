@@ -9,7 +9,8 @@
             "Device": "Gerät",
             "Name": "Name",
             "Not connected to IO.": "Nicht mit einem IO verbunden.",
-            "Instance has no active parent.": "Instanz hat keinen aktiven Parent."
+            "Instance has no active parent.": "Instanz hat keinen aktiven Parent.",
+            "This module is free for non-commercial use,\r\nDonations in support of the author are accepted here:": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos,\r\nSchenkungen als Unterstützung für den Autor werden hier akzeptiert:"
         }
     }
 }

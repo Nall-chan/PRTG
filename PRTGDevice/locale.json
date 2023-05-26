@@ -1,10 +1,11 @@
 {
     "translations": {
         "de": {
+            "PRTG Device": "PRTG Gerät",
             "Device ID": "Geräte ID",
-            "Display pause/resume button": "Pause/Fortsetzen Button anzeigen",
+            "Show monitoring control": "Zeige Steuerung der Überwachung",
             "Auto rename instance": "Instanz automatisch umbenennen",
-            "Readable state": "Lesbarer Status",
+            "Readable state": "Status in Klartext",
             "Show number of sensors": "Anzahl der Sensoren anzeigen",
             "Show sensor summary": "Status der Sensoren anzeigen",
             "Interval": "Intervall",
@@ -27,7 +28,7 @@
             "Down Acknowledged": "Fehler (Bestätigt)",
             "Down Partial": "Fehler (Teilweise)",
             "State": "Status",
-            "Control": "Steuerung",
+            "Monitoring": "Überwachung",
             "Sensors Total": "Sensoren Anzahl",
             "Sensors Up": "Sensoren OK",
             "Sensors Warn": "Sensoren Warnung",
@@ -40,7 +41,8 @@
             "Message must be string.": "Message muss vom Typ string sein.",
             "Minutes must be integer.": "Minutes muss vom Typ integer sein.",
             "No answer": "Keine Antwort",
-            "Invalid Ident": "Ungültiger Ident"
+            "Invalid Ident": "Ungültiger Ident",
+            "This module is free for non-commercial use,\r\nDonations in support of the author are accepted here:": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos,\r\nSchenkungen als Unterstützung für den Autor werden hier akzeptiert:"
         }
     }
 }

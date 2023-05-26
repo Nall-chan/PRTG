@@ -9,12 +9,27 @@
             "PRTG is accessible": "PRTG ist erreichbar",
             "Instance is inactive": "Instanz ist inaktiv",
             "PRTG not reachable": "PRTG nicht erreichbar",
-            "unauthorized": "Zugriff verweigert",
+            "Unauthorized": "Zugriff verweigert",
+            "Could not connect to host, maybe i am a teapot?": "Es konnte keine Verbindung zum Host hergestellt werden, vielleicht bin ich eine Teekanne?",
+            "Service not Found": "Dienst nicht gefunden",
+            "UPnPError": "UPnP Fehler",
+            "Webhook invalid": "Webhook ungültig",
             "URL not valid": "URL nicht gültig",
-            "Advanced SSL certificate settings:": "Erweiterte SSL Einstellungen:",
+            "Advanced SSL certificate settings": "Erweiterte SSL Einstellungen",
             "Disable hostname verification": "Deaktiviere Prüfung des Hostnamen",
             "Disable peer verification": "Deaktiviere Prüfung der Gegenstelle",
-            "Disable certificate validation": "Deaktiviere Prüfung des Zertifikat"
+            "Disable certificate validation": "Deaktiviere Prüfung des Zertifikat",
+            "Event hook:": "Ereignis-WebHook",
+            "Error": "Fehler",
+            "Couldn't determine webhook": "Konnte Webhook nicht ermitteln",
+            "Invalid": "Ungültig",
+            "NAT support is active, but no public address is set.": "NAT Support ist aktiv, aber es wurde keine PublicIP konfiguriert.",
+            "NATPublicIP is missing in special switches!": "NATPublicIP fehlt in den Spezialschaltern!",
+            "Expert settings event hook": "Experteneinstellung Ereignis-Hook",
+            "IP of event hook": "IP für Ereignis-Hook",
+            "Port of event hook": "Port für Ereignis-Hook",
+            "use https": "https benutzen",
+            "This module is free for non-commercial use,\r\nDonations in support of the author are accepted here:": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos,\r\nSchenkungen als Unterstützung für den Autor werden hier akzeptiert:"
         }
     }
 }

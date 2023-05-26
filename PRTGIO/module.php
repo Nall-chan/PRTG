@@ -13,9 +13,9 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.10
+ * @version       2.51
  *
  */
 
@@ -24,10 +24,10 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.10
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  *
@@ -40,11 +40,21 @@ class PRTGIO extends IPSModule
     use \PRTGIO\BufferHelper;
     use \PRTGIO\DebugHelper;
     use \PRTGIO\WebhookHelper;
+
     const isConnected = IS_ACTIVE;
     const isInActive = IS_INACTIVE;
     const isDisconnected = IS_EBASE + 1;
     const isUnauthorized = IS_EBASE + 2;
     const isURLnotValid = IS_EBASE + 3;
+
+    private static $http_error =
+        [
+            418 => ['Could not connect to host, maybe i am a teapot?', self::isDisconnected],
+            404 => ['Service not Found', self::isDisconnected],
+            401 => ['Unauthorized', self::isUnauthorized],
+            500 => ['Server error', self::isDisconnected],
+            501 => ['Webhook invalid', self::isDisconnected]
+        ];
 
     private static $SSLError = [
         0  => 'no connect',
@@ -97,9 +107,16 @@ class PRTGIO extends IPSModule
         $this->RegisterPropertyBoolean('NoCertCheck', false);
         $this->RegisterPropertyBoolean('NoPeerVerify', false);
         $this->RegisterPropertyBoolean('NoHostVerify', false);
+        $this->RegisterPropertyString('ReturnIP', '');
+        $this->RegisterPropertyInteger('ReturnPort', 3777);
+        $this->RegisterPropertyBoolean('ReturnProtocol', false);
+        $this->RegisterAttributeString('ConsumerAddress', 'Invalid');
         $this->Url = '';
         $this->Hash = '';
         $this->State = self::isInActive;
+        if (IPS_GetKernelRunlevel() != KR_READY) {
+            $this->RegisterMessage(0, IPS_KERNELSTARTED);
+        }
     }
 
     /**
@@ -120,22 +137,24 @@ class PRTGIO extends IPSModule
     {
         $this->Url = '';
         $this->Hash = '';
-        $this->RegisterMessage(0, IPS_KERNELSTARTED);
 
         parent::ApplyChanges();
-
+        if (IPS_GetKernelRunlevel() != KR_READY) {
+            return;
+        }
+        $this->RegisterHook('/hook/PRTG' . $this->InstanceID);
         if ($this->CheckHost()) {
             $this->SetSummary($this->Url);
+            if (!$this->GetConsumerAddress()) {
+                $this->SetStatus(self::$http_error[501][1]);
+                return;
+            }
             if (!$this->GetPasswordHash()) {
                 return;
             }
         } else {
             $this->SetSummary('');
             return;
-        }
-
-        if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
-            $this->RegisterHook('/hook/PRTG' . $this->InstanceID);
         }
     }
 
@@ -151,11 +170,16 @@ class PRTGIO extends IPSModule
     {
         switch ($Message) {
             case IPS_KERNELSTARTED:
-                $this->RegisterHook('/hook/PRTG' . $this->InstanceID);
+                IPS_RequestAction($this->InstanceID, 'KernelReady', true);
                 break;
         }
     }
-
+    public function RequestAction($Ident, $Value)
+    {
+        if ($Ident == 'KernelReady') {
+            return $this->KernelReady();
+        }
+    }
     /**
      * IPS Instanz-Funktion PRTG_GetGraph
      * Liefert einen Graphen aus PRTG.
@@ -249,7 +273,27 @@ class PRTGIO extends IPSModule
     public function GetConfigurationForm(): string
     {
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
-        $Form['elements'][8]['caption'] = 'PRTG Webhook: http://<IP>:<PORT>/hook/PRTG' . $this->InstanceID;
+        if ($this->GetStatus() == IS_CREATING) {
+            return json_encode($Form);
+        }
+        if (IPS_GetOption('NATSupport')) {
+            if (IPS_GetOption('NATPublicIP') == '') {
+                if ($this->ReadPropertyString('ReturnIP') == '') {
+                    $Form['actions'][1]['visible'] = true;
+                    $Form['actions'][1]['popup']['items'][0]['caption'] = $this->Translate('Error');
+                    $Form['actions'][1]['popup']['items'][1]['caption'] = $this->Translate('NAT support is active, but no public address is set.');
+                }
+            }
+        }
+        $ConsumerAddress = $this->ReadAttributeString('ConsumerAddress');
+        if (!$Form['actions'][1]['visible']) {
+            if (($ConsumerAddress == 'Invalid') && ($this->ReadPropertyBoolean('Open'))) {
+                $Form['actions'][1]['visible'] = true;
+                $Form['actions'][1]['popup']['items'][0]['caption'] = $this->Translate('Error');
+                $Form['actions'][1]['popup']['items'][1]['caption'] = $this->Translate('Couldn\'t determine webhook');
+            }
+        }
+        $Form['actions'][0]['items'][1]['caption'] = $this->Translate($ConsumerAddress);
         return json_encode($Form);
     }
 
@@ -258,6 +302,14 @@ class PRTGIO extends IPSModule
      */
     protected function ProcessHookdata()
     {
+        header('X-Powered-By: IP-Symcon ' . IPS_GetKernelVersion());
+        if (!($this->State == self::isConnected)) {
+            header('HTTP/1.0 404 Not Found');
+            header('Content-type: text/plain');
+            echo 'Not Found!' . PHP_EOL;
+            echo 'Webhook available.';
+            return;
+        }
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'GET':
                 if (isset($_GET['graph']) && ($_GET['graph'] == 'png')) {
@@ -271,11 +323,14 @@ class PRTGIO extends IPSModule
                     return;
                 }
                 if (isset($_SERVER['HTTP_SENSORID'])) {
+                    header('Content-Type: application/json');
                     echo $this->FetchIPSSensorData();
                     return;
                 }
                 header('HTTP/1.0 404 Not Found');
-                echo 'Not Found!';
+                header('Content-type: text/plain');
+                echo 'Not Found!' . PHP_EOL;
+                echo 'Webhook available.';
                 return;
             case 'POST':
                 $Data = explode("\r\n", rawurldecode(file_get_contents('php://input')));
@@ -302,6 +357,61 @@ class PRTGIO extends IPSModule
     protected function ModulErrorHandler($errno, $errstr)
     {
         echo $errstr . PHP_EOL;
+    }
+    private function KernelReady()
+    {
+        $this->UnregisterMessage(0, IPS_KERNELSTARTED);
+        $this->ApplyChanges();
+    }
+
+    private function GetConsumerAddress()
+    {
+        $Port = $this->ReadPropertyInteger('ReturnPort');
+        $Protocol = $this->ReadPropertyBoolean('ReturnProtocol') ? 'https' : 'http';
+        if (IPS_GetOption('NATSupport')) {
+            $ip = $this->ReadPropertyString('ReturnIP');
+            if ($ip == '') {
+                $ip = IPS_GetOption('NATPublicIP');
+                if ($ip == '') {
+                    $this->SendDebug('NAT enabled ConsumerAddress', 'Invalid', 0);
+                    $this->UpdateFormField('EventHook', 'caption', $this->Translate('NATPublicIP is missing in special switches!'));
+                    $this->WriteAttributeString('ConsumerAddress', 'Invalid');
+                    $this->ShowLastError('Error', $this->Translate('NAT support is active, but no public address is set.'));
+                    return false;
+                }
+            }
+            $Debug = 'NAT enabled ConsumerAddress';
+        } else {
+            $ip = $this->ReadPropertyString('ReturnIP');
+            if ($ip == '') {
+                $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+                socket_bind($sock, '0.0.0.0', 0);
+                $Host = parse_url($this->Url);
+                @socket_connect($sock, $Host['host'], $Host['port']);
+                $ip = '';
+                socket_getsockname($sock, $ip);
+                @socket_close($sock);
+                if ($ip == '0.0.0.0') {
+                    $this->SendDebug('ConsumerAddress', 'Invalid', 0);
+                    $this->UpdateFormField('EventHook', 'caption', $this->Translate('Invalid'));
+                    $this->WriteAttributeString('ConsumerAddress', 'Invalid');
+                    return false;
+                }
+            }
+            $Debug = 'ConsumerAddress';
+        }
+        $Url = $Protocol . '://' . $ip . ':' . $Port . '/hook/PRTG' . $this->InstanceID;
+        $this->SendDebug($Debug, $Url, 0);
+        $this->UpdateFormField('EventHook', 'caption', $Url);
+        $this->WriteAttributeString('ConsumerAddress', $Url);
+        return true;
+    }
+    private function ShowLastError(string $ErrorMessage, string $ErrorTitle = 'Error')
+    {
+        IPS_Sleep(500);
+        $this->UpdateFormField('ErrorTitle', 'caption', $this->Translate($ErrorTitle));
+        $this->UpdateFormField('ErrorText', 'caption', $this->Translate($ErrorMessage));
+        $this->UpdateFormField('ErrorPopup', 'visible', true);
     }
 
     /**
@@ -437,7 +547,7 @@ class PRTGIO extends IPSModule
      * @param mixed  $item
      * @param string $key
      */
-    private function ResultEncode(&$item, &$key)
+    private function ResultEncode($item, $key)
     {
         if (is_string($item)) {
             $item = html_entity_decode($item);
@@ -452,13 +562,13 @@ class PRTGIO extends IPSModule
     private function CheckHost(): bool
     {
         if (!$this->ReadPropertyBoolean('Open')) {
-            $this->SetStatus(104);
+            $this->SetStatus(IS_INACTIVE);
             $this->State = self::isInActive;
             return false;
         }
         $URL = $this->ReadPropertyString('Host');
         if ($URL == 'http://') {
-            $this->SetStatus(104);
+            $this->SetStatus(IS_INACTIVE);
             $this->State = self::isInActive;
             return false;
         }
@@ -468,13 +578,13 @@ class PRTGIO extends IPSModule
         }
         $Host = parse_url($URL, PHP_URL_HOST);
         if ($Host == null) {
-            $this->SetStatus(203);
+            $this->SetStatus(IS_EBASE + 3);
             $this->State = self::isDisconnected;
             return false;
         }
         $Port = parse_url($URL, PHP_URL_PORT);
-        if ($Port != null) {
-            $Host .= ':' . $Port;
+        if ($Port == null) {
+            $Port = ($Scheme == 'https') ? 443 : 80;
         }
         $Path = parse_url($URL, PHP_URL_PATH);
         if (is_null($Path)) {
@@ -484,7 +594,7 @@ class PRTGIO extends IPSModule
                 $Path = substr($Path, 0, -1);
             }
         }
-        $this->Url = $Scheme . '://' . $Host . $Path . '/';
+        $this->Url = $Scheme . '://' . $Host . ':' . $Port . $Path . '/';
         return true;
     }
 
@@ -506,20 +616,20 @@ class PRTGIO extends IPSModule
         $Result = $this->SendRequest($QueryURL, $HttpCode);
         if ($Result === '') {
             if ($HttpCode == 0) {
-                $this->SetStatus(201);
+                $this->SetStatus(IS_EBASE + 1);
                 $this->State = self::isDisconnected;
             } elseif ($HttpCode == 404) {
-                $this->SetStatus(201);
+                $this->SetStatus(S_EBASE + 1);
                 $this->State = self::isDisconnected;
             } else {
-                $this->SetStatus(202);
+                $this->SetStatus(S_EBASE + 2);
                 $this->State = self::isUnauthorized;
             }
             $this->Hash = '';
             return false;
         }
         $this->Hash = $Result;
-        $this->SetStatus(102);
+        $this->SetStatus(IS_ACTIVE);
         $this->State = self::isConnected;
         return true;
     }
@@ -594,7 +704,7 @@ class PRTGIO extends IPSModule
             $this->SendDebug('Not Found Error', $HttpCode, 0);
             return '';
         } else {
-            $this->SendDebug('Request Result:' . $HttpCode, $Result, 0);
+            $this->SendDebug('Result:' . $HttpCode, $Result, 0);
         }
         return $Result;
     }

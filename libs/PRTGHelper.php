@@ -11,24 +11,24 @@ namespace prtg;
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2020 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.20
+ * @version       2.51
  *
  */
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableHelper.php') . '}');
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableProfileHelper.php') . '}');
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
-
+eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/ParentIOHelper.php') . '}');
 /**
  * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2020 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.20
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  */
@@ -43,10 +43,12 @@ trait PRTGPause
     public function SetResume(): bool
     {
         $Result = $this->SendData('api/pause.htm', [
-            'action' => 1,
-            'id'     => $this->ReadPropertyInteger('id')
+            'id'     => $this->ReadPropertyInteger('id'),
+            'action' => 1
+
         ]);
         if (array_key_exists('Payload', $Result)) {
+            IPS_Sleep(50);
             return $this->RequestState();
         }
         return false;
@@ -126,6 +128,7 @@ trait PRTGPause
 
         $Result = $this->SendData($Uri, $QueryData);
         if (array_key_exists('Payload', $Result)) {
+            IPS_Sleep(50);
             return $this->RequestState();
         }
         return false;
@@ -186,6 +189,9 @@ trait VariableConverter
         if ($Value['lastvalue_raw'] === 'Keine Daten') {
             return false;
         }
+        if (($Value['lastvalue_raw'] === '') && ($Value['lastvalue'] === '')) {
+            return false;
+        }
         $data = explode(' ', $Value['lastvalue']);
         if ($data[0] == '<') {
             array_shift($data);
@@ -241,14 +247,14 @@ trait VariableConverter
                 break;
             case 'Mbit/Sek.':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 1250000),
+                    'Data'    => floor($Value['lastvalue_raw'] / 125000),
                     'Profile' => 'PRTG.MBitSec',
                     'VarType' => VARIABLETYPE_INTEGER
                 ];
                 break;
             case 'kbit/Sek.':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 1250),
+                    'Data'    => floor($Value['lastvalue_raw'] / 125),
                     'Profile' => 'PRTG.kBitSec',
                     'VarType' => VARIABLETYPE_INTEGER
                 ];

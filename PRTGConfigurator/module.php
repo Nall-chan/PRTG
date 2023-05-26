@@ -12,9 +12,9 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.0
+ * @version       2.51
  *
  */
 
@@ -23,10 +23,10 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2019 Michael Tröger
+ * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.0
+ * @version       2.51
  *
  * @example <b>Ohne</b>
  */
@@ -43,7 +43,7 @@ class PRTGConfigurator extends IPSModule
         parent::Create();
         $this->ConnectParent('{67470842-FB5E-485B-92A2-4401E371E6FC}');
         $this->SetReceiveDataFilter('.*"nothingtoreceive":.*');
-        $this->RegisterPropertyInteger('RootId', 0);
+        $this->RegisterPropertyInteger('RootId', 1);
     }
 
     /**
@@ -60,6 +60,10 @@ class PRTGConfigurator extends IPSModule
     public function GetConfigurationForm(): string
     {
         $IOID = $this->GetIO();
+        $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        if ($this->GetStatus() == IS_CREATING) {
+            return json_encode($Form);
+        }
         if ($IOID === false) {
             $Form['actions'][] = [
                 'type'  => 'PopupAlert',
@@ -70,8 +74,8 @@ class PRTGConfigurator extends IPSModule
                     ]]
                 ]
             ];
+            return json_encode($Form);
         }
-        $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
         if (IPS_GetInstance($IOID)['InstanceStatus'] != IS_ACTIVE) {
             $Form['actions'][] = [
                 'type'  => 'PopupAlert',
@@ -82,24 +86,28 @@ class PRTGConfigurator extends IPSModule
                     ]]
                 ]
             ];
+            $Sensors = [];
+            $Devices = [];
+        } else {
+            $Sensors = $this->GetSensors();
+            $Devices = $this->GetDevices();
         }
-        $Sensors = $this->GetSensors();
-        $Devices = $this->GetDevices();
         $RootNames = [];
         $RootId = $this->ReadPropertyInteger('RootId');
-        while ($RootId != 0) {
-            if ($RootId != 0) {
-                $RootNames[] = IPS_GetName($RootId);
+        if (IPS_CategoryExists($RootId)) {
+            while ($RootId != 0) {
+                if ($RootId != 0) {
+                    $RootNames[] = IPS_GetName($RootId);
+                }
+                $RootId = IPS_GetParent($RootId);
             }
-            $RootId = IPS_GetParent($RootId);
+            $RootNames = array_reverse($RootNames);
         }
-        $RootNames = array_reverse($RootNames);
         $InstanceIDListSensors = IPS_GetInstanceListByModuleID('{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}');
 
-        $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $InstancesSensors = [];
         foreach ($InstanceIDListSensors as $InstanceIDSensor) {
-            if (IPS_GetInstance($InstanceIDSensor)['ConnectionID'] == $MyParent) {
+            if (IPS_GetInstance($InstanceIDSensor)['ConnectionID'] == $IOID) {
                 $InstancesSensors[$InstanceIDSensor] = IPS_GetProperty($InstanceIDSensor, 'id');
             }
         }
@@ -141,7 +149,7 @@ class PRTGConfigurator extends IPSModule
         $InstanceIDListDevices = IPS_GetInstanceListByModuleID('{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}');
         $InstancesDevices = [];
         foreach ($InstanceIDListDevices as $InstanceIDDevice) {
-            if (IPS_GetInstance($InstanceIDDevice)['ConnectionID'] == $MyParent) {
+            if (IPS_GetInstance($InstanceIDDevice)['ConnectionID'] == $IOID) {
                 $InstancesDevices[$InstanceIDDevice] = IPS_GetProperty($InstanceIDDevice, 'id');
             }
         }
@@ -256,7 +264,7 @@ class PRTGConfigurator extends IPSModule
             return [];
         }
         unset($Result['Error']);
-        $this->SendDebug('Request Result', $Result, 0);
+        $this->SendDebug('Result', $Result, 0);
         return $Result;
     }
 
@@ -267,11 +275,11 @@ class PRTGConfigurator extends IPSModule
      */
     private function GetIO()
     {
-        $SplitterID = IPS_GetInstance($this->InstanceID)['ConnectionID'];
-        if ($SplitterID == 0) {
+        $IOID = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($IOID == 0) {
             return false;
         }
-        return $SplitterID;
+        return $IOID;
     }
 }
 

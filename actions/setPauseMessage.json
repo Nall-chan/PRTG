@@ -1,0 +1,31 @@
+{
+    "id": "{1AE550E7-03CE-487C-8B78-54FE730C2FBB}",
+    "caption": "Set device or sensor on pause with message",
+    "form": [
+        {
+            "type": "ValidationTextBox",
+            "caption": "Message",
+            "name": "MESSAGE"
+        }
+    ],
+    "restrictions": {
+        "objectType": [
+            1
+        ],
+        "moduleID": [
+            "{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}",
+            "{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}"
+        ],
+        "includeEnvironments": [
+            "TestCommands",
+            "Default"
+        ]
+    },
+    "action": "PRTG_SetPauseEx($_IPS['TARGET'],$_IPS['MESSAGE']);",
+    "locale": {
+        "de": {
+            "Set device or sensor on pause with message": "Setze das Gerät oder den Sensor mit einer Nachricht auf Pause",
+            "Message": "Nachricht"
+        }
+    }
+}
