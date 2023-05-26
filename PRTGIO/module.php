@@ -15,7 +15,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.51
+ * @version       2.52
  *
  */
 
@@ -27,25 +27,28 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.51
+ * @version       2.52
  *
  * @example <b>Ohne</b>
  *
  * @property string $Url
  * @property string $Hash
  * @property self $State
+ * @method void RegisterHook(string $WebHook)
+ * @method void UnregisterHook(string $WebHook)
+ * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  */
-class PRTGIO extends IPSModule
+class PRTGIO extends IPSModuleStrict
 {
     use \PRTGIO\BufferHelper;
     use \PRTGIO\DebugHelper;
     use \PRTGIO\WebhookHelper;
 
-    const isConnected = IS_ACTIVE;
-    const isInActive = IS_INACTIVE;
-    const isDisconnected = IS_EBASE + 1;
-    const isUnauthorized = IS_EBASE + 2;
-    const isURLnotValid = IS_EBASE + 3;
+    public const isConnected = IS_ACTIVE;
+    public const isInActive = IS_INACTIVE;
+    public const isDisconnected = IS_EBASE + 1;
+    public const isUnauthorized = IS_EBASE + 2;
+    public const isURLnotValid = IS_EBASE + 3;
 
     private static $http_error =
         [
@@ -96,7 +99,7 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function Create()
+    public function Create(): void
     {
         parent::Create();
         $this->RegisterPropertyBoolean('Open', false);
@@ -122,7 +125,7 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function Destroy()
+    public function Destroy(): void
     {
         if (!IPS_InstanceExists($this->InstanceID)) {
             $this->UnregisterHook('/hook/PRTG' . $this->InstanceID);
@@ -133,7 +136,7 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         $this->Url = '';
         $this->Hash = '';
@@ -166,7 +169,7 @@ class PRTGIO extends IPSModule
      * @param type $Message
      * @param type $Data
      */
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         switch ($Message) {
             case IPS_KERNELSTARTED:
@@ -174,10 +177,11 @@ class PRTGIO extends IPSModule
                 break;
         }
     }
-    public function RequestAction($Ident, $Value)
+    public function RequestAction(string $Ident, mixed $Value): void
     {
         if ($Ident == 'KernelReady') {
-            return $this->KernelReady();
+            $this->KernelReady();
+            return;
         }
     }
     /**
@@ -198,7 +202,7 @@ class PRTGIO extends IPSModule
      *
      * @return string
      */
-    public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend)
+    public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend): string
     {
         if ($this->State != self::isConnected) {
             return false;
@@ -228,11 +232,11 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      *
-     * @param type $JSONString Der IPS-Datenstring
+     * @param string $JSONString Der IPS-Datenstring
      *
      * @return string Die Antwort an den anfragenden Child
      */
-    public function ForwardData($JSONString)
+    public function ForwardData(string $JSONString): string
     {
         $Json = json_decode($JSONString, true);
         $Result = $this->SendData($Json['Uri'], $Json['QueryData'], $Json['PostData']);
@@ -262,7 +266,7 @@ class PRTGIO extends IPSModule
                 break;
         }
         restore_error_handler();
-        return false;
+        return '';
     }
 
     /**
@@ -300,7 +304,7 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    protected function ProcessHookdata()
+    protected function ProcessHookdata(): void
     {
         header('X-Powered-By: IP-Symcon ' . IPS_GetKernelVersion());
         if (!($this->State == self::isConnected)) {
@@ -346,25 +350,26 @@ class PRTGIO extends IPSModule
     /**
      * Interne Funktion des SDK.
      *
-     * @param type $InstanceStatus
+     * @param int $InstanceStatus
      */
-    protected function SetStatus($InstanceStatus)
+    protected function SetStatus(int $InstanceStatus): bool
     {
         $this->State = $InstanceStatus;
-        parent::SetStatus($InstanceStatus);
+        return parent::SetStatus($InstanceStatus);
     }
 
-    protected function ModulErrorHandler($errno, $errstr)
+    protected function ModulErrorHandler(int $errno, string $errstr): bool
     {
         echo $errstr . PHP_EOL;
+        return true;
     }
-    private function KernelReady()
+    private function KernelReady(): void
     {
         $this->UnregisterMessage(0, IPS_KERNELSTARTED);
         $this->ApplyChanges();
     }
 
-    private function GetConsumerAddress()
+    private function GetConsumerAddress(): bool
     {
         $Port = $this->ReadPropertyInteger('ReturnPort');
         $Protocol = $this->ReadPropertyBoolean('ReturnProtocol') ? 'https' : 'http';
@@ -406,7 +411,7 @@ class PRTGIO extends IPSModule
         $this->WriteAttributeString('ConsumerAddress', $Url);
         return true;
     }
-    private function ShowLastError(string $ErrorMessage, string $ErrorTitle = 'Error')
+    private function ShowLastError(string $ErrorMessage, string $ErrorTitle = 'Error'): void
     {
         IPS_Sleep(500);
         $this->UpdateFormField('ErrorTitle', 'caption', $this->Translate($ErrorTitle));
@@ -547,7 +552,7 @@ class PRTGIO extends IPSModule
      * @param mixed  $item
      * @param string $key
      */
-    private function ResultEncode($item, $key)
+    private function ResultEncode(mixed &$item): void
     {
         if (is_string($item)) {
             $item = html_entity_decode($item);

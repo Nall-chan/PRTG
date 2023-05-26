@@ -13,7 +13,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.51
+ * @version       2.52
  *
  */
 
@@ -25,13 +25,19 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.51
+ * @version       2.52
  *
  * @example <b>Ohne</b>
  *
  * @property int $Interval
+ * @method bool SendDebug(string $Message, mixed $Data, int $Format)
+ * @method void RegisterProfileBooleanEx(string $Name, string $Icon, string $Prefix, string $Suffix, array $Associations)
+ * @method void RegisterProfileIntegerEx(string $Name, string $Icon, string $Prefix, string $Suffix, array $Associations, int $MaxValue = -1, float $StepSize = 0)
+ * @method void RegisterProfileFloat(string $Name, string $Icon, string $Prefix, string $Suffix, float $MinValue, float $MaxValue, float $StepSize, int $Digits)
+ * @method void RegisterProfileInteger(string $Name, string $Icon, string $Prefix, string $Suffix, int $MinValue, int $MaxValue, int $StepSize)
+ * @method void RegisterParent()
  */
-class PRTGSensor extends IPSModule
+class PRTGSensor extends IPSModuleStrict
 {
     use \prtg\VariableHelper;
     use \prtg\VariableProfileHelper;
@@ -47,7 +53,7 @@ class PRTGSensor extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function Create()
+    public function Create(): void
     {
         parent::Create();
         $this->RegisterPropertyBoolean('AutoRename', true);
@@ -66,7 +72,7 @@ class PRTGSensor extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         $this->RegisterProfileBooleanEx('PRTG.Action', 'Gear', '', '', [
             [true, $this->Translate('Active'), '', 0x00ff00],
@@ -105,8 +111,7 @@ class PRTGSensor extends IPSModule
         parent::ApplyChanges();
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
 
-        if (!@$this->GetIDForIdent('State')) {
-            $this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true);
+        if ($this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true)) {
             $this->SetValue('State', 6);
         }
 
@@ -144,7 +149,7 @@ class PRTGSensor extends IPSModule
             $this->SetTimer(false);
         }
     }
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
 
@@ -172,12 +177,13 @@ class PRTGSensor extends IPSModule
      *
      * @param string $JSONString
      */
-    public function ReceiveData($JSONString)
+    public function ReceiveData(string $JSONString): string
     {
         $Data = json_decode($JSONString, true);
         $this->SendDebug('Got Event', $Data, 0);
         $this->RequestState();
         $this->SendDebug('End Event', $Data, 0);
+        return '';
     }
 
     /**
@@ -202,25 +208,28 @@ class PRTGSensor extends IPSModule
      *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
-    public function RequestAction($Ident, $Value): bool
+    public function RequestAction(string $Ident, mixed $Value): void
     {
         if ($this->IORequestAction($Ident, $Value)) {
-            return true;
+            return;
         }
         switch ($Ident) {
             case 'ActionButton':
                 if ($Value) {
-                    return $this->SetResume();
+                    $this->SetResume();
+                } else {
+                    $this->SetPause();
                 }
-                    return $this->SetPause();
+                return;
             case 'AckButton':
-                return $this->AcknowledgeAlarm();
-                case 'ShowIntervall':
-                    $this->UpdateFormField('Interval', 'visible', $Value);
-                    return true;
+                $this->AcknowledgeAlarm();
+                return;
+            case 'ShowIntervall':
+                $this->UpdateFormField('Interval', 'visible', $Value);
+                return;
         }
         trigger_error('Invalid Ident', E_USER_NOTICE);
-        return false;
+        return;
     }
 
     /**
@@ -265,7 +274,7 @@ class PRTGSensor extends IPSModule
     /**
      * Wird ausgeführt wenn sich der Status vom Parent ändert.
      */
-    protected function IOChangeState($State)
+    protected function IOChangeState(int $State): void
     {
         if ($State == IS_ACTIVE) {
             if ($this->ReadPropertyInteger('id') > 0) {
@@ -273,7 +282,7 @@ class PRTGSensor extends IPSModule
             }
         }
     }
-    private function KernelReady()
+    private function KernelReady(): void
     {
         $this->UnregisterMessage(0, IPS_KERNELSTARTED);
         $this->ApplyChanges();
@@ -282,7 +291,7 @@ class PRTGSensor extends IPSModule
     /**
      * Setzt den Intervall-Timer.
      */
-    private function SetTimer(bool $Active)
+    private function SetTimer(bool $Active): void
     {
         if ($Active) {
             if ($this->ReadPropertyBoolean('UseInterval')) {
@@ -367,7 +376,7 @@ class PRTGSensor extends IPSModule
      *
      * @param array $Channels
      */
-    private function DecodeChannelData(array $Channels)
+    private function DecodeChannelData(array $Channels): void
     {
         foreach ($Channels as $Channel) {
             if ($Channel['objid'] < -3) {
@@ -387,7 +396,7 @@ class PRTGSensor extends IPSModule
             }
 
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Profile'], $Channel['objid'], true);
-            $vid = $this->GetIDForIdent($Ident);
+            $vid = $this->FindIDForIdent($Ident);
 
             if ($this->ReadPropertyBoolean('AutoRenameChannels') && (IPS_GetName($vid)) != $Channel['name']) {
                 IPS_SetName($vid, $Channel['name']);
@@ -400,7 +409,7 @@ class PRTGSensor extends IPSModule
      * Sendet Eine Anfrage an den IO und liefert die Antwort.
      *
      * @param string $Uri       URI der Anfrage
-     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string[]  $QueryData Alle mit Allen GET-Parametern
      * @param string $PostData  String mit POST Daten
      *
      * @return array Antwort ale Array

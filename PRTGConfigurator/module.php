@@ -14,7 +14,7 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.51
+ * @version       2.52
  *
  */
 
@@ -26,11 +26,13 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.51
+ * @version       2.52
  *
  * @example <b>Ohne</b>
+ *
+ * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  */
-class PRTGConfigurator extends IPSModule
+class PRTGConfigurator extends IPSModuleStrict
 {
     use \PRTGConfigurator\BufferHelper;
     use \PRTGConfigurator\DebugHelper;
@@ -38,7 +40,7 @@ class PRTGConfigurator extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function Create()
+    public function Create(): void
     {
         parent::Create();
         $this->ConnectParent('{67470842-FB5E-485B-92A2-4401E371E6FC}');
@@ -49,7 +51,7 @@ class PRTGConfigurator extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         parent::ApplyChanges();
     }
@@ -240,7 +242,7 @@ class PRTGConfigurator extends IPSModule
      * Sendet Eine Anfrage an den IO und liefert die Antwort.
      *
      * @param string $Uri       URI der Anfrage
-     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string[]  $QueryData Alle mit Allen GET-Parametern
      * @param string $PostData  String mit POST Daten
      *
      * @return array Antwort ale Array
@@ -273,7 +275,7 @@ class PRTGConfigurator extends IPSModule
      *
      * @return bool|int FALSE wenn kein Splitter vorhanden, sonst die ID des Splitter.
      */
-    private function GetIO()
+    private function GetIO(): false|int
     {
         $IOID = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         if ($IOID == 0) {

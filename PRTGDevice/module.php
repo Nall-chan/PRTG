@@ -13,7 +13,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.51
+ * @version       2.52
  *
  */
 
@@ -25,11 +25,16 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @copyright     2023 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.51
+ * @version       2.52
  *
  * @example <b>Ohne</b>
+ *
+ * @method bool SendDebug(string $Message, mixed $Data, int $Format)
+ * @method void RegisterProfileBooleanEx(string $Name, string $Icon, string $Prefix, string $Suffix, array $Associations)
+ * @method void RegisterProfileIntegerEx(string $Name, string $Icon, string $Prefix, string $Suffix, array $Associations, int $MaxValue = -1, float $StepSize = 0)
+ * @method void RegisterParent()
  */
-class PRTGDevice extends IPSModule
+class PRTGDevice extends IPSModuleStrict
 {
     use \prtg\VariableHelper;
     use \prtg\VariableProfileHelper;
@@ -45,7 +50,7 @@ class PRTGDevice extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function Create()
+    public function Create(): void
     {
         parent::Create();
         $this->RegisterPropertyInteger('id', 0);
@@ -62,7 +67,7 @@ class PRTGDevice extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function ApplyChanges()
+    public function ApplyChanges(): void
     {
         $this->RegisterProfileBooleanEx('PRTG.Action', 'Gear', '', '', [
             [true, $this->Translate('Active'), '', 0x00ff00],
@@ -88,8 +93,7 @@ class PRTGDevice extends IPSModule
         parent::ApplyChanges();
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
 
-        if (!@$this->GetIDForIdent('State')) {
-            $this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true);
+        if ($this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true)) {
             $this->SetValue('State', 6);
         }
 
@@ -146,7 +150,7 @@ class PRTGDevice extends IPSModule
             $this->SetTimer(false);
         }
     }
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
 
@@ -169,37 +173,39 @@ class PRTGDevice extends IPSModule
     /**
      * Interne Funktion des SDK.
      */
-    public function ReceiveData($JSONString)
+    public function ReceiveData(string $JSONString): string
     {
         $Data = json_decode($JSONString, true);
         $this->SendDebug('Got Event', $Data, 0);
         $this->RequestState();
         $this->SendDebug('End Event', $Data, 0);
+        return '';
     }
 
     /**
      * Interne Funktion des SDK.
      */
-    public function RequestAction($Ident, $Value)
+    public function RequestAction(string $Ident, mixed $Value): void
     {
         if ($this->IORequestAction($Ident, $Value)) {
-            return true;
+            return;
         }
         switch ($Ident) {
             case 'ActionButton':
                 if ($Value) {
-                    return $this->SetResume();
+                    $this->SetResume();
                 } else {
-                    return $this->SetPause();
+                    $this->SetPause();
                 }
+                return;
         }
         trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
-        return false;
+        return;
     }
     /**
      * Wird ausgeführt wenn sich der Status vom Parent ändert.
      */
-    protected function IOChangeState($State)
+    protected function IOChangeState(int $State): void
     {
         if ($State == IS_ACTIVE) {
             if ($this->ReadPropertyInteger('id') > 0) {
@@ -207,7 +213,7 @@ class PRTGDevice extends IPSModule
             }
         }
     }
-    private function KernelReady()
+    private function KernelReady(): void
     {
         $this->UnregisterMessage(0, IPS_KERNELSTARTED);
         $this->ApplyChanges();
@@ -216,7 +222,7 @@ class PRTGDevice extends IPSModule
     /**
      * Setzt den Intervall-Timer.
      */
-    private function SetTimer(bool $Active)
+    private function SetTimer(bool $Active): void
     {
         if ($Active) {
             $Sec = $this->ReadPropertyInteger('Interval');
@@ -282,7 +288,7 @@ class PRTGDevice extends IPSModule
      * Sendet Eine Anfrage an den IO und liefert die Antwort.
      *
      * @param string $Uri       URI der Anfrage
-     * @param array  $QueryData Alle mit Allen GET-Parametern
+     * @param string[]  $QueryData Alle mit Allen GET-Parametern
      * @param string $PostData  String mit POST Daten
      *
      * @return array Antwort ale Array
