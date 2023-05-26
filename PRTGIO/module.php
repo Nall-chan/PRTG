@@ -273,6 +273,9 @@ class PRTGIO extends IPSModule
     public function GetConfigurationForm(): string
     {
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        if ($this->GetStatus() == IS_CREATING) {
+            return json_encode($Form);
+        }
         if (IPS_GetOption('NATSupport')) {
             if (IPS_GetOption('NATPublicIP') == '') {
                 if ($this->ReadPropertyString('ReturnIP') == '') {
@@ -544,7 +547,7 @@ class PRTGIO extends IPSModule
      * @param mixed  $item
      * @param string $key
      */
-    private function ResultEncode(&$item, &$key)
+    private function ResultEncode($item, $key)
     {
         if (is_string($item)) {
             $item = html_entity_decode($item);

@@ -188,7 +188,9 @@ class PRTGSensor extends IPSModule
     public function GetConfigurationForm(): string
     {
         $Form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
-
+        if ($this->GetStatus() == IS_CREATING) {
+            return json_encode($Form);
+        }
         $Form['elements'][6]['caption'] = sprintf($this->Translate('Use not sensor Interval of %d seconds'), $this->Interval);
         $Form['elements'][6]['onChange'] = 'IPS_RequestAction(' . $this->InstanceID . ', \'ShowIntervall\' ,$UseInterval);';
         $Form['elements'][7]['visible'] = $this->ReadPropertyBoolean('UseInterval');
