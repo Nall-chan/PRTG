@@ -96,13 +96,11 @@ class PRTGConfigurator extends IPSModuleStrict
         }
         $RootNames = [];
         $RootId = $this->ReadPropertyInteger('RootId');
-        if (IPS_CategoryExists($RootId)) {
-            while ($RootId != 0) {
-                if ($RootId != 0) {
-                    $RootNames[] = IPS_GetName($RootId);
-                }
+        if (($RootId > 1) && IPS_CategoryExists($RootId)) {
+            do {
+                $RootNames[] = IPS_GetName($RootId);
                 $RootId = IPS_GetParent($RootId);
-            }
+            } while ($RootId > 1);
             $RootNames = array_reverse($RootNames);
         }
         $InstanceIDListSensors = IPS_GetInstanceListByModuleID('{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}');

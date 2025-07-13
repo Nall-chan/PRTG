@@ -4,9 +4,10 @@
     "name": "PRTG-Library",
     "url": "https://github.com/Nall-chan/PRTG",
     "compatibility": {
-        "version": "7.0"
+        "version": "8.1",
+        "date": 1751809221
     },
     "version": "2.52",
     "build": 252,
-    "date": 1685114089
+    "date": 1752397886
 }

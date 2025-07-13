@@ -383,9 +383,9 @@ class PRTGSensor extends IPSModuleStrict
                 continue;
             }
             if ($Channel['objid'] < 0) {
-                $Ident = $Channel['objid'] + 255;
+                $Ident = (string) ($Channel['objid'] + 255);
             } else {
-                $Ident = $Channel['objid'];
+                $Ident = (string) $Channel['objid'];
             }
             $Data = $this->ConvertValue($Channel);
             if ($Data === false) {

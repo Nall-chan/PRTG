@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ . '/../libs/helper/WebhookHelper.php') . '}');
 eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
 eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 
@@ -34,15 +33,13 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @property string $Url
  * @property string $Hash
  * @property self $State
- * @method void RegisterHook(string $WebHook)
- * @method void UnregisterHook(string $WebHook)
+ * @method bool RegisterHook(string $WebHook)
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  */
 class PRTGIO extends IPSModuleStrict
 {
     use \PRTGIO\BufferHelper;
     use \PRTGIO\DebugHelper;
-    use \PRTGIO\WebhookHelper;
 
     public const isConnected = IS_ACTIVE;
     public const isInActive = IS_INACTIVE;
@@ -120,17 +117,6 @@ class PRTGIO extends IPSModuleStrict
         if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
         }
-    }
-
-    /**
-     * Interne Funktion des SDK.
-     */
-    public function Destroy(): void
-    {
-        if (!IPS_InstanceExists($this->InstanceID)) {
-            $this->UnregisterHook('/hook/PRTG' . $this->InstanceID);
-        }
-        parent::Destroy();
     }
 
     /**
