@@ -1,11 +1,4 @@
 {
-    "elements": [
-        {
-            "name": "RootId",
-            "type": "SelectCategory",
-            "caption": "Create under category"
-        }
-    ],
     "actions": [
         {
             "type": "Configurator",

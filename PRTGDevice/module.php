@@ -133,20 +133,20 @@ class PRTGDevice extends IPSModuleStrict
             $this->UnregisterVariable('UndefinedSens');
         }
 
-        if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
-            $this->RegisterParent();
-            $this->RequestDeviceState();
-        } else {
+        if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
             return;
         }
-
-        if ($this->ReadPropertyInteger('id') > 0) {
-            $this->SetStatus(IS_ACTIVE);
-            $this->SetTimer(true);
-        } else {
+        $this->RegisterMessage($this->InstanceID, FM_CONNECT);
+        $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
+        if ($this->ReadPropertyInteger('id') == 0) {
             $this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
+            return;
+        }
+
+        if ($this->RegisterParent() && $this->HasActiveParent()) {
+            $this->IOChangeState(IS_ACTIVE);
         }
     }
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -208,8 +208,13 @@ class PRTGDevice extends IPSModuleStrict
     {
         if ($State == IS_ACTIVE) {
             if ($this->ReadPropertyInteger('id') > 0) {
+                $this->RequestDeviceState();
+                $this->SetStatus(IS_ACTIVE);
                 $this->SetTimer(true);
             }
+        } else {
+            $this->SetStatus(IS_INACTIVE);
+            $this->SetTimer(false);
         }
     }
     private function KernelReady(): void

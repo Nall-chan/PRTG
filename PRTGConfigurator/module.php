@@ -44,7 +44,6 @@ class PRTGConfigurator extends IPSModuleStrict
     {
         parent::Create();
         $this->SetReceiveDataFilter('.*"nothingtoreceive":.*');
-        $this->RegisterPropertyInteger('RootId', 1);
     }
 
     /**
@@ -93,15 +92,6 @@ class PRTGConfigurator extends IPSModuleStrict
             $Sensors = $this->GetSensors();
             $Devices = $this->GetDevices();
         }
-        $RootNames = [];
-        $RootId = $this->ReadPropertyInteger('RootId');
-        if (($RootId > 1) && IPS_CategoryExists($RootId)) {
-            do {
-                $RootNames[] = IPS_GetName($RootId);
-                $RootId = IPS_GetParent($RootId);
-            } while ($RootId > 1);
-            $RootNames = array_reverse($RootNames);
-        }
         $InstanceIDListSensors = IPS_GetInstanceListByModuleID('{A37FD212-2E5B-4B65-83F2-956CB5BBB2FA}');
 
         $InstancesSensors = [];
@@ -119,7 +109,7 @@ class PRTGConfigurator extends IPSModuleStrict
                 $Sensor['instanceID'] = 0;
             } else {
                 unset($InstancesSensors[$InstanceIDSensor]);
-                $Sensor['name'] = IPS_GetLocation($InstanceIDSensor);
+                $Sensor['name'] = IPS_GetName($InstanceIDSensor);
                 $Sensor['instanceID'] = $InstanceIDSensor;
             }
             $Sensor['parent'] = $Sensor['parentid'];
@@ -129,8 +119,9 @@ class PRTGConfigurator extends IPSModuleStrict
                 'configuration' => [
                     'id' => $Sensor['objid']
                 ],
-                'location'      => array_merge($RootNames, [$Sensor['device']])
+                'location'      => [$Sensor['device']]
             ];
+            $Sensor['device'] = '';
         }
 
         $MissingSensors = [];
@@ -138,7 +129,7 @@ class PRTGConfigurator extends IPSModuleStrict
             $MissingSensors[] = [
                 'type'       => 'Sensor',
                 'instanceID' => $InstanceIDSensor,
-                'name'       => IPS_GetLocation($InstanceIDSensor),
+                'name'       => IPS_GetName($InstanceIDSensor),
                 'objid'      => $objid,
                 'device'     => '',
                 'group'      => ''
@@ -159,18 +150,18 @@ class PRTGConfigurator extends IPSModuleStrict
             $Device['id'] = $Device['objid'];
             if ($InstanceIDDevice === false) {
                 $Device['instanceID'] = 0;
-                $Device['name'] = '';
+                $Device['name'] = $Device['device'];
             } else {
                 unset($InstancesDevices[$InstanceIDDevice]);
-                $Device['name'] = IPS_GetLocation($InstanceIDDevice);
                 $Device['instanceID'] = $InstanceIDDevice;
+                $Device['name'] = IPS_GetName($InstanceIDDevice);
             }
             $Device['create'] = [
                 'moduleID'      => '{95C47F84-8DF2-4370-90BD-3ED34C65ED7B}',
                 'configuration' => [
                     'id' => $Device['objid']
                 ],
-                'location'      => array_merge($RootNames, [$Device['device']])
+                'location'      => [$Device['device']]
             ];
         }
         $MissingDevices = [];
@@ -178,7 +169,7 @@ class PRTGConfigurator extends IPSModuleStrict
             $MissingDevices[] = [
                 'type'       => 'Device',
                 'instanceID' => $InstanceIDDevice,
-                'name'       => IPS_GetLocation($InstanceIDDevice),
+                'name'       => IPS_GetName($InstanceIDDevice),
                 'objid'      => $objid,
                 'device'     => '',
                 'group'      => ''
@@ -186,13 +177,6 @@ class PRTGConfigurator extends IPSModuleStrict
         }
 
         $Values = array_merge($Devices, $MissingDevices, $Sensors, $MissingSensors);
-        if (count($Values) > 0) {
-            foreach ($Values as $key => $row) {
-                $SortDevice[$key] = $row['device'];
-                $SortType[$key] = $row['type'];
-            }
-            array_multisort($SortDevice, SORT_ASC, $SortType, SORT_ASC, $Values);
-        }
         $Form['actions'][0]['values'] = $Values;
         $this->SendDebug('FORM', json_encode($Form), 0);
         $this->SendDebug('FORM', json_last_error_msg(), 0);

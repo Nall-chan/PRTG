@@ -131,23 +131,21 @@ class PRTGSensor extends IPSModuleStrict
         } else {
             $this->UnregisterVariable('AckButton');
         }
-        if (IPS_GetKernelRunlevel() == KR_READY) { // IPS läuft dann gleich Daten abholen
-            $this->RegisterParent();
-            $this->RequestSensorState();
-            $this->RequestChannelState();
-        } else {
+        if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
             return;
         }
-
-        if ($this->ReadPropertyInteger('id') > 0) {
-            $this->SetStatus(IS_ACTIVE);
-            $this->SetTimer(true);
-        } else {
+        $this->RegisterMessage($this->InstanceID, FM_CONNECT);
+        $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
+        if ($this->ReadPropertyInteger('id') == 0) {
             $this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
         }
+        if ($this->RegisterParent() && $this->HasActiveParent()) {
+            $this->IOChangeState(IS_ACTIVE);
+        }
     }
+
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
@@ -277,8 +275,14 @@ class PRTGSensor extends IPSModuleStrict
     {
         if ($State == IS_ACTIVE) {
             if ($this->ReadPropertyInteger('id') > 0) {
+                $this->RequestSensorState();
+                $this->RequestChannelState();
+                $this->SetStatus(IS_ACTIVE);
                 $this->SetTimer(true);
             }
+        } else {
+            $this->SetStatus(IS_INACTIVE);
+            $this->SetTimer(false);
         }
     }
     private function KernelReady(): void
