@@ -12,9 +12,9 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.52
+ * @version       2.60
  *
  */
 
@@ -23,10 +23,10 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.52
+ * @version       2.60
  *
  * @example <b>Ohne</b>
  *
@@ -114,6 +114,7 @@ class PRTGIO extends IPSModuleStrict
         $this->Url = '';
         $this->Hash = '';
         $this->State = self::isInActive;
+        $this->RegisterHook('PRTG' . $this->InstanceID);
         if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
         }
@@ -131,7 +132,6 @@ class PRTGIO extends IPSModuleStrict
         if (IPS_GetKernelRunlevel() != KR_READY) {
             return;
         }
-        $this->RegisterHook('/hook/PRTG' . $this->InstanceID);
         if ($this->CheckHost()) {
             $this->SetSummary($this->Url);
             if (!$this->GetConsumerAddress()) {

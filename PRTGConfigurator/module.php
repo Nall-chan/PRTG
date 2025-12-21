@@ -12,9 +12,9 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.52
+ * @version       2.60
  *
  */
 
@@ -23,10 +23,10 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.52
+ * @version       2.60
  *
  * @example <b>Ohne</b>
  *
@@ -43,7 +43,6 @@ class PRTGConfigurator extends IPSModuleStrict
     public function Create(): void
     {
         parent::Create();
-        $this->ConnectParent('{67470842-FB5E-485B-92A2-4401E371E6FC}');
         $this->SetReceiveDataFilter('.*"nothingtoreceive":.*');
         $this->RegisterPropertyInteger('RootId', 1);
     }

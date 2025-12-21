@@ -1,12 +1,13 @@
 [![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version 2.52](https://img.shields.io/badge/Modul%20Version-2.52-blue.svg)]()
-![Version 7.0](https://img.shields.io/badge/Symcon%20Version-7.0%20%3E-green.svg)  
+[![Module Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.version&label=Modul%20Version&color=blue)](https://community.symcon.de/t/modul-prtg-prtg-in-ips-einbinden-und-ips-in-prtg-ueberwachen/47105)
+[![Symcon Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.compatibility.version&suffix=%3E&label=Symcon%20Version&color=green)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v80-v81-q3-2025/)  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions)
 [![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
-[![Spenden](https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_SM.gif)](../README.md#4-spenden)  
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](#2-spenden)[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](#2-spenden)  
 
-# PRTG Konfigurator  <!-- omit in toc -->
+# PRTG Konfigurator  <!-- omit in toc -->  
+
 Vereinfacht das Anlegen von Geräte und Sensor Instanzen in IPS.  
 
 ## Inhaltsverzeichnis <!-- omit in toc -->
@@ -14,19 +15,23 @@ Vereinfacht das Anlegen von Geräte und Sensor Instanzen in IPS.
 - [1. Funktionsumfang](#1-funktionsumfang)
 - [2. Installation](#2-installation)
 - [3. Einrichten der Instanzen in IP-Symcon](#3-einrichten-der-instanzen-in-ip-symcon)
-- [4. Statusvariablen und Profile](#4-statusvariablen-und-profile)
-- [5. WebFront](#5-webfront)
+- [4. Statusvariablen](#4-statusvariablen)
+- [5. Visualisierung](#5-visualisierung)
 - [6. PHP-Befehlsreferenz](#6-php-befehlsreferenz)
-- [7. Lizenz](#7-lizenz)
+- [7. Aktionen](#7-aktionen)
+- [8. Anhang](#8-anhang)
+  - [1. Changelog](#1-changelog)
+  - [2. Spenden](#2-spenden)
+- [9. Lizenz](#9-lizenz)
 
 ## 1. Funktionsumfang
 
- - Auslesen und darstellen aller in PRTG und IPS bekannten Geräte und Sensoren.  
- - Einfaches Anlegen von neuen Instanzen in IPS.  
+- Auslesen und darstellen aller in PRTG und IPS bekannten Geräte und Sensoren.  
+- Einfaches Anlegen von neuen Instanzen in IPS.  
 
 ## 2. Installation
 
- Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installation).  
+Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installation).  
 
 ## 3. Einrichten der Instanzen in IP-Symcon
 
@@ -49,20 +54,37 @@ Es kann jedoch eine andere Ursprungskategorie ausgewählt werden.
 Diese Struktur dient dem schellen auffinden der erstellten Instanzen im logischen Baum, anschließend können die Instanzen frei im Baum verschoben werden.  
 ![Konfigurator](imgs/conf2.png)  
 
+## 4. Statusvariablen
 
-## 4. Statusvariablen und Profile
+Der Konfigurator besitzt keine Statusvariablen.  
 
-Der Konfigurator besitzt keine Statusvariablen und Variablenprofile.  
+## 5. Visualisierung
 
-## 5. WebFront
-
-Der Konfigurator besitzt keine im WebFront darstellbaren Elemente.  
+Der Konfigurator besitzt keine in einer Visualisierung darstellbaren Elemente.  
 
 ## 6. PHP-Befehlsreferenz
 
 Der Konfigurator besitzt keine Instanz-Funktionen.  
 
-## 7. Lizenz
+## 7. Aktionen
 
-  IPS-Modul:  
-  [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
+Es gibt keine Aktionen für den Konfigurator.  
+
+## 8. Anhang
+
+### 1. Changelog
+
+[Changelog der Library](../README.md#3-changelog)  
+
+### 2. Spenden  
+  
+Die Library ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als Unterstützung für den Autor werden hier akzeptiert:  
+
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](https://paypal.me/Nall4chan)  
+
+[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](https://www.amazon.de/hz/wishlist/ls/YU4AI9AQT9F?ref_=wl_share)  
+
+## 9. Lizenz
+
+IPS-Modul:  
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  

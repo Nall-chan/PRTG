@@ -1,12 +1,13 @@
 [![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-[![Version 2.52](https://img.shields.io/badge/Modul%20Version-2.52-blue.svg)]()
-![Version 7.0](https://img.shields.io/badge/Symcon%20Version-7.0%20%3E-green.svg)  
+[![Module Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.version&label=Modul%20Version&color=blue)](https://community.symcon.de/t/modul-prtg-prtg-in-ips-einbinden-und-ips-in-prtg-ueberwachen/47105)
+[![Symcon Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.compatibility.version&suffix=%3E&label=Symcon%20Version&color=green)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v80-v81-q3-2025/)  
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions)
 [![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
-[![Spenden](https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_SM.gif)](../README.md#4-spenden)  
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](#2-spenden)[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](#2-spenden)  
 
 # PRTG I/O  <!-- omit in toc -->
+
 I/O zur Kommunikation mit PRTG  
 
 ## Inhaltsverzeichnis <!-- omit in toc -->
@@ -14,24 +15,28 @@ I/O zur Kommunikation mit PRTG
 - [1. Funktionsumfang](#1-funktionsumfang)
 - [2. Installation](#2-installation)
 - [3. Einrichten der Instanzen in IP-Symcon](#3-einrichten-der-instanzen-in-ip-symcon)
-- [4. Statusvariablen und Profile](#4-statusvariablen-und-profile)
-- [5. WebFront](#5-webfront)
+- [4. Statusvariablen](#4-statusvariablen)
+- [5. Visualisierung](#5-visualisierung)
 - [6. PHP-Befehlsreferenz](#6-php-befehlsreferenz)
-- [7. Anhang](#7-anhang)
+- [7. Aktionen](#7-aktionen)
+- [8. Kopplungen zwischen Symcon und PRTG](#8-kopplungen-zwischen-symcon-und-prtg)
   - [1. Events von PRTG empfangen](#1-events-von-prtg-empfangen)
   - [2. IPS in PRTG überwachen](#2-ips-in-prtg-überwachen)
-- [8. Lizenz](#8-lizenz)
+- [9. Anhang](#9-anhang)
+  - [1. Changelog](#1-changelog)
+  - [2. Spenden](#2-spenden)
+- [9. Lizenz](#9-lizenz)
 
 ## 1. Funktionsumfang
 
- - Schnittstelle zwischen den Geräte und Sensor Instanzen und PRTG.  
- - Empfangen von Events aus PRTG.  
- - Bereitstellen von IPS Systeminformation für einen PRTG-Sensor.  
- - Abfragen von Graphen aus PRTG.  
+- Schnittstelle zwischen den Geräte und Sensor Instanzen und PRTG.  
+- Empfangen von Events aus PRTG.  
+- Bereitstellen von IPS Systeminformation für einen PRTG-Sensor.  
+- Abfragen von Graphen aus PRTG.  
 
 ## 2. Installation
 
- Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installation).  
+Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installation).  
 
 ## 3. Einrichten der Instanzen in IP-Symcon
 
@@ -49,47 +54,54 @@ Dabei werden sowohl mehrere IP-Adressen, als auch die globalen NAT Einstellungen
 Sollte es auch anderen Gründen nötig sein den Ereignis-Hook anzupassen, so kann dies in den Experteneinstellungen erfolgen.  
 
 ![Konfigurator](imgs/conf.png)  
+
 **Konfigurationsseite:**  
 
-|  Eigenschaft   |   Typ   | Standardwert |                   Funktion                   |
-| :------------: | :-----: | :----------: | :------------------------------------------: |
-|      Open      |  bool   |    false     |          I/O öffnen oder schließen           |
-|      Host      | string  |              | URL zum PRTG Webfront z.B. http://prtg:8081  |
-|    Username    | string  |              |             Benutzername in PRTG             |
-|    Password    | string  |              |          Passwort für den Benutzer           |
-|  NoHostVerify  |  bool   |              |      Deaktiviere Prüfung des Hostnamen       |
-|  NoPeerVerify  |  bool   |              |     Deaktiviere Prüfung der Gegenstelle      |
-|  NoCertCheck   |  bool   |              |      Deaktiviere Prüfung des Zertifikat      |
-|    ReturnIP    | string  |              | Abweichende IP-Adresse für den Ereignis-Hook |
-|   ReturnPort   | integer |     3777     |   Abweichender Port für den Ereignis-Hook    |
-| ReturnProtocol |  bool   |    false     |       true für https im Ereignis-Hook        |
+| Eigenschaft    |   Typ   | Standardwert | Funktion                                      |
+| :------------- | :-----: | :----------: | :-------------------------------------------- |
+| Open           |  bool   |    false     | I/O öffnen oder schließen                     |
+| Host           | string  |              | URL zum PRTG Webfront z.B. `http://prtg:8081` |
+| Username       | string  |              | Benutzername in PRTG                          |
+| Password       | string  |              | Passwort für den Benutzer                     |
+| NoHostVerify   |  bool   |              | Deaktiviere Prüfung des Hostnamen             |
+| NoPeerVerify   |  bool   |              | Deaktiviere Prüfung der Gegenstelle           |
+| NoCertCheck    |  bool   |              | Deaktiviere Prüfung des Zertifikat            |
+| ReturnIP       | string  |              | Abweichende IP-Adresse für den Ereignis-Hook  |
+| ReturnPort     | integer |     3777     | Abweichender Port für den Ereignis-Hook       |
+| ReturnProtocol |  bool   |    false     | true für https im Ereignis-Hook               |
 
-## 4. Statusvariablen und Profile
+## 4. Statusvariablen
 
-Der I/O legt keine Statusvariablen und Profile an.  
+Der Konfigurator besitzt keine Statusvariablen.  
 
-## 5. WebFront
+## 5. Visualisierung
 
-Entfällt.  
+Der Konfigurator besitzt keine in einer Visualisierung darstellbaren Elemente.  
 
 ## 6. PHP-Befehlsreferenz
 
 ```php
 bool PRTG_GetGraph(integer $InstanzID, integer $Type, integer $SensorId, integer $GraphId, integer $Width, integer $Height, integer $Theme, integer $BaseFontSize, bool $ShowLegend)
 ```
+
 Liefert ein PNG oder SVG Bild eines Graphen als String.  
 Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
 Folgende Parameter stehen zur Verfügung:  
- - $Type 1=PNG, 2=SVG  
- - $SensorId Objekt-ID des Sensors  
- - $GraphId Zeitbereich des Graphen: 0=live, 1=last 48 hours, 2=30 days, 3=365 days  
- - $Width Höhe des Graphen in Pixel.  
- - $Height Höhe des Graphen in Pixel.  
- - $Theme Darstellungschema (0,1,2,3)  
- - $BaseFontSize Schriftgröße, 10 ist Standard.  
- - $ShowLegend true für Legende Anzeigen, false zum verbergen.  
 
-## 7. Anhang
+- $Type 1=PNG, 2=SVG  
+- $SensorId Objekt-ID des Sensors  
+- $GraphId Zeitbereich des Graphen: 0=live, 1=last 48 hours, 2=30 days, 3=365 days  
+- $Width Höhe des Graphen in Pixel.  
+- $Height Höhe des Graphen in Pixel.  
+- $Theme Darstellungschema (0,1,2,3)  
+- $BaseFontSize Schriftgröße, 10 ist Standard.  
+- $ShowLegend true für Legende Anzeigen, false zum verbergen.  
+
+## 7. Aktionen
+
+Es gibt keine Aktionen für die IO-Instanz.  
+
+## 8. Kopplungen zwischen Symcon und PRTG  
 
 ### 1. Events von PRTG empfangen  
 
@@ -101,16 +113,20 @@ Status: gestartet
 Verschieben: Nachrichten während Pausenzustand verwerfen  
 Methode: Immer sofort benachrichtigen, nie zusammenfassen.  
 HTTP-Aktion ausführen: URL von IPS nach folgendem Schema eintragen:  
-```
+
+```text
 http://<ips-ip>:<ips-port>/hook/PRTG<InstanzID>
 ```
-z.B. http://192.168.123.123:3777/hook/PRTG12345  
+
+z.B. `http://192.168.123.123:3777/hook/PRTG12345`  
 (Die URL wird in der Konfiguration der Instanz angezeigt.)  
 Post-Daten:  
-```
+
+```text
 %deviceid
 %sensorid
 ```
+
 ![PRTG Benachrichtigung](imgs/prtg_event2.png)  
 Anschließend müssen noch Trigger definiert werden, welche diese Benachrichtigung auslösen.  
 PRTG vererbt Konfigurationen vom obersten Element nach unten. Somit können einzelne Objekte diese Benachrichtigung auslösen, oder auch alle.  
@@ -123,16 +139,19 @@ Wird in IPS eine Benachrichtigung empfangen, so wird dies im Reiter Debug mit 'P
 
 ### 2. IPS in PRTG überwachen  
 
-Die Instant stellt einen HTTP-Sensor für PRTG bereit welcher wie folgt in PRTG eingebunden werden kann:  
-- Unterhalb des gewünschten Gerätes einen neuen Sensor hinzufügen.  
-- Im Suchfeld 'HTTP Daten' eingeben und den Sensor 'HTTP Daten (Erweitert)' auswählen.  
-- Als URL wird wieder der Webhook eingetragen:  
-```
+Die Instanz stellt einen HTTP-Sensor für PRTG bereit welcher wie folgt in PRTG eingebunden werden kann:  
+
+ Unterhalb des gewünschten Gerätes einen neuen Sensor hinzufügen.  
+ Im Suchfeld 'HTTP Daten' eingeben und den Sensor 'HTTP Daten (Erweitert)' auswählen.  
+ Als URL wird wieder der Webhook eingetragen:  
+
+```text
 http://<ips-ip>:<ips-port>/hook/PRTG<InstanzID>
 ```
-http://192.168.123.123:3777/hook/PRTG12345  
+
+`http://192.168.123.123:3777/hook/PRTG12345`  
 (Die URL wird in der Konfiguration der Instanz angezeigt.)  
- 
+
 - Anfragemethode bleibt auf GET  
 
 Nach dem erzeugen und speichern der Sensoreinstellungen dauert es einen Augenblick bis PRTG die ersten Werte darstellt.  
@@ -140,8 +159,21 @@ Nach dem erzeugen und speichern der Sensoreinstellungen dauert es einen Augenbli
 ![PRTG Sensor](imgs/prtg_sensor2.png)  
 ![PRTG Sensor](imgs/prtg_sensor3.png)  
 
+## 9. Anhang
 
-## 8. Lizenz
+### 1. Changelog
 
-  IPS-Modul:  
-  [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
+[Changelog der Library](../README.md#3-changelog)  
+
+### 2. Spenden  
+  
+Die Library ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als Unterstützung für den Autor werden hier akzeptiert:  
+
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](https://paypal.me/Nall4chan)  
+
+[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](https://www.amazon.de/hz/wishlist/ls/YU4AI9AQT9F?ref_=wl_share)  
+
+## 9. Lizenz
+
+IPS-Modul:  
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)

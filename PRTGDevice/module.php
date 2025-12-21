@@ -11,9 +11,9 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.52
+ * @version       2.60
  *
  */
 
@@ -22,10 +22,10 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * Erweitert IPSModule.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.52
+ * @version       2.60
  *
  * @example <b>Ohne</b>
  *
@@ -61,7 +61,6 @@ class PRTGDevice extends IPSModuleStrict
         $this->RegisterPropertyBoolean('DisplayTotalSensors', true);
         $this->RegisterPropertyInteger('Interval', 60);
         $this->RegisterTimer('RequestState', 0, 'PRTG_RequestState($_IPS[\'TARGET\']);');
-        $this->ConnectParent('{67470842-FB5E-485B-92A2-4401E371E6FC}');
     }
 
     /**

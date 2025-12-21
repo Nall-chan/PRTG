@@ -11,9 +11,9 @@ namespace prtg;
  * @package       PRTG
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
- * @version       2.52
+ * @version       2.60
  *
  */
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/VariableHelper.php') . '}');
@@ -25,10 +25,10 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
- * @copyright     2023 Michael Tröger
+ * @copyright     2025 Michael Tröger
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  *
- * @version       2.52
+ * @version       2.60
  *
  * @example <b>Ohne</b>
  */
@@ -140,7 +140,13 @@ trait PRTGPause
  */
 trait VariableConverter
 {
-    private function ConvertRuntime(int $Seconds)
+    /**
+     * ConvertRuntime
+     *
+     * @param  int $Seconds
+     * @return string
+     */
+    private function ConvertRuntime(int $Seconds): string
     {
         $t['sec'] = $Seconds % 60;
         $t['min'] = (($Seconds - $t['sec']) / 60) % 60;
@@ -149,12 +155,24 @@ trait VariableConverter
         return sprintf($this->Translate('%d Tg. %02d Std. %02d Min. %02d Sek.'), $t['day'], $t['std'], $t['min'], $t['sec']);
     }
 
-    private function ConvertPRTGTimestamp(float $Timestamp)
+    /**
+     * ConvertPRTGTimestamp
+     *
+     * @param  float $Timestamp
+     * @return float|int
+     */
+    private function ConvertPRTGTimestamp(float $Timestamp): float|int
     {
         return -2209165200 + (86400 * $Timestamp);
     }
 
-    private function ConvertValue($Value)
+    /**
+     * ConvertValue
+     *
+     * @param  mixed $Value
+     * @return array|bool
+     */
+    private function ConvertValue($Value): array|bool
     {
         $Result = [
             'Data'    => $Value['lastvalue'],
