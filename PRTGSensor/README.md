@@ -63,6 +63,9 @@ Folgende Parameter sind in der Instanz zu konfigurieren:
 | UseInterval        |  bool   |     true     | Abfrageintervall aus Interval benutzen, sonst PRTG-Intervall nutzen  |
 | Interval           | integer |      60      | Abfrageintervall in Sekunden                                         |
 
+Der Haken für `Ignoriere Einheit und Typ` sollte nur in Ausnahmefällen aktiviert werden.  
+Es wird empfohlen die korrekte Einheit in PRTG unterhalb des Kanal einzustellen.  
+
 ## 4. Statusvariablen
 
 Folgende Statusvariablen werden automatisch angelegt.  

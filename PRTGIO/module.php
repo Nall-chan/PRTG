@@ -118,7 +118,6 @@ class PRTGIO extends IPSModuleStrict
         $this->Url = '';
         $this->Hash = '';
         $this->State = self::isInActive;
-        $this->RegisterHook('PRTG' . $this->InstanceID);
         if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
         }
@@ -133,6 +132,7 @@ class PRTGIO extends IPSModuleStrict
     {
         $this->Url = '';
         $this->Hash = '';
+        $this->RegisterHook('PRTG' . $this->InstanceID);
 
         parent::ApplyChanges();
         if (IPS_GetKernelRunlevel() != KR_READY) {
@@ -464,46 +464,51 @@ class PRTGIO extends IPSModuleStrict
      */
     private function FetchIPSSensorData(): string
     {
-        //$this->SendDebug('FetchIPSSensorData', '', 0);
         $i = 0;
-        $Threads = IPS_GetScriptThreadList();
-        foreach ($Threads as $Thread) {
-            $Par = IPS_GetScriptThread($Thread);
-            if ($Par['Sender']) {
+        $ExecutionAvg = 0;
+        $PeakMemoryUsage = 0;
+        $ThreadList = IPS_GetScriptThreadList();
+        foreach ($ThreadList as $ThreadId) {
+            $Thread = IPS_GetScriptThread($ThreadId);
+
+            $ExecutionAvg += $Thread['ExecutionAvg'];
+            $PeakMemoryUsage += $Thread['PeakMemoryUsage'];
+            if ($Thread['Sender']) {
                 $i++;
             }
         }
         $Channels = [];
-        $Channels[] = ['channel' => 'PHP Threads', 'value' => $i, 'unit' => 'Count', 'limitmaxwarning' => (int) (count($Threads) / 100 * 50), 'limitmaxerror' => (int) (count($Threads) / 100 * 90), 'LimitMode' => 1];
-        $Channels[] = ['channel' => 'IPS Objects', 'value' => count(IPS_GetObjectList()), 'unit' => 'Count', 'limitmaxwarning' => 45000, 'limitmaxerror' => 50000, 'LimitMode' => 1];
+        $Channels[] = ['channel' => 'PHP Threads', 'value' => $i, 'unit' => 'Count', 'limitmaxwarning' => (int) (count($ThreadList) / 100 * 50), 'limitmaxerror' => (int) (count($ThreadList) / 100 * 90), 'limitmode' => 1];
+        $Channels[] = ['channel' => 'PHP Threads duration (avg)', 'value' => (int) ($ExecutionAvg / count($ThreadList)),  'customunit'=>'ms', 'limitmaxwarning' => (count($ThreadList) * 9), 'limitmaxerror' => (count($ThreadList) * 10), 'limitmode' => 1];
+        $MemLimit = ini_parse_quantity(ini_get('memory_limit'));
+        $Channels[] = ['channel' => 'PHP Threads memory usage (avg)', 'value' => (int) ($PeakMemoryUsage / count($ThreadList)), 'unit' => 'BytesMemory', 'limitmaxwarning' => (int) ($MemLimit / 100 * 75), 'limitmaxerror' => (int) ($MemLimit / 100 * 90), 'limitmode' => 1];
+        $Channels[] = ['channel' => 'IPS Objects', 'value' => count(IPS_GetObjectList()), 'unit' => 'Count', 'limitmaxwarning' => 45000, 'limitmaxerror' => 50000, 'limitmode' => 1];
 
-        $UtilsId = IPS_GetInstanceListByModuleID('{B69010EA-96D5-46DF-B885-24821B8C8DBD}');
-        if (count($UtilsId) > 0) {
-            $VarId = @IPS_GetObjectIDByIdent('LicenseSubscription', $UtilsId[0]);
-            if ($VarId > 0) {
-                $Channels[] = ['channel' => 'License Subscription', 'value' => GetValueInteger($VarId) - time(), 'unit' => 'TimeSeconds', 'limitminwarning' => 30 * 24 * 60 * 60, 'limitminerror' => 0, 'LimitMode' => 1];
-            }
+        $UtilsId = IPS_GetInstanceListByModuleID('{B69010EA-96D5-46DF-B885-24821B8C8DBD}')[0];
+        $VarId = @IPS_GetObjectIDByIdent('LicenseSubscription', $UtilsId);
+        if ($VarId > 0) {
+            $Channels[] = ['channel' => 'License Subscription', 'value' => GetValueInteger($VarId) - time(), 'unit' => 'TimeSeconds', 'limitminwarning' => 30 * 24 * 60 * 60, 'limitminerror' => 0, 'limitmode' => 1];
         }
 
-        $Messages = UC_GetLogMessageStatistics($UtilsId[0]);
-        $TimeSpanSec = (time() - $Messages['ResetTimeStamp']);
+        $LogMessages = UC_GetLogMessageStatistics($UtilsId);
+        $TimeSpanSec = (time() - $LogMessages['ResetTimeStamp']);
         if ($TimeSpanSec > 0) {
-            unset($Messages['ResetTimeStamp']);
+            unset($LogMessages['ResetTimeStamp']);
             $TimeSpan = $TimeSpanSec / 60;
-            foreach ($Messages as $MessageTyp => $Value) {
+            foreach ($LogMessages as $MessageTyp => $Value) {
                 switch ($MessageTyp) {
                     case 'MessageWarningCount':
                         $MessageChannel = [
                             'limitmaxwarning' => 10,
                             'limitmaxerror'   => 20,
-                            'LimitMode'       => 1
+                            'limitmode'       => 1
                         ];
                         break;
                     case 'MessageErrorCount':
                         $MessageChannel = [
                             'limitmaxwarning' => 5,
                             'limitmaxerror'   => 10,
-                            'LimitMode'       => 1
+                            'limitmode'       => 1
                         ];
                         break;
                     default:
@@ -514,6 +519,35 @@ class PRTGIO extends IPSModuleStrict
                 $Channels[] = $MessageChannel;
             }
         }
+        $KernelMessages = UC_GetKernelStatistics($UtilsId);
+        $TimeSpanSec = (time() - IPS_GetKernelStartTime());
+        if ($TimeSpanSec > 0) {
+            $TimeSpan = $TimeSpanSec / 60;
+            $Channels[] = [
+                'channel'         => 'Message Slow',
+                'value'           => ($KernelMessages['MessageSlowCounter'] / $TimeSpan),
+                'float'           => 1,
+                'unit'            => 'Custom',
+                'customunit'      => '#/Min.',
+                'speedtime'       => 'Minute',
+                'limitmaxwarning' => 0.1,
+                'limitmaxerror'   => 1,
+                'limitmode'       => 1
+            ];
+            $Channels[] = [
+                'channel'    => 'Message Slow Counter',
+                'value'      => (int) $KernelMessages['MessageSlowCounter'],
+                'unit'       => 'Count'
+            ];
+            $Channels[] = [
+                'channel'         => 'Message Queue Size',
+                'value'           => (int) $KernelMessages['MessageQueueSize'],
+                'unit'            => 'Count',
+                'limitmaxwarning' => 1,
+                'limitmaxerror'   => 5,
+                'limitmode'       => 1
+            ];
+        }
         $ProcessInfo = Sys_GetProcessInfo();
         $Channels[] = ['channel' => 'Process Handles', 'value' => $ProcessInfo['IPS_HANDLECOUNT'], 'unit' => 'Count'];
         $Channels[] = ['channel' => 'Process Threads', 'value' => $ProcessInfo['IPS_NUMTHREADS'], 'unit' => 'Count'];
@@ -522,26 +556,29 @@ class PRTGIO extends IPSModuleStrict
         $Channels[] = ['channel' => 'Process Pagefile', 'value' => $ProcessInfo['IPS_PAGEFILE'], 'unit' => 'BytesMemory'];
         $Channels[] = ['channel' => 'Process Count', 'value' => $ProcessInfo['PROCESSCOUNT'], 'unit' => 'Count'];
         $MemoryInfo = Sys_GetMemoryInfo();
-        $Channels[] = ['channel' => 'System RAM Physical Free', 'value' => $MemoryInfo['AVAILPHYSICAL'] / $MemoryInfo['TOTALPHYSICAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
+        $Channels[] = ['channel' => 'System RAM Physical Free', 'value' => $MemoryInfo['AVAILPHYSICAL'] / $MemoryInfo['TOTALPHYSICAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
         if ($MemoryInfo['TOTALPAGEFILE'] == 0) {
             $MemoryInfo['AVAILPAGEFILE'] = 1;
             $MemoryInfo['TOTALPAGEFILE'] = 1;
         }
-        $Channels[] = ['channel' => 'System RAM Pagefile Free', 'value' => $MemoryInfo['AVAILPAGEFILE'] / $MemoryInfo['TOTALPAGEFILE'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
-        $Channels[] = ['channel' => 'System RAM Virtual Free', 'value' => $MemoryInfo['AVAILVIRTUAL'] / $MemoryInfo['TOTALVIRTUAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
+        $Channels[] = ['channel' => 'System RAM Pagefile Free', 'value' => $MemoryInfo['AVAILPAGEFILE'] / $MemoryInfo['TOTALPAGEFILE'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
+        $Channels[] = ['channel' => 'System RAM Virtual Free', 'value' => $MemoryInfo['AVAILVIRTUAL'] / $MemoryInfo['TOTALVIRTUAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
         $CPUs = Sys_GetCPUInfo();
         foreach ($CPUs as $Key => $Value) {
             $Name = explode('_', $Key);
-            $Channels[] = ['channel' => 'System CPU ' . $Name[1], 'value' => $Value, 'float' => 1, 'unit' => 'CPU', 'limitmaxwarning' => 70, 'limitmaxerror' => 90, 'LimitMode' => 1];
+            $Channels[] = ['channel' => 'System CPU ' . $Name[1], 'value' => $Value, 'float' => 1, 'unit' => 'CPU', 'limitmaxwarning' => 70, 'limitmaxerror' => 90, 'limitmode' => 1];
         }
         $Drives = Sys_GetHardDiskInfo();
         foreach ($Drives as $Value) {
+            if ($Value['TOTAL'] == 0) {
+                continue;
+            }
             if ($Value['LABEL'] == '') {
                 $Name = $Value['LETTER'];
             } else {
                 $Name = $Value['LABEL'] . '(' . $Value['LETTER'] . ')';
             }
-            $Channels[] = ['channel' => 'Disk ' . $Name, 'value' => $Value['FREE'] / $Value['TOTAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'LimitMode' => 1];
+            $Channels[] = ['channel' => 'Disk ' . $Name, 'value' => $Value['FREE'] / $Value['TOTAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
             $Channels[] = ['channel' => 'Disk ' . $Name . ' Free', 'value' => (int) $Value['FREE'], 'unit' => 'BytesDisk'];
         }
         $Result = ['prtg' => ['error' => 0, 'result' => $Channels]];
@@ -670,10 +707,10 @@ class PRTGIO extends IPSModuleStrict
                 $this->SetStatus(IS_EBASE + 1);
                 $this->State = self::isDisconnected;
             } elseif ($HttpCode == 404) {
-                $this->SetStatus(S_EBASE + 1);
+                $this->SetStatus(IS_EBASE + 1);
                 $this->State = self::isDisconnected;
             } else {
-                $this->SetStatus(S_EBASE + 2);
+                $this->SetStatus(IS_EBASE + 2);
                 $this->State = self::isUnauthorized;
             }
             $this->Hash = '';

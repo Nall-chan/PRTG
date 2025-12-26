@@ -106,6 +106,7 @@ Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem extern
 - Fehlende Einheiten werden im LogFile protokolliert.  
 - Wird aufgrund der Einheit ein andere Variablentyp benötigt, als aktuell vorhanden ist, so wird dies im LogFile protokolliert.  
 - Die Instanz-Konfiguration liefert einen Überblick der Variablen mit ihren erkannten Einheiten und Variablentyp.  
+- Der Symcon Sensor für PRTG enthält jetzt auch MessageQueueSize, MessageSlowCounter, durchschnittliche Laufzeit und Speicherverbrauch aller PHP-Threads
   
 **Version 2.52:**  
 

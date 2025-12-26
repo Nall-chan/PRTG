@@ -68,9 +68,14 @@ class PRTGSensor extends IPSModuleStrict
         $this->RegisterPropertyBoolean('UseInterval', false);
         $this->RegisterPropertyInteger('Interval', 60);
         $this->RegisterPropertyInteger('id', 0);
-        $this->RegisterTimer('RequestState', 0, 'PRTG_RequestState($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('RequestState', 0, 'IPS_RequestAction($_IPS[\'TARGET\'],\'RequestState\', 0);');
         $this->Interval = 0;
         $this->Channels = [];
+    }
+
+    public function Destroy(): void
+    {
+        $this->SetTimer(false);
     }
 
     /**
@@ -349,8 +354,12 @@ class PRTGSensor extends IPSModuleStrict
      */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
-        $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
-
+        if (!IPS_InstanceExists($this->InstanceID)) {
+            return;
+        }
+        if (IPS_InstanceExists($SenderID)) {
+            $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
+        }
         switch ($Message) {
             case IPS_KERNELSTARTED:
                 $this->KernelReady();
@@ -381,10 +390,7 @@ class PRTGSensor extends IPSModuleStrict
      */
     public function ReceiveData(string $JSONString): string
     {
-        $Data = json_decode($JSONString, true);
-        $this->SendDebug('Got Event', $Data, 0);
-        $this->RequestState();
-        $this->SendDebug('End Event', $Data, 0);
+        IPS_RunScriptText('PRTG_RequestState(' . $this->InstanceID . ')');
         return '';
     }
 
@@ -419,6 +425,15 @@ class PRTGSensor extends IPSModuleStrict
             return;
         }
         switch ($Ident) {
+            case 'RequestState':
+                if (!IPS_InstanceExists($this->InstanceID)) {
+                    return;
+                }
+                if (!$this->HasActiveParent()) {
+                    return;
+                }
+                $this->RequestState();
+                return;
             case 'ActionButton':
                 if ($Value) {
                     $this->SetResume();
@@ -431,6 +446,10 @@ class PRTGSensor extends IPSModuleStrict
                 return;
             case 'ShowIntervall':
                 $this->UpdateFormField('Interval', 'visible', $Value);
+                return;
+            case 'SetIgnoreMismatch':
+                $Data = json_decode($Value, true);
+                $this->SetChannelOverwrite($Data['objid'], $Data['Ignore']);
                 return;
         }
         trigger_error('Invalid Ident', E_USER_NOTICE);
@@ -499,7 +518,7 @@ class PRTGSensor extends IPSModuleStrict
                 $this->SetTimer(true);
             }
         } else {
-            $this->SetStatus(IS_INACTIVE);
+            @$this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
         }
     }
@@ -538,8 +557,7 @@ class PRTGSensor extends IPSModuleStrict
         } else {
             $Interval = 0;
         }
-
-        $this->SetTimerInterval('RequestState', $Interval);
+        @$this->SetTimerInterval('RequestState', $Interval);
     }
 
     /**
@@ -627,6 +645,7 @@ class PRTGSensor extends IPSModuleStrict
             } else {
                 $Ident = (string) $Channel['objid'];
             }
+            $Channel['Ignore'] = $this->GetChannelOverwrite((int) $Channel['objid']);
             $Data = $this->GetVariableData($Channel);
             if ($Data === false) {
                 continue;
@@ -635,19 +654,19 @@ class PRTGSensor extends IPSModuleStrict
                 $Channel['name'] = $Channel['name_raw'];
             }
             $vid = $this->FindIDForIdent($Ident);
-            if ($vid && IPS_GetVariable($vid)['VariableType'] != $Data['VarType']) {
-                $IpsVarTyp = $this->GetVariableTypeName(IPS_GetVariable($vid)['VariableType']);
-                $ChannelVarTyp = $this->GetVariableTypeName($Data['VarType']);
-                $this->LogMessage(sprintf($this->Translate("Variable type mismatch for channel \"%s (%s)\"\r\nExpected %s but got %s"), $Channel['name'], IPS_GetLocation($this->InstanceID), $IpsVarTyp, $ChannelVarTyp), KL_ERROR);
-                $this->AddChannelVarTypes($Channel, $ChannelVarTyp, $IpsVarTyp);
-                continue;
+            if ($vid) {
+                if ($this->ReadPropertyBoolean('AutoRenameChannels') && (IPS_GetName($vid)) != $Channel['name']) {
+                    IPS_SetName($vid, $Channel['name']);
+                }
+                if (!$Channel['Ignore'] && IPS_GetVariable($vid)['VariableType'] != $Data['VarType']) {
+                    $IpsVarTyp = $this->GetVariableTypeName(IPS_GetVariable($vid)['VariableType']);
+                    $ChannelVarTyp = $this->GetVariableTypeName($Data['VarType']);
+                    $this->LogMessage(sprintf($this->Translate("Variable type mismatch for channel \"%s (%s)\"\r\nExpected %s but got %s"), $Channel['name'], IPS_GetLocation($this->InstanceID), $IpsVarTyp, $ChannelVarTyp), KL_ERROR);
+                    $this->AddChannelVarTypes($Channel, $ChannelVarTyp, $IpsVarTyp);
+                    continue;
+                }
             }
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Presentation'], $Channel['objid'], true);
-            $vid = $this->FindIDForIdent($Ident);
-
-            if ($this->ReadPropertyBoolean('AutoRenameChannels') && (IPS_GetName($vid)) != $Channel['name']) {
-                IPS_SetName($vid, $Channel['name']);
-            }
             $this->SetValue($Ident, $Data['Data']);
         }
     }
@@ -690,8 +709,10 @@ class PRTGSensor extends IPSModuleStrict
     {
         $Channels = $this->Channels;
         if (!array_key_exists($ChannelData['objid'], $Channels)) {
+            $Channels[$ChannelData['objid']]['objid'] = $ChannelData['objid'];
             $Channels[$ChannelData['objid']]['ChannelVarTyp'] = $ChannelVarTyp;
             $Channels[$ChannelData['objid']]['IpsVarTyp'] = $ChannelVarTyp;
+            $Channels[$ChannelData['objid']]['Ignore'] = false;
         }
         $Channels[$ChannelData['objid']]['Name'] = $ChannelData['name'];
         $Channels[$ChannelData['objid']]['Data'] = $ChannelData['lastvalue'];
@@ -710,6 +731,11 @@ class PRTGSensor extends IPSModuleStrict
     private function AddChannelVarTypes(array $ChannelData, string $ChannelVarTyp, string $IpsVarTyp): void
     {
         $Channels = $this->Channels;
+        if (!array_key_exists($ChannelData['objid'], $Channels)) {
+            $Channels[$ChannelData['objid']]['objid'] = $ChannelData['objid'];
+            $Channels[$ChannelData['objid']]['Ignore'] = false;
+            $Channels[$ChannelData['objid']]['Unit'] = 'unknown';
+        }
         $Channels[$ChannelData['objid']]['Name'] = $ChannelData['name'];
         $Channels[$ChannelData['objid']]['Data'] = $ChannelData['lastvalue'];
         $Channels[$ChannelData['objid']]['ChannelVarTyp'] = $ChannelVarTyp;
@@ -725,6 +751,35 @@ class PRTGSensor extends IPSModuleStrict
     private function GetChannelOverview(): array
     {
         return array_values($this->Channels);
+    }
+
+    /**
+     * GetChannelOverwrite
+     *
+     * @param  int $objid
+     * @return bool
+     */
+    private function GetChannelOverwrite(int $objid): bool
+    {
+        $Channels = $this->Channels;
+        $Overwrites = array_combine(array_column($Channels, 'objid'), array_column($Channels, 'Ignore'));
+        return $Overwrites[$objid] ?? false;
+    }
+
+    /**
+     * SetChannelOverwrite
+     *
+     * @param  int $objid
+     * @param  bool $Ignore
+     * @return void
+     */
+    private function SetChannelOverwrite(int $objid, bool $Ignore): void
+    {
+        $Channels = $this->Channels;
+        if (array_key_exists($objid, $Channels)) {
+            $Channels[$objid]['Ignore'] = $Ignore;
+        }
+        $this->Channels = $Channels;
     }
 
     /**

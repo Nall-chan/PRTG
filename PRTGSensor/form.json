@@ -48,7 +48,7 @@
         {
             "type": "List",
             "name": "Channels",
-            "caption": "Overview Channels",
+            "caption": "Channel Overview",
             "add": false,
             "delete": false,
             "sort": {
@@ -56,6 +56,11 @@
                 "direction": "ascending"
             },
             "columns": [
+                {
+                    "caption": "objid",
+                    "name": "objid",
+                    "visible": false
+                },
                 {
                     "caption": "Name",
                     "name": "Name",
@@ -80,7 +85,20 @@
                     "caption": "Variable Type",
                     "name": "IpsVarTyp",
                     "width": "150px"
+                },
+                {
+                    "caption": "Ignore unit and type",
+                    "name": "Ignore",
+                    "width": "150px",
+                    "edit": {
+                        "type": "CheckBox"
+                    }
                 }
+            ],
+            "onEdit": [
+                "IPS_RequestAction($id, 'SetIgnoreMismatch', ",
+                "  json_encode(['objid' => $Channels['objid'], 'Ignore' => (bool)$Channels['Ignore']])",
+                ");"
             ],
             "values": []
         },

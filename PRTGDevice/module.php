@@ -63,7 +63,7 @@ class PRTGDevice extends IPSModuleStrict
         $this->RegisterPropertyBoolean('DisplaySensorState', true);
         $this->RegisterPropertyBoolean('DisplayTotalSensors', true);
         $this->RegisterPropertyInteger('Interval', 60);
-        $this->RegisterTimer('RequestState', 0, 'PRTG_RequestState($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('RequestState', 0, 'IPS_RequestAction($_IPS[\'TARGET\'],\'RequestState\', 0);');
     }
 
     /**
@@ -369,8 +369,12 @@ class PRTGDevice extends IPSModuleStrict
      */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
-        $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
-
+        if (!IPS_InstanceExists($this->InstanceID)) {
+            return;
+        }
+        if (IPS_InstanceExists($SenderID)) {
+            $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
+        }
         switch ($Message) {
             case IPS_KERNELSTARTED:
                 $this->KernelReady();
@@ -398,10 +402,7 @@ class PRTGDevice extends IPSModuleStrict
      */
     public function ReceiveData(string $JSONString): string
     {
-        $Data = json_decode($JSONString, true);
-        $this->SendDebug('Got Event', $Data, 0);
-        $this->RequestState();
-        $this->SendDebug('End Event', $Data, 0);
+        IPS_RunScriptText('PRTG_RequestState(' . $this->InstanceID . ')');
         return '';
     }
 
@@ -418,6 +419,15 @@ class PRTGDevice extends IPSModuleStrict
             return;
         }
         switch ($Ident) {
+            case 'RequestState':
+                if (!IPS_InstanceExists($this->InstanceID)) {
+                    return;
+                }
+                if (!$this->HasActiveParent()) {
+                    return;
+                }
+                $this->RequestState();
+                return;
             case 'ActionButton':
                 if ($Value) {
                     $this->SetResume();
@@ -447,7 +457,7 @@ class PRTGDevice extends IPSModuleStrict
                 $this->SetTimer(true);
             }
         } else {
-            $this->SetStatus(IS_INACTIVE);
+            @$this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
         }
     }
@@ -479,7 +489,7 @@ class PRTGDevice extends IPSModuleStrict
         } else {
             $Interval = 0;
         }
-        $this->SetTimerInterval('RequestState', $Interval);
+        @$this->SetTimerInterval('RequestState', $Interval);
     }
 
     /**

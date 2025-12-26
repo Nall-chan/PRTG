@@ -182,7 +182,9 @@ trait VariableConverter
         $data = explode(' ', $Value['lastvalue']);
         if (count($data) == 1) {
             if (preg_match('/[0-9]/', $Value['lastvalue'], $matches, PREG_OFFSET_CAPTURE, 0)) {
-                $this->LogMessage(sprintf($this->Translate("Value without suffix in channel \"%s (%s)\" detected.\r\nPlease check the PRTG channel configuration."), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
+                if (!$Value['Ignore']) {
+                    $this->LogMessage(sprintf($this->Translate("Value without suffix in channel \"%s (%s)\" detected.\r\nPlease check the PRTG channel configuration."), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
+                }
             }
         }
         if ($data[0] == '<') {

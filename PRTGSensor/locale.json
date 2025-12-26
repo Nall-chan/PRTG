@@ -15,6 +15,7 @@
             "Unit": "Einheit",
             "Type of Data": "Datentyp",
             "Variable Type": "Variablentyp",
+            "Ignore unit and type": "Ignoriere Einheit und Typ",
             "Read data": "Lese Daten",
             "Active": "Aktiv",
             "Pause": "Pause",
