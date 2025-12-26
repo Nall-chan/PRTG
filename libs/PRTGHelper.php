@@ -35,6 +35,8 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
 trait PRTGPause
 {
     /**
+     * SetResume
+     *
      * IPS Instanz-Funktion PRTG_SetResume
      * Setzt die Überwachung des Gerätes in PRTG fort.
      *
@@ -55,6 +57,8 @@ trait PRTGPause
     }
 
     /**
+     * SetPause
+     *
      * IPS Instanz-Funktion PRTG_SetPause
      * Pausiert die Überwachung des Gerätes in PRTG.
      *
@@ -66,6 +70,8 @@ trait PRTGPause
     }
 
     /**
+     * SetPauseEx
+     *
      * IPS Instanz-Funktion PRTG_SetPauseEx
      * Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergeben Meldung.
      *
@@ -79,6 +85,8 @@ trait PRTGPause
     }
 
     /**
+     * SetPauseDuration
+     *
      * IPS Instanz-Funktion PRTG_SetPauseDuration
      * Pausiert die Überwachung des Gerätes in PRTG für die in '$Minutes' angegebene Zeit in Minuten.
      *
@@ -92,6 +100,8 @@ trait PRTGPause
     }
 
     /**
+     * SetPauseDurationEx
+     *
      * IPS Instanz-Funktion PRTG_SetPauseDuration
      * Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergeben Meldung für die in '$Minutes' angegebene Zeit in Minuten.
      *
@@ -141,21 +151,6 @@ trait PRTGPause
 trait VariableConverter
 {
     /**
-     * ConvertRuntime
-     *
-     * @param  int $Seconds
-     * @return string
-     */
-    private function ConvertRuntime(int $Seconds): string
-    {
-        $t['sec'] = $Seconds % 60;
-        $t['min'] = (($Seconds - $t['sec']) / 60) % 60;
-        $t['std'] = (((($Seconds - $t['sec']) / 60) - $t['min']) / 60) % 24;
-        $t['day'] = floor(((((($Seconds - $t['sec']) / 60) - $t['min']) / 60) / 24));
-        return sprintf($this->Translate('%d Tg. %02d Std. %02d Min. %02d Sek.'), $t['day'], $t['std'], $t['min'], $t['sec']);
-    }
-
-    /**
      * ConvertPRTGTimestamp
      *
      * @param  float $Timestamp
@@ -167,41 +162,15 @@ trait VariableConverter
     }
 
     /**
-     * ConvertValue
+     * GetVariableData
      *
      * @param  mixed $Value
      * @return array|bool
      */
-    private function ConvertValue($Value): array|bool
+    private function GetVariableData($Value): array|bool
     {
-        $Result = [
-            'Data'    => $Value['lastvalue'],
-            'Profile' => '',
-            'VarType' => VARIABLETYPE_STRING
-        ];
-
-        if (is_numeric($Value['lastvalue'])) {
-            $Result = [
-                'Data'    => (float) $Value['lastvalue'],
-                'Profile' => '',
-                'VarType' => VARIABLETYPE_FLOAT
-            ];
-            if (is_int($Value['lastvalue'])) {
-                $Result = [
-                    'Data'    => $Value['lastvalue'],
-                    'Profile' => '',
-                    'VarType' => VARIABLETYPE_INTEGER
-                ];
-            } elseif (is_float($Value['lastvalue'])) {
-                $Result = [
-                    'Data'    => $Value['lastvalue'],
-                    'Profile' => '',
-                    'VarType' => VARIABLETYPE_FLOAT
-                ];
-            }
-            return $Result;
-        }
         if (!array_key_exists('lastvalue_raw', $Value)) {
+            $this->LogMessage(sprintf($this->Translate('Channel "%s (%s)", lastvalue_raw not found!'), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
             return false;
         }
         if ($Value['lastvalue_raw'] === 'Keine Daten') {
@@ -211,94 +180,282 @@ trait VariableConverter
             return false;
         }
         $data = explode(' ', $Value['lastvalue']);
+        if (count($data) == 1) {
+            if (preg_match('/[0-9]/', $Value['lastvalue'], $matches, PREG_OFFSET_CAPTURE, 0)) {
+                $this->LogMessage(sprintf($this->Translate("Value without suffix in channel \"%s (%s)\" detected.\r\nPlease check the PRTG channel configuration."), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
+            }
+        }
         if ($data[0] == '<') {
             array_shift($data);
         }
-        if (count($data) > 3) {
-            return $Result;
+        $Suffix = trim(array_pop($data));
+        if ($Suffix == 'Delay') {
+            $Suffix = trim(array_pop($data));
         }
-        if (count($data) < 2) {
-            return $Result;
-        }
-        switch ($data[1]) {
+        switch ($Suffix) {
             case 'Tg.':
+            case 'Std.':
+            case 'Min.':
+            case 'Sek.':
                 $Result = [
-                    'Data'    => $this->ConvertRuntime((int) $Value['lastvalue_raw']),
-                    'Profile' => '',
-                    'VarType' => VARIABLETYPE_STRING
+                    'Data'         => (int) $Value['lastvalue_raw'],
+                    'Presentation' => [
+                        'COUNTDOWN_TYPE' => 0,
+                        'FORMAT'         => 2,
+                        'PRESENTATION'   => VARIABLE_PRESENTATION_DURATION,
+                    ],
+                    'VarType'      => VARIABLETYPE_INTEGER
                 ];
                 break;
             case 'ms':
                 $Result = [
-                    'Data'    => $Value['lastvalue_raw'],
-                    'Profile' => 'PRTG.ms',
-                    'VarType' => VARIABLETYPE_FLOAT
+                    'Data'         => $Value['lastvalue_raw'],
+                    'Presentation' => [
+                        'COLOR'        => -1,
+                        'ICON'         => 'binary',
+                        'SUFFIX'       => ' ms',
+                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'   => 0,
+                        'PERCENTAGE'   => false,
+                        'DIGITS'       => 2,
+                    ],
+                    'VarType'      => VARIABLETYPE_FLOAT
                 ];
                 break;
             case '#':
                 $Result = [
-                    'Data'    => $Value['lastvalue_raw'],
-                    'Profile' => 'PRTG.No',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => $Value['lastvalue_raw'],
+                    'Presentation' => [
+                        'COLOR'        => -1,
+                        'ICON'         => 'sigma',
+                        'SUFFIX'       => ' #',
+                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'   => 0,
+                        'PERCENTAGE'   => false,
+                        'DIGITS'       => 0,
+                    ],
+                    'VarType'      => VARIABLETYPE_INTEGER
                 ];
                 break;
+            case 'kByte':
             case 'MByte':
+            case 'GByte':
+            case 'kb':
+            case 'KB':
+            case 'MB':
+            case 'GB':
                 $Result = [
-                    'Data'    => $Value['lastvalue_raw'] / 1048576,
-                    'Profile' => 'PRTG.MByte',
-                    'VarType' => VARIABLETYPE_FLOAT
-                ];
-                break;
-            case 'Sek.':
-                $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 10),
-                    'Profile' => 'PRTG.Sec',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => $Value['lastvalue_raw'],
+                    'Presentation' => [
+                        'COLOR'            => -1,
+                        'ICON'             => '',
+                        'SUFFIX'           => ' MB',
+                        'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'       => 0,
+                        'PERCENTAGE'       => false,
+                        'DIGITS'           => 2,
+                        'INTERVALS_ACTIVE' => true,
+                        'INTERVALS'        => json_encode([
+                            [
+                                'IntervalMinValue' => 0,
+                                'IntervalMaxValue' => 1024,
+                                'ConstantActive'   => false,
+                                'ConstantValue'    => '',
+                                'ConversionFactor' => 1,
+                                'PrefixActive'     => false,
+                                'PrefixValue'      => '',
+                                'SuffixActive'     => true,
+                                'SuffixValue'      => ' Byte',
+                                'DigitsActive'     => true,
+                                'DigitsValue'      => 0,
+                                'IconActive'       => false,
+                                'IconValue'        => '',
+                                'ColorActive'      => false,
+                                'Color'            => -1
+                            ],
+                            [
+                                'IntervalMinValue' => 1024,
+                                'IntervalMaxValue' => 1024 * 1024,
+                                'ConstantActive'   => false,
+                                'ConstantValue'    => '',
+                                'ConversionFactor' => 1024,
+                                'PrefixActive'     => false,
+                                'PrefixValue'      => '',
+                                'SuffixActive'     => true,
+                                'SuffixValue'      => ' KB',
+                                'DigitsActive'     => true,
+                                'DigitsValue'      => 2,
+                                'IconActive'       => false,
+                                'IconValue'        => '',
+                                'ColorActive'      => false,
+                                'Color'            => -1
+                            ],
+                            [
+                                'IntervalMinValue' => 1024 * 1024,
+                                'IntervalMaxValue' => 1024 * 1024 * 1024,
+                                'ConstantActive'   => false,
+                                'ConstantValue'    => '',
+                                'ConversionFactor' => 1024 * 1024,
+                                'PrefixActive'     => false,
+                                'PrefixValue'      => '',
+                                'SuffixActive'     => true,
+                                'SuffixValue'      => ' MB',
+                                'DigitsActive'     => true,
+                                'DigitsValue'      => 2,
+                                'IconActive'       => false,
+                                'IconValue'        => '',
+                                'ColorActive'      => false,
+                                'Color'            => -1
+                            ],
+                            [
+                                'IntervalMinValue' => 1024 * 1024 * 1024,
+                                'IntervalMaxValue' => PHP_FLOAT_MAX,
+                                'ConstantActive'   => false,
+                                'ConstantValue'    => '',
+                                'ConversionFactor' => 1024 * 1024 * 1024,
+                                'PrefixActive'     => false,
+                                'PrefixValue'      => '',
+                                'SuffixActive'     => true,
+                                'SuffixValue'      => ' GB',
+                                'DigitsActive'     => true,
+                                'DigitsValue'      => 2,
+                                'IconActive'       => false,
+                                'IconValue'        => '',
+                                'ColorActive'      => false,
+                                'Color'            => -1
+                            ],
+                        ])
+                    ],
+                    'VarType'      => VARIABLETYPE_FLOAT
                 ];
                 break;
             case '%':
                 $Result = [
-                    'Data'    => $Value['lastvalue_raw'],
-                    'Profile' => 'PRTG.Intensity',
-                    'VarType' => VARIABLETYPE_FLOAT
-                ];
-                break;
-            case 'Mbit/Sek.':
-                $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 125000),
-                    'Profile' => 'PRTG.MBitSec',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => $Value['lastvalue_raw'],
+                    'Presentation' => [
+                        'COLOR'           => -1,
+                        'ICON'            => 'Intensity',
+                        'SUFFIX'          => ' %',
+                        'PRESENTATION'    => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'      => 0,
+                        'PERCENTAGE'      => true,
+                        'DIGITS'          => 2,
+                        'MIN'             => 0,
+                        'MAX'             => 100,
+                        'INTERVALS_ACTIVE'=> false
+                    ],
+                    'VarType'      => VARIABLETYPE_FLOAT
                 ];
                 break;
             case 'kbit/Sek.':
+            case 'Mbit/Sek.':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 125),
-                    'Profile' => 'PRTG.kBitSec',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => $Value['lastvalue_raw'],
+                    'Presentation' => [
+                        'COLOR'            => -1,
+                        'ICON'             => '',
+                        'SUFFIX'           => ' kbit/Sek.',
+                        'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'       => 0,
+                        'PERCENTAGE'       => false,
+                        'DIGITS'           => 2,
+                        'INTERVALS_ACTIVE' => true,
+                        'INTERVALS'        => json_encode([
+                            [
+                                'IntervalMinValue' => 0,
+                                'IntervalMaxValue' => 125000,
+                                'ConstantActive'   => false,
+                                'ConstantValue'    => '',
+                                'ConversionFactor' => 125,
+                                'PrefixActive'     => false,
+                                'PrefixValue'      => '',
+                                'SuffixActive'     => true,
+                                'SuffixValue'      => ' kbit/Sek.',
+                                'DigitsActive'     => true,
+                                'DigitsValue'      => 0,
+                                'IconActive'       => false,
+                                'IconValue'        => '',
+                                'ColorActive'      => false,
+                                'Color'            => -1
+                            ],
+                            [
+                                'IntervalMinValue' => 125000,
+                                'IntervalMaxValue' => PHP_FLOAT_MAX,
+                                'ConstantActive'   => false,
+                                'ConstantValue'    => ' Mbit/Sek.',
+                                'ConversionFactor' => 125000,
+                                'PrefixActive'     => false,
+                                'PrefixValue'      => '',
+                                'SuffixActive'     => true,
+                                'SuffixValue'      => ' KB',
+                                'DigitsActive'     => true,
+                                'DigitsValue'      => 2,
+                                'IconActive'       => false,
+                                'IconValue'        => '',
+                                'ColorActive'      => false,
+                                'Color'            => -1
+                            ]
+                        ])
+                    ],
+                    'VarType'      => VARIABLETYPE_FLOAT
                 ];
                 break;
             case '#/Sek.':
+            case 'Msg/s':
+            case 'Nachr./s':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 10),
-                    'Profile' => 'PRTG.IpS',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => floor($Value['lastvalue_raw'] / 10),
+                    'Presentation' => [
+                        'COLOR'        => -1,
+                        'ICON'         => 'sigma',
+                        'SUFFIX'       => $this->Translate(' Items/sec'),
+                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'   => 0,
+                        'PERCENTAGE'   => false,
+                        'DIGITS'       => 0,
+                    ],
+                    'VarType'      => VARIABLETYPE_INTEGER
                 ];
                 break;
             case '#/Min.':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 10),
-                    'Profile' => 'PRTG.IpM',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => floor($Value['lastvalue_raw'] / 10),
+                    'Presentation' => [
+                        'COLOR'        => -1,
+                        'ICON'         => 'sigma',
+                        'SUFFIX'       => $this->Translate(' Items/min'),
+                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'   => 0,
+                        'PERCENTAGE'   => false,
+                        'DIGITS'       => 0,
+                    ],
+                    'VarType'      => VARIABLETYPE_INTEGER
                 ];
                 break;
             case 'Items':
                 $Result = [
-                    'Data'    => floor($Value['lastvalue_raw'] / 10),
-                    'Profile' => 'PRTG.Items',
-                    'VarType' => VARIABLETYPE_INTEGER
+                    'Data'         => floor($Value['lastvalue_raw'] / 10),
+                    'Presentation' => [
+                        'COLOR'        => -1,
+                        'ICON'         => 'sigma',
+                        'SUFFIX'       => $this->Translate(' Items'),
+                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                        'USAGE_TYPE'   => 0,
+                        'PERCENTAGE'   => false,
+                        'DIGITS'       => 0,
+                    ],
+                    'VarType'      => VARIABLETYPE_INTEGER
+                ];
+                break;
+            default:
+                $Result = [
+                    'Data'         => $Value['lastvalue'],
+                    'Presentation' => [],
+                    'VarType'      => VARIABLETYPE_STRING
                 ];
                 break;
         }
+        $this->AddChannelSuffix($Value, $Suffix, $this->GetVariableTypeName($Result['VarType']));
         return $Result;
     }
 }

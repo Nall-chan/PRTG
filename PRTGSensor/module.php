@@ -30,11 +30,12 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @example <b>Ohne</b>
  *
  * @property int $Interval
+ * @property array $Channels
+ * @method bool IORequestAction(string $Ident, mixed $Value)
+ * @method void IOMessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data)
+ * @method int FindIDForIdent(string $Ident)
+ * @method void UnregisterProfile(string $Name)
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
- * @method void RegisterProfileBooleanEx(string $Name, string $Icon, string $Prefix, string $Suffix, array $Associations)
- * @method void RegisterProfileIntegerEx(string $Name, string $Icon, string $Prefix, string $Suffix, array $Associations, int $MaxValue = -1, float $StepSize = 0)
- * @method void RegisterProfileFloat(string $Name, string $Icon, string $Prefix, string $Suffix, float $MinValue, float $MaxValue, float $StepSize, int $Digits)
- * @method void RegisterProfileInteger(string $Name, string $Icon, string $Prefix, string $Suffix, int $MinValue, int $MaxValue, int $StepSize)
  * @method void RegisterParent()
  */
 class PRTGSensor extends IPSModuleStrict
@@ -50,8 +51,11 @@ class PRTGSensor extends IPSModuleStrict
         //\prtg\InstanceStatus::RegisterParent as IORegisterParent;
         \prtg\InstanceStatus::RequestAction as IORequestAction;
     }
+
     /**
-     * Interne Funktion des SDK.
+     * Create
+     *
+     * @return void
      */
     public function Create(): void
     {
@@ -66,67 +70,255 @@ class PRTGSensor extends IPSModuleStrict
         $this->RegisterPropertyInteger('id', 0);
         $this->RegisterTimer('RequestState', 0, 'PRTG_RequestState($_IPS[\'TARGET\']);');
         $this->Interval = 0;
+        $this->Channels = [];
     }
 
     /**
-     * Interne Funktion des SDK.
+     * ApplyChanges
+     *
+     * @return void
      */
     public function ApplyChanges(): void
     {
-        $this->RegisterProfileBooleanEx('PRTG.Action', 'Gear', '', '', [
-            [true, $this->Translate('Active'), '', 0x00ff00],
-            [false, $this->Translate('Pause'), '', 0x000090]
-        ]);
-        $this->RegisterProfileIntegerEx('PRTG.Ack', '', '', '', [
-            [0, $this->Translate('Acknowledge alarm'), 'Gear', 0x555555],
-        ]);
-        $this->RegisterProfileIntegerEx('PRTG.Sensor', 'Information', '', '', [
-            [1, $this->Translate('Unknown'), '', 0x555555],
-            [2, $this->Translate('Scanning'), '', 0x555555],
-            [3, $this->Translate('Up'), '', 0x00ff00],
-            [4, $this->Translate('Warning'), 'Warning', 0x808000],
-            [5, $this->Translate('Down'), 'Warning', 0xff0000],
-            [6, $this->Translate('No Probe'), '', 0x555555],
-            [7, $this->Translate('Paused'), 'Sleep', 0x000090],
-            [8, $this->Translate('Paused by Dependency'), 'Sleep', 0x000090],
-            [9, $this->Translate('Paused by Schedule'), 'Sleep', 0x000090],
-            [10, $this->Translate('Unusual'), 'Warning', 0x808000],
-            [11, $this->Translate('Not Licensed'), 'Sleep', 0x000090],
-            [12, $this->Translate('Paused Until'), 'Sleep', 0x000090],
-            [13, $this->Translate('Down Acknowledged'), 'Warning', 0xff0000],
-            [14, $this->Translate('Down Partial'), 'Warning', 0xff0000],
-        ]);
-        $this->RegisterProfileFloat('PRTG.ms', '', '', ' ms', 0, 0, 0, 2);
-        $this->RegisterProfileFloat('PRTG.Intensity', 'Intensity', '', ' %', 0, 100, 0, 2);
-        $this->RegisterProfileInteger('PRTG.No', '', '', ' #', 0, 0, 0);
-        $this->RegisterProfileFloat('PRTG.MByte', '', '', ' MByte', 0, 0, 0, 2);
-        $this->RegisterProfileInteger('PRTG.Sec', '', '', $this->Translate(' sec'), 0, 0, 0);
-        $this->RegisterProfileInteger('PRTG.MBitSec', '', '', $this->Translate(' Mbit/sec'), 0, 0, 0);
-        $this->RegisterProfileInteger('PRTG.kBitSec', '', '', $this->Translate(' kbit/sec'), 0, 0, 0);
-        $this->RegisterProfileInteger('PRTG.IpS', '', '', $this->Translate(' Items/sec'), 0, 0, 0);
-        $this->RegisterProfileInteger('PRTG.IpM', '', '', $this->Translate(' Items/min'), 0, 0, 0);
-        $this->RegisterProfileInteger('PRTG.Items', '', '', ' Items', 0, 0, 0);
-
+        $this->UnregisterProfile('PRTG.Action');
+        $this->UnregisterProfile('PRTG.Ack');
+        $this->UnregisterProfile('PRTG.Sensor');
+        $this->UnregisterProfile('PRTG.ms');
+        $this->UnregisterProfile('PRTG.Intensity');
+        $this->UnregisterProfile('PRTG.No');
+        $this->UnregisterProfile('PRTG.MByte');
+        $this->UnregisterProfile('PRTG.Sec');
+        $this->UnregisterProfile('PRTG.MBitSec');
+        $this->UnregisterProfile('PRTG.kBitSec');
+        $this->UnregisterProfile('PRTG.IpS');
+        $this->UnregisterProfile('PRTG.IpM');
+        $this->UnregisterProfile('PRTG.Items');
         parent::ApplyChanges();
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
+        if ($this->MaintainVariable(
+            'State',
+            $this->Translate('State'),
+            VARIABLETYPE_INTEGER,
+            [
+                'ICON'            => '',
+                'PRESENTATION'    => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                'INTERVALS_ACTIVE'=> true,
+                'USAGE_TYPE'      => 0,
+                'PERCENTAGE'      => false,
+                'MIN'             => 1,
+                'MAX'             => 14,
+                'INTERVALS'       => json_encode(
+                    [
+                        [
+                            'IntervalMinValue' => 1,
+                            'IntervalMaxValue' => 1,
+                            'ConstantActive'   => true,
+                            'ConstantValue'    => $this->Translate('Unknown'),
+                            'IconActive'       => true,
+                            'IconValue'        => 'question',
+                            'ColorActive'      => true,
+                            'ColorValue'       => 0x555555
+                        ],
+                        [
+                            'IntervalMinValue'  => 2,
+                            'IntervalMaxValue'  => 2,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Scanning'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Information',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x555555
+                        ],
+                        [
+                            'IntervalMinValue'  => 3,
+                            'IntervalMaxValue'  => 3,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Up'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'check',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x00ff00
+                        ],
+                        [
+                            'IntervalMinValue'  => 4,
+                            'IntervalMaxValue'  => 4,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Warning'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Warning',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x808000
+                        ],
+                        [
+                            'IntervalMinValue'  => 5,
+                            'IntervalMaxValue'  => 5,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Down'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Warning',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0xff0000
+                        ],
+                        [
+                            'IntervalMinValue'  => 6,
+                            'IntervalMaxValue'  => 6,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('No Probe'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Information',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x555555
+                        ],
+                        [
+                            'IntervalMinValue'  => 7,
+                            'IntervalMaxValue'  => 7,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Paused'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Sleep',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x000090
+                        ],
+                        [
+                            'IntervalMinValue'  => 8,
+                            'IntervalMaxValue'  => 8,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Paused by Dependency'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Sleep',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x000090
+                        ],
+                        [
+                            'IntervalMinValue'  => 9,
+                            'IntervalMaxValue'  => 9,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Paused by Schedule'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Sleep',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x000090
+                        ],
+                        [
+                            'IntervalMinValue'  => 10,
+                            'IntervalMaxValue'  => 10,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Unusual'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Warning',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x808000
+                        ],
+                        [
+                            'IntervalMinValue'  => 11,
+                            'IntervalMaxValue'  => 11,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Not Licensed'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Sleep',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x000090
+                        ],
+                        [
+                            'IntervalMinValue'  => 12,
+                            'IntervalMaxValue'  => 12,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Paused Until'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Sleep',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0x000090
+                        ],
+                        [
+                            'IntervalMinValue'  => 13,
+                            'IntervalMaxValue'  => 13,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Down Acknowledged'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'check',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0xff0000
+                        ],
+                        [
+                            'IntervalMinValue'  => 14,
+                            'IntervalMaxValue'  => 14,
+                            'ConstantActive'    => true,
+                            'ConstantValue'     => $this->Translate('Down Partial'),
+                            'IconActive'        => true,
+                            'IconValue'         => 'Warning',
+                            'ColorActive'       => true,
+                            'ColorValue'        => 0xff0000
+                        ]
+                    ]
+                )
 
-        if ($this->MaintainVariable('State', $this->Translate('State'), VARIABLETYPE_INTEGER, 'PRTG.Sensor', -2, true)) {
+            ],
+            -2,
+            true
+        )) {
             $this->SetValue('State', 6);
         }
 
         if ($this->ReadPropertyBoolean('ReadableState')) {
-            $this->MaintainVariable('ReadableState', $this->Translate('Readable state'), VARIABLETYPE_STRING, '', -2, true);
+            $this->MaintainVariable('ReadableState', $this->Translate('Readable state'), VARIABLETYPE_STRING, [
+                'COLOR'        => -1,
+                'ICON'         => 'Information',
+                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION
+            ], -2, true);
         } else {
             $this->UnregisterVariable('ReadableState');
         }
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
-            $this->MaintainVariable('ActionButton', $this->Translate('Monitoring'), VARIABLETYPE_BOOLEAN, 'PRTG.Action', -4, true);
+            $this->MaintainVariable('ActionButton', $this->Translate('Monitoring'), VARIABLETYPE_BOOLEAN, [
+                'ICON'         => '',
+                'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+                'OPTIONS'      => json_encode(
+                    [
+                        [
+                            'Value'        => false,
+                            'Caption'      => $this->Translate('Pause'),
+                            'IconActive'   => true,
+                            'IconValue'    => 'pause',
+                            'Color'        => 0x000090
+                        ],
+                        [
+                            'Value'        => true,
+                            'Caption'      => $this->Translate('Active'),
+                            'IconActive'   => true,
+                            'IconValue'    => 'play',
+                            'Color'        => 0x00ff00
+                        ]
+                    ]
+                )
+            ], -4, true);
             $this->EnableAction('ActionButton');
         } else {
             $this->UnregisterVariable('ActionButton');
         }
         if ($this->ReadPropertyBoolean('ShowAckButton')) {
-            $this->MaintainVariable('AckButton', $this->Translate('Alarm control'), VARIABLETYPE_INTEGER, 'PRTG.Ack', -3, true);
+            $this->MaintainVariable(
+                'AckButton',
+                $this->Translate('Alarm control'),
+                VARIABLETYPE_INTEGER,
+                [
+                    'ICON'         => 'Gear',
+                    'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
+                    'OPTIONS'      => json_encode(
+                        [
+                            [
+                                'Value'        => 0,
+                                'Caption'      => $this->Translate('Acknowledge alarm'),
+                                'IconActive'   => false,
+                                'IconValue'    => '',
+                                'Color'        => 0x555555
+                            ]
+                        ]
+                    )
+
+                ],
+                -3,
+                true
+            );
             $this->EnableAction('AckButton');
         } else {
             $this->UnregisterVariable('AckButton');
@@ -146,6 +338,15 @@ class PRTGSensor extends IPSModuleStrict
         }
     }
 
+    /**
+     * MessageSink
+     *
+     * @param  int $TimeStamp
+     * @param  int $SenderID
+     * @param  int $Message
+     * @param  array $Data
+     * @return void
+     */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
         $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
@@ -156,7 +357,10 @@ class PRTGSensor extends IPSModuleStrict
                 break;
         }
     }
+
     /**
+     * RequestState
+     *
      * IPS Instanz-Funktion PRTG_RequestState.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
@@ -170,9 +374,10 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
-     * Verarbeitet empfangene Events des IO.
+     * ReceiveData
      *
-     * @param string $JSONString
+     * @param  string $JSONString
+     * @return string
      */
     public function ReceiveData(string $JSONString): string
     {
@@ -184,9 +389,9 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
-     * Interne Funktion des SDK.
+     * GetConfigurationForm
      *
-     * @return string Konfigurationsform
+     * @return string
      */
     public function GetConfigurationForm(): string
     {
@@ -197,13 +402,16 @@ class PRTGSensor extends IPSModuleStrict
         $Form['elements'][6]['caption'] = sprintf($this->Translate('Use not sensor Interval of %d seconds'), $this->Interval);
         $Form['elements'][6]['onChange'] = 'IPS_RequestAction(' . $this->InstanceID . ', \'ShowIntervall\' ,$UseInterval);';
         $Form['elements'][7]['visible'] = $this->ReadPropertyBoolean('UseInterval');
+        $Form['actions'][0]['values'] = $this->GetChannelOverview();
         return json_encode($Form);
     }
 
     /**
-     * Interne Funktion des SDK.
+     * RequestAction
      *
-     * @return bool True bei Erfolg, False im Fehlerfall
+     * @param  string $Ident
+     * @param  mixed $Value
+     * @return void
      */
     public function RequestAction(string $Ident, mixed $Value): void
     {
@@ -230,6 +438,8 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * AcknowledgeAlarm
+     *
      * Bestätigt einen Alarm in PRTG.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
@@ -240,6 +450,8 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * AcknowledgeAlarmEx
+     *
      * Bestätigt einen Alarm in PRT mit der in $Message übergebenen Nachricht.
      *
      * @param string $Message Nachricht für PRTG.
@@ -268,8 +480,14 @@ class PRTGSensor extends IPSModuleStrict
         }
         return false;
     }
+
     /**
+     * IOChangeState
+     *
      * Wird ausgeführt wenn sich der Status vom Parent ändert.
+     *
+     * @param  int $State
+     * @return void
      */
     protected function IOChangeState(int $State): void
     {
@@ -285,6 +503,12 @@ class PRTGSensor extends IPSModuleStrict
             $this->SetTimer(false);
         }
     }
+
+    /**
+     * KernelReady
+     *
+     * @return void
+     */
     private function KernelReady(): void
     {
         $this->UnregisterMessage(0, IPS_KERNELSTARTED);
@@ -292,7 +516,12 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * SetTimer
+     *
      * Setzt den Intervall-Timer.
+     *
+     * @param  bool $Active
+     * @return void
      */
     private function SetTimer(bool $Active): void
     {
@@ -314,6 +543,8 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * RequestSensorState
+     *
      * Fragt den Zustand des Sensors aus PRTG ab.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
@@ -335,8 +566,9 @@ class PRTGSensor extends IPSModuleStrict
         if ($Data['name'] == '') {
             return false;
         }
-        $this->SetSummary($Data['device']);
-
+        if ($this->GetSummary() != $Data['device']) {
+            $this->SetSummary($Data['device']);
+        }
         $this->SetValue('State', $Data['status_raw']);
         if ($this->ReadPropertyBoolean('ReadableState')) {
             $this->SetValue('ReadableState', $Data['status']);
@@ -356,6 +588,8 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * RequestChannelState
+     *
      * Fragt den Zustand aller Kanäle dieses Sensors aus PRTG ab.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
@@ -375,9 +609,12 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * DecodeChannelData
+     *
      * Dekodiert die Daten der Kanäle und schreibt diese in Statusvariablen.
      *
      * @param array $Channels
+     * @return void
      */
     private function DecodeChannelData(array $Channels): void
     {
@@ -390,15 +627,22 @@ class PRTGSensor extends IPSModuleStrict
             } else {
                 $Ident = (string) $Channel['objid'];
             }
-            $Data = $this->ConvertValue($Channel);
+            $Data = $this->GetVariableData($Channel);
             if ($Data === false) {
                 continue;
             }
             if (array_key_exists('name_raw', $Channel)) {
                 $Channel['name'] = $Channel['name_raw'];
             }
-
-            $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Profile'], $Channel['objid'], true);
+            $vid = $this->FindIDForIdent($Ident);
+            if ($vid && IPS_GetVariable($vid)['VariableType'] != $Data['VarType']) {
+                $IpsVarTyp = $this->GetVariableTypeName(IPS_GetVariable($vid)['VariableType']);
+                $ChannelVarTyp = $this->GetVariableTypeName($Data['VarType']);
+                $this->LogMessage(sprintf($this->Translate("Variable type mismatch for channel \"%s (%s)\"\r\nExpected %s but got %s"), $Channel['name'], IPS_GetLocation($this->InstanceID), $IpsVarTyp, $ChannelVarTyp), KL_ERROR);
+                $this->AddChannelVarTypes($Channel, $ChannelVarTyp, $IpsVarTyp);
+                continue;
+            }
+            $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Presentation'], $Channel['objid'], true);
             $vid = $this->FindIDForIdent($Ident);
 
             if ($this->ReadPropertyBoolean('AutoRenameChannels') && (IPS_GetName($vid)) != $Channel['name']) {
@@ -409,12 +653,88 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * GetVariableTypeName
+     *
+     * @param  int $VarType
+     * @return string
+     */
+    private function GetVariableTypeName(int $VarType): string
+    {
+        return match ($VarType) {
+            VARIABLETYPE_BOOLEAN => 'Boolean',
+            VARIABLETYPE_INTEGER => 'Integer',
+            VARIABLETYPE_FLOAT   => 'Float',
+            VARIABLETYPE_STRING  => 'String',
+            default              => 'Unknown',
+        };
+    }
+
+    /**
+     * GetSummary
+     *
+     * @return string
+     */
+    private function GetSummary(): string
+    {
+        return IPS_GetObject($this->InstanceID)['ObjectSummary'];
+    }
+
+    /**
+     * AddChannelSuffix
+     *
+     * @param  array $ChannelData
+     * @param  string $Unit
+     * @return void
+     */
+    private function AddChannelSuffix(array $ChannelData, string $Unit = '', string $ChannelVarTyp = ''): void
+    {
+        $Channels = $this->Channels;
+        if (!array_key_exists($ChannelData['objid'], $Channels)) {
+            $Channels[$ChannelData['objid']]['ChannelVarTyp'] = $ChannelVarTyp;
+            $Channels[$ChannelData['objid']]['IpsVarTyp'] = $ChannelVarTyp;
+        }
+        $Channels[$ChannelData['objid']]['Name'] = $ChannelData['name'];
+        $Channels[$ChannelData['objid']]['Data'] = $ChannelData['lastvalue'];
+        $Channels[$ChannelData['objid']]['Unit'] = $Unit ? $Unit : 'no Unit detected';
+        $this->Channels = $Channels;
+    }
+
+    /**
+     * AddChannelVarTypes
+     *
+     * @param  array $ChannelData
+     * @param  string $ChannelVarType
+     * @param  string $IpsVarId
+     * @return void
+     */
+    private function AddChannelVarTypes(array $ChannelData, string $ChannelVarTyp, string $IpsVarTyp): void
+    {
+        $Channels = $this->Channels;
+        $Channels[$ChannelData['objid']]['Name'] = $ChannelData['name'];
+        $Channels[$ChannelData['objid']]['Data'] = $ChannelData['lastvalue'];
+        $Channels[$ChannelData['objid']]['ChannelVarTyp'] = $ChannelVarTyp;
+        $Channels[$ChannelData['objid']]['IpsVarTyp'] = $IpsVarTyp;
+        $this->Channels = $Channels;
+    }
+
+    /**
+     * GetChannelOverview
+     *
+     * @return array
+     */
+    private function GetChannelOverview(): array
+    {
+        return array_values($this->Channels);
+    }
+
+    /**
+     * SendData
+     *
      * Sendet Eine Anfrage an den IO und liefert die Antwort.
      *
      * @param string $Uri       URI der Anfrage
-     * @param string[]  $QueryData Alle mit Allen GET-Parametern
+     * @param array  $QueryData Alle mit Allen GET-Parametern
      * @param string $PostData  String mit POST Daten
-     *
      * @return array Antwort ale Array
      */
     private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
@@ -433,7 +753,6 @@ class PRTGSensor extends IPSModuleStrict
         $Result = unserialize($ResultString);
         if ($Result['Error'] != 200) {
             $this->SendDebug('Result Error', $Result, 0);
-            //trigger_error('Error: ' . $Result['Error'], E_USER_NOTICE);
             return [];
         }
         unset($Result['Error']);

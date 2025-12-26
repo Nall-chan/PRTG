@@ -8,7 +8,7 @@
 
 # Symcon-Modul: PRTG  <!-- omit in toc -->  
 
-Einbinden von PRTG Geräten und Sensoren in IPS.  
+Einbinden von PRTG Geräten und Sensoren in Symcon.  
 
 ## Inhaltsverzeichnis <!-- omit in toc -->
 
@@ -33,13 +33,13 @@ Einbinden von PRTG Geräten und Sensoren in IPS.
 
 - Schnittstelle zwischen den Device und Sensor Instanzen und PRTG.  
 - Empfangen von Events aus PRTG.  
-- Bereitstellen von IPS Systeminformation für einen PRTG-Sensor.  
+- Bereitstellen von Symcon Systeminformation für einen PRTG-Sensor.  
 - Abfragen von Graphen aus PRTG.  
 
 ### [PRTG Konfigurator:](PRTGConfigurator/)  
 
 - Auflisten alle in PRTG verfügbaren Geräte und Sensoren.  
-- Erstellen von neuen Device und Sensor Instanzen in IPS.  
+- Erstellen von neuen Device und Sensor Instanzen in Symcon.  
 
 ### [PRTG Gerät:](PRTGDevice/)  
 
@@ -59,7 +59,7 @@ Einbinden von PRTG Geräten und Sensoren in IPS.
 
 ## 3. Software-Installation
 
-Über den 'Module-Store' in IPS das Modul 'PRTG' hinzufügen.  
+Über den 'Module-Store' in Symcon das Modul 'PRTG' hinzufügen.  
 **Bei kommerzieller Nutzung (z.B. als Errichter oder Integrator) wenden Sie sich bitte an den Autor.**  
 ![Module-Store](imgs/install.png)  
 
@@ -70,10 +70,10 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 
 Details sind in der Dokumentation der jeweiligen Module beschrieben.  
 
-In der Dokumentation des [PRTG IO](PRTGIO/) wird im Anhang erläutert wie eine Überwachung von IPS aus PRTG erfolgen kann.  
-Ebenso wird dort das Empfangen von Statusänderungen eines Sensors in IPS erläutert, damit IPS den Zustand zeitnah darstellen kann.  
+In der Dokumentation des [PRTG IO](PRTGIO/) wird im Anhang erläutert wie eine Überwachung von Symcon aus PRTG erfolgen kann.  
+Ebenso wird dort das Empfangen von Statusänderungen eines Sensors in Symcon erläutert, damit Symcon den Zustand zeitnah darstellen kann.  
 
-Es wird dingend empfohlen somit zuerst den [PRTG IO](PRTGIO/) zu erstellen und fertig zu konfigurieren, sowie in PRTG alle gewünschten Einstellungen vorzunehmen, bevor weitere Instanzen in IPS über den [PRTG Konfigurator](PRTGConfigurator/) angelegt werden.  
+Es wird dingend empfohlen somit zuerst den [PRTG IO](PRTGIO/) zu erstellen und fertig zu konfigurieren, sowie in PRTG alle gewünschten Einstellungen vorzunehmen, bevor weitere Instanzen in Symcon über den [PRTG Konfigurator](PRTGConfigurator/) angelegt werden.  
 
 ## 5. Anhang
 
@@ -89,7 +89,7 @@ Es wird dingend empfohlen somit zuerst den [PRTG IO](PRTGIO/) zu erstellen und f
 ### 2. Hinweise  
 
 Der im [PRTG IO](PRTGIO/) verwendete Benutzer sollte in PRTG Administrative Rechte bekommen, um die Überwachung zu steuern und Alarme quittieren zu können.  
-Die Kommunikation zwischen IPS und PRTG kann sowohl per HTTP als auch per HTTPS (SSL/TLS) erfolgen.  
+Die Kommunikation zwischen Symcon und PRTG kann sowohl per HTTP als auch per HTTPS (SSL/TLS) erfolgen.  
 Hierzu ist PRTG und die URL im [PRTG IO](PRTGIO/) entsprechend zu anzupassen.
 Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem externen PRTG-Server genutzt werden, da die Login-Informationen dann nicht verschlüsselt übertragen werden!  
 
@@ -97,15 +97,23 @@ Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem extern
 
 **Version 2.60:**  
 
-- Version für IPS 8.2.
-
+- Version für Symcon 8.2.  
+- Umstellung von Profile auf Darstellungen.  
+- Damit einher geht eine Anpassung der Einheiten aller Speicher / Bandbreitenvarialen der Sensoren.  
+- Diese werden jetzt ohne Umrechnung immer als Byte/Bit gespeichert.
+- Variablenhandling überarbeitet.  
+- Die Einheiten aus PRTG werden zuverlässiger erkannt.  
+- Fehlende Einheiten werden im LogFile protokolliert.  
+- Wird aufgrund der Einheit ein andere Variablentyp benötigt, als aktuell vorhanden ist, so wird dies im LogFile protokolliert.  
+- Die Instanz-Konfiguration liefert einen Überblick der Variablen mit ihren erkannten Einheiten und Variablentyp.  
+  
 **Version 2.52:**  
 
-- Version für IPS 7.0.  
+- Version für Symcon 7.0.  
   
 **Version 2.51:**  
 
-- Sensor und Device Intervall konnte beim starten von Symcon falsch sein.
+- Sensor und Device Intervall konnte beim starten von Symcon falsch sein.  
 
 **Version 2.50:**  
 
@@ -122,16 +130,16 @@ Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem extern
 
 **Version 2.20:**  
 
-- Fehler im IPS-Sensor behoben, wenn PRTG 'Keine Daten' als Nutzdaten übertragen hat.  
+- Fehler im Symcon-Sensor behoben, wenn PRTG 'Keine Daten' als Nutzdaten übertragen hat.  
 
 **Version 2.10:**  
 
-- Fehler im IPS-Sensor behoben, wenn Laufwerke keine Bezeichnung hatten  
-- Fehler im IPS-Sensor behoben, wenn Pagefile genutzt wird  
+- Fehler im Symcon-Sensor behoben, wenn Laufwerke keine Bezeichnung hatten  
+- Fehler im Symcon-Sensor behoben, wenn Pagefile genutzt wird  
 
 **Version 2.00:**  
 
-- Release für IPS 5.1 und den Module-Store  
+- Release für Symcon 5.1 und den Module-Store  
 
 **Version 1.36:**  
 

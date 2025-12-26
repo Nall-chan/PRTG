@@ -32,7 +32,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  *
  * @property string $Url
  * @property string $Hash
- * @property self $State
+ * @property int $State
  * @method bool RegisterHook(string $WebHook)
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  */
@@ -47,6 +47,7 @@ class PRTGIO extends IPSModuleStrict
     public const isUnauthorized = IS_EBASE + 2;
     public const isURLnotValid = IS_EBASE + 3;
 
+    /** @var array $http_error */
     private static $http_error =
         [
             418 => ['Could not connect to host, maybe i am a teapot?', self::isDisconnected],
@@ -56,6 +57,7 @@ class PRTGIO extends IPSModuleStrict
             501 => ['Webhook invalid', self::isDisconnected]
         ];
 
+    /** @var array $SSLError */
     private static $SSLError = [
         0  => 'no connect',
         1  => 'unspecified error',
@@ -94,7 +96,9 @@ class PRTGIO extends IPSModuleStrict
     ];
 
     /**
-     * Interne Funktion des SDK.
+     * Create
+     *
+     * @return void
      */
     public function Create(): void
     {
@@ -121,7 +125,9 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
-     * Interne Funktion des SDK.
+     * ApplyChanges
+     *
+     * @return void
      */
     public function ApplyChanges(): void
     {
@@ -148,12 +154,13 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
-     * Interne Funktion des SDK.
+     * MessageSink
      *
-     * @param type $TimeStamp
-     * @param type $SenderID
-     * @param type $Message
-     * @param type $Data
+     * @param  int $TimeStamp
+     * @param  int $SenderID
+     * @param  int $Message
+     * @param  array $Data
+     * @return void
      */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
     {
@@ -163,6 +170,14 @@ class PRTGIO extends IPSModuleStrict
                 break;
         }
     }
+
+    /**
+     * RequestAction
+     *
+     * @param  string $Ident
+     * @param  mixed $Value
+     * @return void
+     */
     public function RequestAction(string $Ident, mixed $Value): void
     {
         if ($Ident == 'KernelReady') {
@@ -170,7 +185,10 @@ class PRTGIO extends IPSModuleStrict
             return;
         }
     }
+
     /**
+     * GetGraph
+     *
      * IPS Instanz-Funktion PRTG_GetGraph
      * Liefert einen Graphen aus PRTG.
      *
@@ -191,7 +209,7 @@ class PRTGIO extends IPSModuleStrict
     public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend): string
     {
         if ($this->State != self::isConnected) {
-            return false;
+            return '';
         }
         //'showLegend%3D%271%27+baseFontSize%3D%275%27'
         $QueryData = ['type'         => 'graph',
@@ -212,15 +230,18 @@ class PRTGIO extends IPSModuleStrict
             'Timeout' => 5000
         ];
         $this->SendDebug('PRTG Graph URL', $URL, 0);
-        return @Sys_GetURLContentEx($URL, $Timeout);
+        $Result = Sys_GetURLContentEx($URL, $Timeout);
+        if (!$Result) {
+            return '';
+        }
+        return $Result;
     }
 
     /**
-     * Interne Funktion des SDK.
+     * ForwardData
      *
-     * @param string $JSONString Der IPS-Datenstring
-     *
-     * @return string Die Antwort an den anfragenden Child
+     * @param  string $JSONString
+     * @return string
      */
     public function ForwardData(string $JSONString): string
     {
@@ -256,9 +277,9 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
-     * Interne Funktion des SDK.
+     * GetConfigurationForm
      *
-     * @return string Konfigurationsform
+     * @return string
      */
     public function GetConfigurationForm(): string
     {
@@ -288,11 +309,13 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
-     * Interne Funktion des SDK.
+     * ProcessHookdata
+     *
+     * @return void
      */
     protected function ProcessHookdata(): void
     {
-        header('X-Powered-By: IP-Symcon ' . IPS_GetKernelVersion());
+        header('X-Powered-By: Symcon ' . IPS_GetKernelVersion());
         if (!($this->State == self::isConnected)) {
             header('HTTP/1.0 404 Not Found');
             header('Content-type: text/plain');
@@ -334,9 +357,10 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
-     * Interne Funktion des SDK.
+     * SetStatus
      *
-     * @param int $InstanceStatus
+     * @param  int $InstanceStatus
+     * @return bool
      */
     protected function SetStatus(int $InstanceStatus): bool
     {
@@ -344,17 +368,35 @@ class PRTGIO extends IPSModuleStrict
         return parent::SetStatus($InstanceStatus);
     }
 
+    /**
+     * ModulErrorHandler
+     *
+     * @param  int $errno
+     * @param  string $errstr
+     * @return bool
+     */
     protected function ModulErrorHandler(int $errno, string $errstr): bool
     {
         echo $errstr . PHP_EOL;
         return true;
     }
+
+    /**
+     * KernelReady
+     *
+     * @return void
+     */
     private function KernelReady(): void
     {
         $this->UnregisterMessage(0, IPS_KERNELSTARTED);
         $this->ApplyChanges();
     }
 
+    /**
+     * GetConsumerAddress
+     *
+     * @return bool
+     */
     private function GetConsumerAddress(): bool
     {
         $Port = $this->ReadPropertyInteger('ReturnPort');
@@ -397,6 +439,14 @@ class PRTGIO extends IPSModuleStrict
         $this->WriteAttributeString('ConsumerAddress', $Url);
         return true;
     }
+
+    /**
+     * ShowLastError
+     *
+     * @param  string $ErrorMessage
+     * @param  string $ErrorTitle
+     * @return void
+     */
     private function ShowLastError(string $ErrorMessage, string $ErrorTitle = 'Error'): void
     {
         IPS_Sleep(500);
@@ -406,6 +456,8 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * FetchIPSSensorData
+     *
      * Liefert JSON-Daten für eine HTTP-Abfrage von PRTG an den IPS-Webhook.
      *
      * @return string JSON-String für PRTG HTTP-Daten-Sensor
@@ -497,6 +549,8 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * SendData
+     *
      * Sendet Eine Anfrage an PRTG und liefert die Antwort.
      *
      * @param string $Uri       URI der Abfrage
@@ -533,10 +587,12 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * ResultEncode
+     *
      * Callback für array_walk_recursive. Dekodiert HTML-Kodierte Strings.
      *
-     * @param mixed  $item
-     * @param string $key
+     * @param  mixed $item
+     * @return void
      */
     private function ResultEncode(mixed &$item): void
     {
@@ -546,6 +602,8 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * CheckHost
+     *
      * Prüft die Konfiguration der URL für PRTG und schreibt die bereinigte URL in einen InstanceBuffer.
      *
      * @return bool True wenn Host ok, sonst false.
@@ -590,7 +648,9 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
-     * Holt einen PAsswordHash von PRTG.
+     * GetPasswordHash
+     *
+     * Holt einen PasswordHash von PRTG.
      *
      * @return bool True bei Erfolg, sonst false
      */
@@ -626,6 +686,8 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * CreateQueryURL
+     *
      * Erstellt eine komplette URL für die Anfrage an den PRTG-Server.
      *
      * @param string $Uri       URI für die URL
@@ -644,6 +706,8 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * SendRequest
+     *
      * Sendet Eine Anfrage an PRTG.
      *
      * @param string $Url      URL der Abfrage
@@ -671,6 +735,12 @@ class PRTGIO extends IPSModuleStrict
         if ($this->ReadPropertyBoolean('NoPeerVerify')) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
+        $headers = [
+            'Connection: Keep-Alive',
+            'User-Agent: Symcon PRTG-Lib by Nall-chan',
+            'Content-Type: application/json; charset=UTF-8',
+        ];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, 5000);
@@ -680,7 +750,6 @@ class PRTGIO extends IPSModuleStrict
         if (is_bool($Result)) {
             $Result = '';
         }
-        curl_close($ch);
         if ($HttpCode == 0) {
             if ($SSLResult !== false) {
                 $this->SendDebug('SSL connect', self::$SSLError[$SSLResult], 0);

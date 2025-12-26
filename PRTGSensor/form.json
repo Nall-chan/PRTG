@@ -46,6 +46,45 @@
     ],
     "actions": [
         {
+            "type": "List",
+            "name": "Channels",
+            "caption": "Overview Channels",
+            "add": false,
+            "delete": false,
+            "sort": {
+                "column": "Name",
+                "direction": "ascending"
+            },
+            "columns": [
+                {
+                    "caption": "Name",
+                    "name": "Name",
+                    "width": "auto"
+                },
+                {
+                    "caption": "Last Value",
+                    "name": "Data",
+                    "width": "150px"
+                },
+                {
+                    "caption": "Unit",
+                    "name": "Unit",
+                    "width": "150px"
+                },
+                {
+                    "caption": "Type of Data",
+                    "name": "ChannelVarTyp",
+                    "width": "150px"
+                },
+                {
+                    "caption": "Variable Type",
+                    "name": "IpsVarTyp",
+                    "width": "150px"
+                }
+            ],
+            "values": []
+        },
+        {
             "type": "RowLayout",
             "items": [
                 {

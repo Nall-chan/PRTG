@@ -10,6 +10,11 @@
             "Use not sensor Interval of %d seconds": "Nicht den Sensor Intervall von %d Sekunden benutzen",
             "Interval": "Intervall",
             "seconds": "Sekunden",
+            "Channel Overview": "Kanalübersicht",
+            "Last Value": "Letzter Wert",
+            "Unit": "Einheit",
+            "Type of Data": "Datentyp",
+            "Variable Type": "Variablentyp",
             "Read data": "Lese Daten",
             "Active": "Aktiv",
             "Pause": "Pause",
@@ -41,6 +46,9 @@
             "Minutes must be integer.": "Minutes muss vom Typ integer sein.",
             "No answer": "Keine Antwort",
             "Invalid Ident": "Ungültiger Ident",
+            "Variable type mismatch for channel \"%s (%s)\"\r\nExpected %s but got %s": "Variablentyp stimmt nicht überein für Kanal \"%s (%s)\"\r\nErwartet wurde %s aber erhalten %s",
+            "Channel \"%s (%s)\", lastvalue_raw not found!": "Kanal \"%s (%s)\", lastvalue_raw nicht gefunden!",
+            "Value without suffix in channel \"%s (%s)\" detected.\r\nPlease check the PRTG channel configuration.": "Wert ohne Suffix in Kanal \"%s (%s)\" erkannt.\r\nBitte prüfen Sie die PRTG-Kanal-Konfiguration.",
             "This module is free for non-commercial use,\r\nDonations in support of the author are accepted here:": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos,\r\nSchenkungen als Unterstützung für den Autor werden hier akzeptiert:"
         }
     }
