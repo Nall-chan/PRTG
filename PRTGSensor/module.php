@@ -36,7 +36,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @method int FindIDForIdent(string $Ident)
  * @method void UnregisterProfile(string $Name)
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
- * @method void RegisterParent()
+ * @method int RegisterParent()
  */
 class PRTGSensor extends IPSModuleStrict
 {
