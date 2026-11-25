@@ -273,7 +273,7 @@ trait VariableConverter
                                 'IconActive'       => false,
                                 'IconValue'        => '',
                                 'ColorActive'      => false,
-                                'Color'            => -1
+                                'ColorValue'            => -1
                             ],
                             [
                                 'IntervalMinValue' => 1024,
@@ -290,7 +290,7 @@ trait VariableConverter
                                 'IconActive'       => false,
                                 'IconValue'        => '',
                                 'ColorActive'      => false,
-                                'Color'            => -1
+                                'ColorValue'            => -1
                             ],
                             [
                                 'IntervalMinValue' => 1024 * 1024,
@@ -307,7 +307,7 @@ trait VariableConverter
                                 'IconActive'       => false,
                                 'IconValue'        => '',
                                 'ColorActive'      => false,
-                                'Color'            => -1
+                                'ColorValue'            => -1
                             ],
                             [
                                 'IntervalMinValue' => 1024 * 1024 * 1024,
@@ -324,7 +324,7 @@ trait VariableConverter
                                 'IconActive'       => false,
                                 'IconValue'        => '',
                                 'ColorActive'      => false,
-                                'Color'            => -1
+                                'ColorValue'            => -1
                             ],
                         ])
                     ],
@@ -378,7 +378,7 @@ trait VariableConverter
                                 'IconActive'       => false,
                                 'IconValue'        => '',
                                 'ColorActive'      => false,
-                                'Color'            => -1
+                                'ColorValue'            => -1
                             ],
                             [
                                 'IntervalMinValue' => 125000,
@@ -395,7 +395,7 @@ trait VariableConverter
                                 'IconActive'       => false,
                                 'IconValue'        => '',
                                 'ColorActive'      => false,
-                                'Color'            => -1
+                                'ColorValue'            => -1
                             ]
                         ])
                     ],
