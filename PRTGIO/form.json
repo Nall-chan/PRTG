@@ -69,6 +69,31 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Access to the WebHook (Symcon sensor and graphs)",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Basic authentication for requests from PRTG. Leave empty for access without login. Events from PRTG do not require a login."
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "name": "HookUsername",
+                            "type": "ValidationTextBox",
+                            "caption": "Username"
+                        },
+                        {
+                            "name": "HookPassword",
+                            "type": "PasswordTextBox",
+                            "caption": "Password"
+                        }
+                    ]
+                }
+            ]
         }
     ],
     "actions": [

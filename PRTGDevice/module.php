@@ -45,10 +45,21 @@ class PRTGDevice extends IPSModuleStrict
     use \prtg\PRTGPause;
     use \prtg\VariableConverter;
     use \prtg\ParentStatus;
+    use \prtg\PRTGRequest;
     use \prtg\InstanceStatus {
         \prtg\InstanceStatus::MessageSink as IOMessageSink;
         \prtg\InstanceStatus::RequestAction as IORequestAction;
     }
+    /** Status: Das Objekt existiert in PRTG nicht (mehr). */
+    private const StatusNotFound = IS_EBASE + 1;
+
+    /** Werte der Variable Status (PRTG status_raw) für die Rückmeldung nach Befehlen. */
+    private const StateScanning = 2;
+    private const StatePaused = 7;
+    private const StatePausedUntil = 12;
+    private const StateDown = 5;
+    private const StateDownPartial = 14;
+    private const StateDownAcknowledged = 13;
 
     /**
      * Create
@@ -78,7 +89,8 @@ class PRTGDevice extends IPSModuleStrict
         $this->UnregisterProfile('PRTG.Action');
         $this->UnregisterProfile('PRTG.Sensor');
         parent::ApplyChanges();
-        $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
+        // Die ID endet mit , oder } (sonst passt z.B. ID 12 auch auf ein Ereignis für 1234).
+        $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '[,}].*');
 
         $StateIsNew = ($this->FindIDForIdent('State') == 0);
         $this->MaintainVariable(
@@ -400,7 +412,10 @@ class PRTGDevice extends IPSModuleStrict
      */
     public function RequestState(): bool
     {
-        return $this->RequestDeviceState();
+        if (!$this->UpdateState()) {
+            return $this->ReportRequestError();
+        }
+        return true;
     }
 
     /**
@@ -411,7 +426,9 @@ class PRTGDevice extends IPSModuleStrict
      */
     public function ReceiveData(string $JSONString): string
     {
-        IPS_RunScriptText('PRTG_RequestState(' . $this->InstanceID . ')');
+        // Ereignis von PRTG: Abfrage entkoppelt vom Datenfluss. Symcon führt die Timer einer Instanz
+        // nie gleichzeitig aus, mehrere Ereignisse kurz hintereinander laufen nacheinander.
+        $this->RegisterOnceTimer('EventRequest', 'IPS_RequestAction($_IPS[\'TARGET\'], \'RequestState\', 0);');
         return '';
     }
 
@@ -435,7 +452,10 @@ class PRTGDevice extends IPSModuleStrict
                 if (!$this->HasActiveParent()) {
                     return;
                 }
-                $this->RequestState();
+                // Timer und Ereignisse: Der Fehler geht über die Ausgabe in das Log.
+                if (!$this->UpdateState()) {
+                    $this->ReportRequestError();
+                }
                 return;
             case 'ActionButton':
                 if ($Value) {
@@ -503,6 +523,18 @@ class PRTGDevice extends IPSModuleStrict
     }
 
     /**
+     * UpdateState
+     *
+     * Fragt das Gerät ab, ohne den Fehler auszugeben (Ausgabe übernimmt der Aufrufer).
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall (Grund in LastRequestError)
+     */
+    private function UpdateState(): bool
+    {
+        return $this->RequestDeviceState();
+    }
+
+    /**
      * RequestDeviceState
      *
      * Liest den aktuellen Status des Gerätes von PRTG.
@@ -512,6 +544,7 @@ class PRTGDevice extends IPSModuleStrict
     private function RequestDeviceState(): bool
     {
         if ($this->ReadPropertyInteger('id') == 0) {
+            $this->LastRequestError = 'No PRTG object ID configured';
             return false;
         }
         $Result = $this->SendData('api/table.json', [
@@ -523,7 +556,14 @@ class PRTGDevice extends IPSModuleStrict
             return false;
         }
         if (count($Result['devices']) != 1) {
+            $this->LastRequestError = 'Object not found in PRTG';
+            if ($this->GetStatus() != self::StatusNotFound) {
+                $this->SetStatus(self::StatusNotFound);
+            }
             return false;
+        }
+        if ($this->GetStatus() != IS_ACTIVE) {
+            $this->SetStatus(IS_ACTIVE);
         }
         $Data = $Result['devices'][0];
         if ($this->GetSummary() != $Data['group']) {
@@ -565,40 +605,6 @@ class PRTGDevice extends IPSModuleStrict
         return IPS_GetObject($this->InstanceID)['ObjectSummary'];
     }
 
-    /**
-     * SendData
-     *
-     * Sendet Eine Anfrage an den IO und liefert die Antwort.
-     *
-     * @param string $Uri       URI der Anfrage
-     * @param array  $QueryData Alle mit Allen GET-Parametern
-     * @param string $PostData  String mit POST Daten
-     * @return array Antwort ale Array
-     */
-    private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
-    {
-        $this->SendDebug('Request Uri:', $Uri, 0);
-        $this->SendDebug('Request QueryData:', $QueryData, 0);
-        $this->SendDebug('Request PostData:', $PostData, 0);
-        $Data['DataID'] = '{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}';
-        $Data['Uri'] = $Uri;
-        $Data['QueryData'] = $QueryData;
-        $Data['PostData'] = $PostData;
-        $ResultString = $this->SendDataToParent(json_encode($Data));
-        // ForwardData liefert im Fehlerfall einen leeren String. Entsteht beim Aufruf eine Ausgabe (Warnung), verwirft Symcon den Rückgabewert und liefert false.
-        $Result = is_string($ResultString) ? @unserialize($ResultString) : false;
-        if (!is_array($Result) || !array_key_exists('Error', $Result)) {
-            return [];
-        }
-
-        if ($Result['Error'] != 200) {
-            $this->SendDebug('Result Error', $Result, 0);
-            return [];
-        }
-        unset($Result['Error']);
-        $this->SendDebug('Result', $Result, 0);
-        return $Result;
-    }
 }
 
 /* @} */

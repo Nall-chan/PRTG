@@ -110,15 +110,25 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 
 > [!IMPORTANT]
 > Neu angelegte Geräte- und Sensor-Instanzen benennen sich und ihre Kanäle nicht mehr automatisch nach den Namen in PRTG um. Das kann in der Instanzkonfiguration eingeschaltet werden. Vorhandene Instanzen behalten ihre bisherige Einstellung.  
-> Sensor: Kanäle mit Zahlenwert, deren Einheit bisher nicht erkannt wurde (z.B. `°C`, `V` oder die Einheiten eines englisch eingestellten PRTG), werden als Zahl angelegt. Ist dafür bereits eine Variable vom Typ String vorhanden, meldet die Instanz den abweichenden Typ im Log und schreibt keinen Wert. Abhilfe: Variable löschen oder in der Kanalübersicht `Ignoriere Einheit und Typ` setzen.
+> Sensor: Kanäle mit Zahlenwert, deren Einheit bisher nicht erkannt wurde (z.B. `°C`, `V` oder die Einheiten eines englisch eingestellten PRTG), werden als Zahl angelegt. Ist dafür bereits eine Variable vom Typ String vorhanden, meldet die Instanz den abweichenden Typ im Log und schreibt keinen Wert. Abhilfe: Variable löschen oder in der Kanalübersicht `Ignoriere Einheit und Typ` setzen.  
+> Graphen über den WebHook und `PRTG_GetGraph` werden mit Version 3.00 entfernt.
+
+**Neue Funktionen und Aktionen**  
+
+- IO: Benutzername und Passwort (Basic-Authentifizierung) für Abrufe über den WebHook (Symcon-Sensor, Graphen).  
+- IO: Der Symcon-Sensor liefert zusätzlich `Kernel Uptime`, `Instances with error` sowie, wenn Symcon sie bereitstellt, `WebServer Connections` und `WebSocket Connections`.  
 
 **Geändertes Verhalten**  
 
+- IO: Symcon-Sensor: Die Meldungen pro Minute gelten für die Zeit seit der letzten Abfrage statt als Mittelwert seit dem Zurücksetzen der Statistik. Einzelne CPU-Kerne werden nur geliefert, solange PRTG nicht mehr als 50 Kanäle bekommt.  
 - Konfigurator: Die Zusammenfassung zeigt den PRTG-Server des IO an.  
 - IO: Graphen nutzen die SSL-Einstellungen der Instanz. `PRTG_GetGraph` meldet Fehler (z.B. ungültige Parameter, PRTG nicht erreichbar) an den Aufrufer.  
 - IO: Passwort und Passwort-Hash werden im Debug nicht mehr angezeigt.  
 - Sensor: Einheiten eines englisch eingestellten PRTG (z.B. `msec`, `kbit/s`, `Mbit/s`, `KByte`) werden erkannt.  
 - Gerät und Sensor: Nach dem Start, nach Änderungen an der Instanz und beim Verbinden des IO wird nicht mehr sofort abgefragt. Neue Werte kommen mit dem nächsten Intervall oder mit einem Ereignis von PRTG. Bisher fragten dabei alle Instanzen gleichzeitig an, wodurch Symcon bei vielen Instanzen Abfragen verwarf.  
+- Gerät und Sensor: Existiert das Objekt in PRTG nicht mehr, zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies im Log.  
+- Gerät und Sensor: Die PHP-Befehle und die Bedienung der Statusvariablen melden bei einem Fehler den Grund (z.B. `PRTG nicht erreichbar`), statt nur `false` zurückzugeben. Fehler bei Abfragen per Intervall oder Ereignis stehen im Log.  
+- Gerät und Sensor: Nach Pausieren, Fortsetzen und Quittieren zeigen die Statusvariablen den neuen Zustand sofort. Bisher blieb der alte Zustand bis zur nächsten Abfrage stehen, weil PRTG ihn verzögert meldet.  
 
 **Behobene falsche Werte in Statusvariablen**  
 
@@ -132,6 +142,11 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 - Gerät, Sensor und Konfigurator: Eine fehlgeschlagene Anfrage an den IO führte zu einem PHP-Fehler.  
 - Sensor: Mit gesetztem `Ignoriere Einheit und Typ` wurde eine vorhandene Variable mit abweichendem Typ durch eine neue ersetzt. Sie bleibt jetzt erhalten und der Wert wird in ihren Typ umgewandelt.  
 - IO: Ungültige Antworten von PRTG wurden nicht als Fehler erkannt.  
+- IO: Symcon-Sensor: Der Kanal `Message Time` enthielt keinen sinnvollen Wert. Er entfällt und kann in PRTG gelöscht werden.  
+- IO: `Deaktiviere Prüfung des Zertifikat` war ohne Wirkung. Die Prüfung des Zertifikats wird damit jetzt vollständig abgeschaltet.  
+- Gerät und Sensor: Ein Ereignis von PRTG löste auch bei Instanzen mit ähnlicher ID eine Abfrage aus (z.B. bei ID 12 durch ein Ereignis für ID 1234).  
+- Sensor: Die Einstellung `Ignoriere Einheit und Typ` ging bei einem Neustart von Symcon verloren.  
+- Gerät und Sensor: Das Pausieren nutzte eine Adresse, die nicht der PRTG-API entspricht.  
 
 **Version 2.60:**  
 

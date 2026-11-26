@@ -74,6 +74,7 @@ Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-de
 Wird eine der Eigenschaften `Zeige Steuerung der Überwachung`, `Zeige Quittieren Button` oder `Status in Klartext` deaktiviert, so wird die zugehörige Statusvariable gelöscht.  
 
 Die Zusammenfassung der Instanz zeigt das Gerät des Sensors in PRTG.  
+Existiert das Objekt in PRTG nicht (mehr), zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies einmalig im Log.  
 
 Beispiel zum Setzen der Eigenschaften per Skript:  
 
@@ -89,7 +90,7 @@ IPS_ApplyChanges(12345);
 Die Konfiguration zeigt unter `Kanalübersicht` alle Kanäle des Sensors mit dem letzten Wert, der erkannten Einheit, dem passenden Datentyp und dem Typ der vorhandenen Variable.  
 
 Liefert PRTG einen Wert ohne Einheit oder passt der Typ der vorhandenen Variable nicht zur Einheit, so wird dies im Log gemeldet. Bei abweichendem Typ wird der Wert nicht geschrieben.  
-Mit dem Haken `Ignoriere Einheit und Typ` werden diese Meldungen für einen Kanal unterdrückt.  
+Mit dem Haken `Ignoriere Einheit und Typ` werden diese Meldungen für einen Kanal unterdrückt. Die Einstellung bleibt auch nach einem Neustart von Symcon erhalten.  
 
 > [!TIP]
 > Den Haken `Ignoriere Einheit und Typ` nur in Ausnahmefällen setzen. Besser die korrekte Einheit in PRTG in den Einstellungen des Kanals eintragen.
@@ -153,7 +154,8 @@ Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status`, `Überwachung` und 
 
 ## 7. PHP-Befehlsreferenz
 
-Nach erfolgreichem Steuern der Überwachung oder Bestätigen eines Alarms liest die Instanz den Zustand des Sensors neu aus PRTG.  
+Nach erfolgreichem Pausieren, Fortsetzen oder Quittieren setzt die Instanz die Statusvariablen sofort (z.B. `Pausiert`, nach dem Fortsetzen `Suche`, nach dem Quittieren `Fehler (Bestätigt)`), weil PRTG den neuen Zustand erst verzögert meldet. Beim Fortsetzen stößt sie in PRTG einen sofortigen Scan an. Den tatsächlichen Zustand liefert die nächste Abfrage.  
+Schlägt ein Befehl fehl, gibt er `false` zurück und meldet den Grund (z.B. `PRTG nicht erreichbar`, `Objekt in PRTG nicht gefunden`).  
 
 ```php
 bool PRTG_RequestState(integer $InstanzID);
@@ -173,7 +175,7 @@ bool PRTG_SetResume(integer $InstanzID);
 ```
 
 Setzt die Überwachung des Sensors in PRTG fort.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetResume(12345);
@@ -186,7 +188,7 @@ bool PRTG_SetPause(integer $InstanzID);
 ```
 
 Pausiert die Überwachung des Sensors in PRTG ohne zeitliche Begrenzung.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetPause(12345);
@@ -200,7 +202,7 @@ bool PRTG_SetPauseEx(integer $InstanzID, string $Message);
 
 Pausiert die Überwachung des Sensors in PRTG ohne zeitliche Begrenzung.  
 `$Message` ist der Text, den PRTG als Grund der Pause anzeigt. Ein leerer String pausiert ohne Meldung.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetPauseEx(12345, 'Wartung');
@@ -213,8 +215,8 @@ bool PRTG_SetPauseDuration(integer $InstanzID, integer $Minutes);
 ```
 
 Pausiert die Überwachung des Sensors in PRTG für `$Minutes` Minuten. Danach setzt PRTG die Überwachung selbst fort.  
-Bei `0` wird ohne zeitliche Begrenzung pausiert.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Bei `0` wird ohne zeitliche Begrenzung pausiert, negative Werte werden abgelehnt.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetPauseDuration(12345, 60);
@@ -239,7 +241,7 @@ bool PRTG_AcknowledgeAlarm(integer $InstanzID);
 ```
 
 Bestätigt den Alarm des Sensors in PRTG.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_AcknowledgeAlarm(12345);
@@ -252,7 +254,7 @@ bool PRTG_AcknowledgeAlarmEx(integer $InstanzID, string $Message);
 ```
 
 Bestätigt den Alarm des Sensors in PRTG mit dem Text `$Message`, den PRTG zur Bestätigung anzeigt.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_AcknowledgeAlarmEx(12345, 'Wird geprüft');

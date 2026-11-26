@@ -70,10 +70,12 @@ Ist es aus anderen Gründen nötig, die Adresse anzupassen, so kann dies im Bere
 | Passwort                             | Password       | string  |              | Passwort des Benutzers                                                        |
 | Deaktiviere Prüfung des Hostnamen    | NoHostVerify   |  bool   |    false     | Hostname im Zertifikat nicht prüfen                                           |
 | Deaktiviere Prüfung der Gegenstelle  | NoPeerVerify   |  bool   |    false     | Zertifikat der Gegenstelle nicht prüfen (z.B. selbst signiert)                |
-| Deaktiviere Prüfung des Zertifikat   | NoCertCheck    |  bool   |    false     | Status des Zertifikats nicht prüfen                                           |
+| Deaktiviere Prüfung des Zertifikat   | NoCertCheck    |  bool   |    false     | Zertifikat gar nicht prüfen (schaltet beide vorigen Prüfungen mit ab)         |
 | IP für Ereignis-Hook                 | ReturnIP       | string  |              | Abweichende IP-Adresse oder Hostname von Symcon für den Ereignis-WebHook      |
 | Port für Ereignis-Hook               | ReturnPort     | integer |     3777     | Abweichender Port von Symcon für den Ereignis-WebHook                         |
 | https benutzen                       | ReturnProtocol |  bool   |    false     | `true` = Ereignis-WebHook mit https, `false` = mit http                       |
+| Benutzername (WebHook)               | HookUsername   | string  |              | Benutzername für Abrufe über den WebHook (leer = ohne Anmeldung)              |
+| Passwort (WebHook)                   | HookPassword   | string  |              | Passwort für Abrufe über den WebHook                                          |
 
 Beispiel zum Setzen der Eigenschaften per Skript:  
 
@@ -87,8 +89,10 @@ IPS_ApplyChanges(12345);
 
 Über den WebHook `/hook/PRTG<InstanzID>` empfängt die Instanz Ereignisse von PRTG und liefert Systeminformationen sowie Graphen.  
 
+Unter `Zugriff auf den WebHook` können Benutzername und Passwort eingetragen werden. Abrufe (Symcon-Sensor, Graphen) erfordern dann eine Anmeldung per Basic-Authentifizierung. Ereignisse von PRTG funktionieren weiterhin ohne Anmeldung, weil PRTG bei der HTTP-Aktion keine Zugangsdaten mitsendet.  
+
 > [!IMPORTANT]
-> Der WebHook ist ohne Anmeldung erreichbar. Er liefert Systeminformationen von Symcon und Graphen aus PRTG mit den in der Instanz hinterlegten Zugangsdaten. Den WebHook daher nicht ungeschützt aus dem Internet erreichbar machen.
+> Ohne Benutzername ist der WebHook ohne Anmeldung erreichbar. Er liefert Systeminformationen von Symcon und Graphen aus PRTG mit den in der Instanz hinterlegten Zugangsdaten. Den WebHook daher nicht ungeschützt aus dem Internet erreichbar machen.
 
 ### Ereignisse von PRTG empfangen
 
@@ -138,6 +142,7 @@ Die Instanz stellt Daten für einen HTTP-Sensor in PRTG bereit. Dieser wird wie 
 - Im Suchfeld `HTTP Daten` eingeben und den Sensor `HTTP Daten (Erweitert)` auswählen.  
 - Als URL wird wieder der WebHook eingetragen, z.B. `http://192.168.123.123:3777/hook/PRTG12345`.  
 - Die Anfragemethode bleibt auf `GET`.  
+- Sind in der Instanz Benutzername und Passwort für den WebHook eingetragen, diese im Sensor unter `Anmeldeinformationen` mit `Basic-Authentifizierung` eintragen.  
 
 Nach dem Speichern der Sensoreinstellungen dauert es einen Augenblick, bis PRTG die ersten Werte darstellt.  
 
@@ -145,7 +150,7 @@ Nach dem Speichern der Sensoreinstellungen dauert es einen Augenblick, bis PRTG 
 ![PRTG Sensor](imgs/prtg_sensor2.png)  
 ![PRTG Sensor](imgs/prtg_sensor3.png)  
 
-Der Sensor liefert folgende Kanäle, die Grenzwerte für Warnung und Fehler sind bereits vorbelegt:  
+Der Sensor liefert folgende Kanäle. Die Grenzwerte für Warnung und Fehler sind vorbelegt, PRTG übernimmt sie aber nur beim ersten Anlegen eines Kanals. Danach werden sie in PRTG in den Einstellungen des Kanals geändert.  
 
 | Kanal                                                           | Inhalt                                                                         |
 | :-------------------------------------------------------------- | :----------------------------------------------------------------------------- |
@@ -153,17 +158,26 @@ Der Sensor liefert folgende Kanäle, die Grenzwerte für Warnung und Fehler sind
 | PHP Threads duration (avg)                                      | Durchschnittliche Laufzeit der PHP-Threads in ms                               |
 | PHP Threads memory usage (avg)                                  | Durchschnittlicher Speicherverbrauch der PHP-Threads                           |
 | IPS Objects                                                     | Anzahl der Objekte im Objektbaum                                               |
+| Kernel Uptime                                                   | Laufzeit von Symcon seit dem Start                                             |
+| Instances with error                                            | Anzahl der Instanzen mit Fehlerstatus (ohne Grenzwert, in PRTG einstellbar)    |
 | License Subscription                                            | Restlaufzeit des Subskriptionszeitraums (nur wenn vorhanden)                   |
-| Message …                                                       | Log-Meldungen je Typ pro Minute (seit dem letzten Zurücksetzen der Statistik)  |
-| Message Slow, Message Slow Counter                              | Langsame Nachrichten pro Minute bzw. gesamt seit dem Start von Symcon          |
+| Message …                                                       | Log-Meldungen je Typ pro Minute seit der letzten Abfrage                       |
+| Message Slow, Message Slow Counter                              | Langsame Nachrichten pro Minute seit der letzten Abfrage bzw. gesamt           |
 | Message Queue Size                                              | Größe der Nachrichtenwarteschlange                                             |
+| WebServer Connections, WebSocket Connections                    | Offene Verbindungen zum WebServer bzw. per WebSocket (nur wenn Symcon sie liefert) |
 | Process Handles, Threads, Virtualsize, Workingsetsize, Pagefile | Daten des Symcon-Prozesses                                                     |
 | Process Count                                                   | Anzahl der Prozesse des Systems                                                |
 | System RAM Physical/Pagefile/Virtual Free                       | Freier Arbeitsspeicher in Prozent                                              |
-| System CPU …                                                    | Auslastung je CPU in Prozent                                                   |
+| System CPU AVG, System CPU …                                    | Mittlere Auslastung bzw. Auslastung je CPU-Kern in Prozent                     |
 | Disk …, Disk … Free                                             | Freier Speicherplatz je Laufwerk in Prozent bzw. Byte                          |
 
+PRTG erlaubt höchstens 50 Kanäle je Sensor. Die einzelnen CPU-Kerne werden deshalb nur geliefert, solange diese Grenze nicht überschritten wird; der Mittelwert `System CPU AVG` immer.  
+Kanäle, die Symcon nicht mehr liefert (z.B. ein entferntes Laufwerk), bleiben in PRTG bestehen und können dort gelöscht werden.  
+
 ### Graphen über den WebHook abrufen
+
+> [!WARNING]
+> Graphen über den WebHook und `PRTG_GetGraph` werden mit Version 3.00 entfernt.
 
 Graphen aus PRTG können direkt über den WebHook abgerufen werden, z.B. für eine HTML-Box oder einen Browser:  
 

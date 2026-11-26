@@ -70,6 +70,7 @@ Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-de
 Wird eine der Eigenschaften `Zeige Steuerung der Überwachung`, `Status in Klartext`, `Anzahl der Sensoren anzeigen` oder `Status der Sensoren anzeigen` deaktiviert, so werden die zugehörigen Statusvariablen gelöscht.  
 
 Die Zusammenfassung der Instanz zeigt die Gruppe des Gerätes in PRTG.  
+Existiert das Objekt in PRTG nicht (mehr), zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies einmalig im Log.  
 
 Beispiel zum Setzen der Eigenschaften per Skript:  
 
@@ -124,7 +125,8 @@ Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status` und `Überwachung`).
 
 ## 7. PHP-Befehlsreferenz
 
-Nach erfolgreichem Steuern der Überwachung liest die Instanz den Zustand des Gerätes neu aus PRTG.  
+Nach erfolgreichem Pausieren, Fortsetzen setzt die Instanz die Statusvariablen sofort (z.B. `Pausiert`, nach dem Fortsetzen `Suche`), weil PRTG den neuen Zustand erst verzögert meldet. Beim Fortsetzen stößt sie in PRTG einen sofortigen Scan an. Den tatsächlichen Zustand liefert die nächste Abfrage.  
+Schlägt ein Befehl fehl, gibt er `false` zurück und meldet den Grund (z.B. `PRTG nicht erreichbar`, `Objekt in PRTG nicht gefunden`).  
 
 ```php
 bool PRTG_RequestState(integer $InstanzID);
@@ -144,7 +146,7 @@ bool PRTG_SetResume(integer $InstanzID);
 ```
 
 Setzt die Überwachung des Gerätes in PRTG fort.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetResume(12345);
@@ -157,7 +159,7 @@ bool PRTG_SetPause(integer $InstanzID);
 ```
 
 Pausiert die Überwachung des Gerätes in PRTG ohne zeitliche Begrenzung.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetPause(12345);
@@ -171,7 +173,7 @@ bool PRTG_SetPauseEx(integer $InstanzID, string $Message);
 
 Pausiert die Überwachung des Gerätes in PRTG ohne zeitliche Begrenzung.  
 `$Message` ist der Text, den PRTG als Grund der Pause anzeigt. Ein leerer String pausiert ohne Meldung.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetPauseEx(12345, 'Wartung');
@@ -184,8 +186,8 @@ bool PRTG_SetPauseDuration(integer $InstanzID, integer $Minutes);
 ```
 
 Pausiert die Überwachung des Gerätes in PRTG für `$Minutes` Minuten. Danach setzt PRTG die Überwachung selbst fort.  
-Bei `0` wird ohne zeitliche Begrenzung pausiert.  
-Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+Bei `0` wird ohne zeitliche Begrenzung pausiert, negative Werte werden abgelehnt.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat, sonst `false`.  
 
 ```php
 PRTG_SetPauseDuration(12345, 60);

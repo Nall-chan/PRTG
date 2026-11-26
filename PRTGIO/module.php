@@ -33,6 +33,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @property string $Url
  * @property string $Hash
  * @property int $State
+ * @property array $SensorCounters Zählerstände der letzten Abfrage des Symcon-Sensors
  * @method bool RegisterHook(string $WebHook)
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  */
@@ -49,6 +50,9 @@ class PRTGIO extends IPSModuleStrict
 
     public const GraphPNG = 1;
     public const GraphSVG = 2;
+
+    /** Höchstzahl der Kanäle je Sensor in PRTG. */
+    private const SensorMaxChannels = 50;
 
     /** @var array $http_error */
     private static $http_error =
@@ -117,10 +121,14 @@ class PRTGIO extends IPSModuleStrict
         $this->RegisterPropertyString('ReturnIP', '');
         $this->RegisterPropertyInteger('ReturnPort', 3777);
         $this->RegisterPropertyBoolean('ReturnProtocol', false);
+        // Basic-Auth für Abrufe über den WebHook (Symcon-Sensor, Graphen); leer = ohne Anmeldung.
+        $this->RegisterPropertyString('HookUsername', '');
+        $this->RegisterPropertyString('HookPassword', '');
         $this->RegisterAttributeString('ConsumerAddress', 'Invalid');
         $this->Url = '';
         $this->Hash = '';
         $this->State = self::isInActive;
+        $this->SensorCounters = [];
         if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
         }
@@ -135,6 +143,7 @@ class PRTGIO extends IPSModuleStrict
     {
         $this->Url = '';
         $this->Hash = '';
+        $this->SensorCounters = [];
         $this->RegisterHook('PRTG' . $this->InstanceID);
 
         parent::ApplyChanges();
@@ -229,37 +238,10 @@ class PRTGIO extends IPSModuleStrict
     public function ForwardData(string $JSONString): string
     {
         $Json = json_decode($JSONString, true);
+        // Fehler (HTTP-Code oder Status des IO) gehen im Feld 'Error' an das Kind zurück.
+        // Das Kind meldet sie bei Aufrufen durch den Nutzer an den Aufrufer, bei Timern und Ereignissen nur im Debug.
         $Result = $this->SendData($Json['Uri'], $Json['QueryData'], $Json['PostData']);
-        set_error_handler([$this, 'ModulErrorHandler']);
-        switch ($Result['Error']) {
-            case self::isConnected:
-            case self::isInActive:
-            case 200:
-                restore_error_handler();
-                return serialize($Result);
-            case self::isDisconnected:
-                trigger_error('IO not connected', E_USER_WARNING);
-                break;
-            case self::isURLnotValid:
-            case 400:
-                trigger_error('Bad Request', E_USER_WARNING);
-                break;
-            case self::isUnauthorized:
-            case 401:
-                trigger_error('Unauthorized', E_USER_WARNING);
-                break;
-            case 404: // not Found
-                trigger_error('Not found', E_USER_WARNING);
-                break;
-            case 500:
-                trigger_error('Server error', E_USER_WARNING);
-                break;
-            case 405: // Antwort ist kein gültiges JSON
-                trigger_error('Invalid answer from PRTG', E_USER_WARNING);
-                break;
-        }
-        restore_error_handler();
-        return '';
+        return serialize($Result);
     }
 
     /**
@@ -311,6 +293,14 @@ class PRTGIO extends IPSModuleStrict
         }
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'GET':
+                // Ereignisse (POST) bleiben ohne Anmeldung: PRTG sendet bei der HTTP-Aktion keine Zugangsdaten.
+                if (!$this->CheckHookAuth()) {
+                    header('WWW-Authenticate: Basic realm="Symcon PRTG"');
+                    header('HTTP/1.0 401 Unauthorized');
+                    header('Content-type: text/plain');
+                    echo 'Unauthorized';
+                    return;
+                }
                 if (isset($_GET['graph']) && in_array($_GET['graph'], ['png', 'svg'], true)) {
                     $Type = ($_GET['graph'] == 'png') ? self::GraphPNG : self::GraphSVG;
                     $Error = '';
@@ -366,19 +356,6 @@ class PRTGIO extends IPSModuleStrict
     {
         $this->State = $InstanceStatus;
         return parent::SetStatus($InstanceStatus);
-    }
-
-    /**
-     * ModulErrorHandler
-     *
-     * @param  int $errno
-     * @param  string $errstr
-     * @return bool
-     */
-    protected function ModulErrorHandler(int $errno, string $errstr): bool
-    {
-        echo $errstr . PHP_EOL;
-        return true;
     }
 
     /**
@@ -464,25 +441,28 @@ class PRTGIO extends IPSModuleStrict
      */
     private function FetchIPSSensorData(): string
     {
-        $i = 0;
+        $Channels = [];
+        $ThreadList = IPS_GetScriptThreadList();
+        $ThreadCount = max(count($ThreadList), 1);
+        $Busy = 0;
         $ExecutionAvg = 0;
         $PeakMemoryUsage = 0;
-        $ThreadList = IPS_GetScriptThreadList();
         foreach ($ThreadList as $ThreadId) {
             $Thread = IPS_GetScriptThread($ThreadId);
-
             $ExecutionAvg += $Thread['ExecutionAvg'];
             $PeakMemoryUsage += $Thread['PeakMemoryUsage'];
             if ($Thread['Sender']) {
-                $i++;
+                $Busy++;
             }
         }
-        $Channels = [];
-        $Channels[] = ['channel' => 'PHP Threads', 'value' => $i, 'unit' => 'Count', 'limitmaxwarning' => (int) (count($ThreadList) / 100 * 50), 'limitmaxerror' => (int) (count($ThreadList) / 100 * 90), 'limitmode' => 1];
-        $Channels[] = ['channel' => 'PHP Threads duration (avg)', 'value' => (int) ($ExecutionAvg / count($ThreadList)),  'customunit'=>'ms', 'limitmaxwarning' => (count($ThreadList) * 9), 'limitmaxerror' => (count($ThreadList) * 10), 'limitmode' => 1];
+        $Channels[] = ['channel' => 'PHP Threads', 'value' => $Busy, 'unit' => 'Count', 'limitmaxwarning' => (int) ($ThreadCount / 100 * 50), 'limitmaxerror' => (int) ($ThreadCount / 100 * 90), 'limitmode' => 1];
+        $Channels[] = ['channel' => 'PHP Threads duration (avg)', 'value' => (int) ($ExecutionAvg / $ThreadCount), 'customunit' => 'ms', 'limitmaxwarning' => ($ThreadCount * 9), 'limitmaxerror' => ($ThreadCount * 10), 'limitmode' => 1];
         $MemLimit = ini_parse_quantity(ini_get('memory_limit'));
-        $Channels[] = ['channel' => 'PHP Threads memory usage (avg)', 'value' => (int) ($PeakMemoryUsage / count($ThreadList)), 'unit' => 'BytesMemory', 'limitmaxwarning' => (int) ($MemLimit / 100 * 75), 'limitmaxerror' => (int) ($MemLimit / 100 * 90), 'limitmode' => 1];
+        $Channels[] = ['channel' => 'PHP Threads memory usage (avg)', 'value' => (int) ($PeakMemoryUsage / $ThreadCount), 'unit' => 'BytesMemory', 'limitmaxwarning' => (int) ($MemLimit / 100 * 75), 'limitmaxerror' => (int) ($MemLimit / 100 * 90), 'limitmode' => 1];
         $Channels[] = ['channel' => 'IPS Objects', 'value' => count(IPS_GetObjectList()), 'unit' => 'Count', 'limitmaxwarning' => 45000, 'limitmaxerror' => 50000, 'limitmode' => 1];
+        $Channels[] = ['channel' => 'Kernel Uptime', 'value' => time() - IPS_GetKernelStartTime(), 'unit' => 'TimeSeconds'];
+        // Ohne Grenzwert: Instanzen dauerhaft nicht erreichbarer Geräte würden den Sensor sonst ständig auf Warnung setzen.
+        $Channels[] = ['channel' => 'Instances with error', 'value' => $this->CountInstancesWithError(), 'unit' => 'Count'];
 
         $UtilsId = IPS_GetInstanceListByModuleID('{B69010EA-96D5-46DF-B885-24821B8C8DBD}')[0];
         $VarId = @IPS_GetObjectIDByIdent('LicenseSubscription', $UtilsId);
@@ -490,64 +470,55 @@ class PRTGIO extends IPSModuleStrict
             $Channels[] = ['channel' => 'License Subscription', 'value' => GetValueInteger($VarId) - time(), 'unit' => 'TimeSeconds', 'limitminwarning' => 30 * 24 * 60 * 60, 'limitminerror' => 0, 'limitmode' => 1];
         }
 
+        // Meldungen je Minute seit der letzten Abfrage. Die Statistik zählt seit dem letzten Zurücksetzen,
+        // daher die Differenz zur letzten Abfrage. Ohne Vorwert (erste Abfrage, Zurücksetzen) gilt der Mittelwert seit dem Zurücksetzen.
         $LogMessages = UC_GetLogMessageStatistics($UtilsId);
-        $TimeSpanSec = (time() - $LogMessages['ResetTimeStamp']);
-        if ($TimeSpanSec > 0) {
-            unset($LogMessages['ResetTimeStamp']);
-            $TimeSpan = $TimeSpanSec / 60;
-            foreach ($LogMessages as $MessageTyp => $Value) {
-                switch ($MessageTyp) {
-                    case 'MessageWarningCount':
-                        $MessageChannel = [
-                            'limitmaxwarning' => 10,
-                            'limitmaxerror'   => 20,
-                            'limitmode'       => 1
-                        ];
-                        break;
-                    case 'MessageErrorCount':
-                        $MessageChannel = [
-                            'limitmaxwarning' => 5,
-                            'limitmaxerror'   => 10,
-                            'limitmode'       => 1
-                        ];
-                        break;
-                    default:
-                        $MessageChannel = [];
-                }
-                $MessageTyp = str_split(substr($MessageTyp, 0, -5), 7);
-                $MessageChannel = array_merge($MessageChannel, ['channel' => $MessageTyp[0] . ' ' . $MessageTyp[1], 'value' => (int) ($Value / $TimeSpan), 'unit' => 'Custom', 'customunit' => '#/Min.', 'speedtime' => 'Minute']);
-                $Channels[] = $MessageChannel;
+        $KernelMessages = UC_GetKernelStatistics($UtilsId);
+        $Counters = [];
+        foreach ($LogMessages as $Key => $Value) {
+            // Nur die Zähler je Meldungstyp (MessageErrorCount …), nicht MessageTimeStamp/ResetTimeStamp.
+            if (str_ends_with($Key, 'Count')) {
+                $Counters[$Key] = (int) $Value;
             }
         }
-        $KernelMessages = UC_GetKernelStatistics($UtilsId);
-        $TimeSpanSec = (time() - IPS_GetKernelStartTime());
-        if ($TimeSpanSec > 0) {
-            $TimeSpan = $TimeSpanSec / 60;
-            $Channels[] = [
-                'channel'         => 'Message Slow',
-                'value'           => ($KernelMessages['MessageSlowCounter'] / $TimeSpan),
-                'float'           => 1,
-                'unit'            => 'Custom',
-                'customunit'      => '#/Min.',
-                'speedtime'       => 'Minute',
-                'limitmaxwarning' => 0.1,
-                'limitmaxerror'   => 1,
-                'limitmode'       => 1
-            ];
-            $Channels[] = [
-                'channel'    => 'Message Slow Counter',
-                'value'      => (int) $KernelMessages['MessageSlowCounter'],
-                'unit'       => 'Count'
-            ];
-            $Channels[] = [
-                'channel'         => 'Message Queue Size',
-                'value'           => (int) $KernelMessages['MessageQueueSize'],
-                'unit'            => 'Count',
-                'limitmaxwarning' => 1,
-                'limitmaxerror'   => 5,
-                'limitmode'       => 1
-            ];
+        $Counters['MessageSlowCounter'] = (int) $KernelMessages['MessageSlowCounter'];
+        $Rates = $this->GetRatesPerMinute($Counters);
+        $LogMinutes = max((time() - $LogMessages['ResetTimeStamp']) / 60, 1);
+        $KernelMinutes = max((time() - IPS_GetKernelStartTime()) / 60, 1);
+        foreach ($Counters as $Key => $Value) {
+            if ($Key == 'MessageSlowCounter') {
+                continue;
+            }
+            $MessageChannel = match ($Key) {
+                'MessageWarningCount' => ['limitmaxwarning' => 10, 'limitmaxerror' => 20, 'limitmode' => 1],
+                'MessageErrorCount'   => ['limitmaxwarning' => 5, 'limitmaxerror' => 10, 'limitmode' => 1],
+                default               => []
+            };
+            // MessageErrorCount → „Message Error“ (Kanalnamen wie bisher, sonst legt PRTG neue Kanäle an).
+            $Name = 'Message ' . substr($Key, 7, -5);
+            $Rate = $Rates[$Key] ?? ($Value / $LogMinutes);
+            $Channels[] = array_merge($MessageChannel, ['channel' => $Name, 'value' => (int) round($Rate), 'unit' => 'Custom', 'customunit' => '#/Min.']);
         }
+        $Channels[] = [
+            'channel'         => 'Message Slow',
+            'value'           => $Rates['MessageSlowCounter'] ?? ($Counters['MessageSlowCounter'] / $KernelMinutes),
+            'float'           => 1,
+            'unit'            => 'Custom',
+            'customunit'      => '#/Min.',
+            'limitmaxwarning' => 0.1,
+            'limitmaxerror'   => 1,
+            'limitmode'       => 1
+        ];
+        $Channels[] = ['channel' => 'Message Slow Counter', 'value' => $Counters['MessageSlowCounter'], 'unit' => 'Count'];
+        $Channels[] = ['channel' => 'Message Queue Size', 'value' => (int) $KernelMessages['MessageQueueSize'], 'unit' => 'Count', 'limitmaxwarning' => 1, 'limitmaxerror' => 5, 'limitmode' => 1];
+        // Verbindungen: interne Befehle, nicht in jeder Version vorhanden.
+        if (function_exists('IPS_GetActiveWebServerConnections')) {
+            $Channels[] = ['channel' => 'WebServer Connections', 'value' => @IPS_GetActiveWebServerConnections(), 'unit' => 'Count'];
+        }
+        if (function_exists('IPS_GetActiveWebSocketConnections')) {
+            $Channels[] = ['channel' => 'WebSocket Connections', 'value' => @IPS_GetActiveWebSocketConnections(), 'unit' => 'Count'];
+        }
+
         $ProcessInfo = Sys_GetProcessInfo();
         $Channels[] = ['channel' => 'Process Handles', 'value' => $ProcessInfo['IPS_HANDLECOUNT'], 'unit' => 'Count'];
         $Channels[] = ['channel' => 'Process Threads', 'value' => $ProcessInfo['IPS_NUMTHREADS'], 'unit' => 'Count'];
@@ -563,11 +534,6 @@ class PRTGIO extends IPSModuleStrict
         }
         $Channels[] = ['channel' => 'System RAM Pagefile Free', 'value' => $MemoryInfo['AVAILPAGEFILE'] / $MemoryInfo['TOTALPAGEFILE'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
         $Channels[] = ['channel' => 'System RAM Virtual Free', 'value' => $MemoryInfo['AVAILVIRTUAL'] / $MemoryInfo['TOTALVIRTUAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
-        $CPUs = Sys_GetCPUInfo();
-        foreach ($CPUs as $Key => $Value) {
-            $Name = explode('_', $Key);
-            $Channels[] = ['channel' => 'System CPU ' . $Name[1], 'value' => $Value, 'float' => 1, 'unit' => 'CPU', 'limitmaxwarning' => 70, 'limitmaxerror' => 90, 'limitmode' => 1];
-        }
         $Drives = Sys_GetHardDiskInfo();
         foreach ($Drives as $Value) {
             if ($Value['TOTAL'] == 0) {
@@ -581,8 +547,81 @@ class PRTGIO extends IPSModuleStrict
             $Channels[] = ['channel' => 'Disk ' . $Name, 'value' => $Value['FREE'] / $Value['TOTAL'] * 100, 'float' => 1, 'unit' => 'Percent', 'limitminwarning' => 20, 'limitminerror' => 5, 'limitmode' => 1];
             $Channels[] = ['channel' => 'Disk ' . $Name . ' Free', 'value' => (int) $Value['FREE'], 'unit' => 'BytesDisk'];
         }
-        $Result = ['prtg' => ['error' => 0, 'result' => $Channels]];
+        // CPU: Mittelwert immer, einzelne Kerne nur solange PRTG nicht mehr als 50 Kanäle je Sensor bekommt.
+        $Cores = [];
+        foreach (Sys_GetCPUInfo() as $Key => $Value) {
+            $Name = explode('_', $Key);
+            $Channel = ['channel' => 'System CPU ' . $Name[1], 'value' => $Value, 'float' => 1, 'unit' => 'CPU', 'limitmaxwarning' => 70, 'limitmaxerror' => 90, 'limitmode' => 1];
+            if ($Name[1] == 'AVG') {
+                $Channels[] = $Channel;
+            } else {
+                $Cores[] = $Channel;
+            }
+        }
+        if (count($Channels) + count($Cores) <= self::SensorMaxChannels) {
+            $Channels = array_merge($Channels, $Cores);
+        }
+        $Result = ['prtg' => ['error' => 0, 'result' => array_slice($Channels, 0, self::SensorMaxChannels)]];
         return json_encode($Result);
+    }
+
+    /**
+     * Zählt die Instanzen mit Fehlerstatus (ab 200).
+     *
+     * @return int Anzahl
+     */
+    private function CountInstancesWithError(): int
+    {
+        $Count = 0;
+        foreach (IPS_GetInstanceList() as $InstanceID) {
+            if (IPS_GetInstance($InstanceID)['InstanceStatus'] >= IS_EBASE) {
+                $Count++;
+            }
+        }
+        return $Count;
+    }
+
+    /**
+     * Liefert je Zähler die Änderung pro Minute seit der letzten Abfrage.
+     *
+     * @param int[] $Counters Aktuelle Zählerstände
+     *
+     * @return array Rate je Zähler, null ohne gültigen Vorwert (erste Abfrage oder Zähler zurückgesetzt)
+     */
+    private function GetRatesPerMinute(array $Counters): array
+    {
+        $Now = time();
+        $Last = $this->SensorCounters;
+        $this->SensorCounters = ['Time' => $Now, 'Values' => $Counters];
+        $Minutes = isset($Last['Time']) ? ($Now - $Last['Time']) / 60 : 0;
+        $Rates = [];
+        foreach ($Counters as $Key => $Value) {
+            $Previous = $Last['Values'][$Key] ?? null;
+            $Rates[$Key] = (($Minutes > 0) && ($Previous !== null) && ($Value >= $Previous)) ? ($Value - $Previous) / $Minutes : null;
+        }
+        return $Rates;
+    }
+
+    /**
+     * Prüft die Basic-Auth-Anmeldung für Abrufe über den WebHook.
+     *
+     * @return bool True, wenn kein Benutzer eingestellt ist oder die Anmeldung passt.
+     */
+    private function CheckHookAuth(): bool
+    {
+        $User = $this->ReadPropertyString('HookUsername');
+        if ($User == '') {
+            return true;
+        }
+        $AuthUser = $_SERVER['PHP_AUTH_USER'] ?? '';
+        $AuthPassword = $_SERVER['PHP_AUTH_PW'] ?? '';
+        $Header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        if (($AuthUser == '') && (stripos($Header, 'Basic ') === 0)) {
+            $Parts = explode(':', (string) base64_decode(substr($Header, 6)), 2);
+            $AuthUser = $Parts[0];
+            $AuthPassword = $Parts[1] ?? '';
+        }
+        return hash_equals($User, $AuthUser) && hash_equals($this->ReadPropertyString('HookPassword'), $AuthPassword);
     }
 
     /**
@@ -845,7 +884,9 @@ class PRTGIO extends IPSModuleStrict
         }
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         if ($this->ReadPropertyBoolean('NoCertCheck')) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYSTATUS, false);
+            // Zertifikat gar nicht prüfen: weder Gegenstelle noch Hostname.
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
         if ($this->ReadPropertyBoolean('NoHostVerify')) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);

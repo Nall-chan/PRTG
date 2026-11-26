@@ -34,7 +34,8 @@
             "Invalid graph time span": "Ungültiger Zeitbereich des Graphen",
             "Invalid graph size": "Ungültige Größe des Graphen",
             "Graph could not be loaded": "Graph konnte nicht geladen werden",
-            "Invalid answer from PRTG": "Ungültige Antwort von PRTG",
+            "Access to the WebHook (Symcon sensor and graphs)": "Zugriff auf den WebHook (Symcon-Sensor und Graphen)",
+            "Basic authentication for requests from PRTG. Leave empty for access without login. Events from PRTG do not require a login.": "Basic-Authentifizierung für Abrufe durch PRTG. Leer lassen für Zugriff ohne Anmeldung. Ereignisse von PRTG benötigen keine Anmeldung.",
             "This module is free for non-commercial use,\r\nDonations in support of the author are accepted here:": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos,\r\nSchenkungen als Unterstützung für den Autor werden hier akzeptiert:"
         }
     }

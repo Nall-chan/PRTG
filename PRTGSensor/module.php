@@ -30,7 +30,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @example <b>Ohne</b>
  *
  * @property int $Interval
- * @property array $Channels
+ * @property array $Channels Kanalübersicht für das Formular (Laufzeitdaten)
  * @method bool IORequestAction(string $Ident, mixed $Value)
  * @method void IOMessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data)
  * @method int FindIDForIdent(string $Ident)
@@ -47,11 +47,22 @@ class PRTGSensor extends IPSModuleStrict
     use \prtg\PRTGPause;
     use \prtg\VariableConverter;
     use \prtg\ParentStatus;
+    use \prtg\PRTGRequest;
     use \prtg\InstanceStatus {
         \prtg\InstanceStatus::MessageSink as IOMessageSink; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
         //\prtg\InstanceStatus::RegisterParent as IORegisterParent;
         \prtg\InstanceStatus::RequestAction as IORequestAction;
     }
+    /** Status: Das Objekt existiert in PRTG nicht (mehr). */
+    private const StatusNotFound = IS_EBASE + 1;
+
+    /** Werte der Variable Status (PRTG status_raw) für die Rückmeldung nach Befehlen. */
+    private const StateScanning = 2;
+    private const StatePaused = 7;
+    private const StatePausedUntil = 12;
+    private const StateDown = 5;
+    private const StateDownPartial = 14;
+    private const StateDownAcknowledged = 13;
 
     /**
      * Create
@@ -70,13 +81,21 @@ class PRTGSensor extends IPSModuleStrict
         $this->RegisterPropertyInteger('Interval', 60);
         $this->RegisterPropertyInteger('id', 0);
         $this->RegisterTimer('RequestState', 0, 'IPS_RequestAction($_IPS[\'TARGET\'],\'RequestState\', 0);');
+        // Kanäle mit gesetztem „Ignoriere Einheit und Typ“ (objid-Liste als JSON).
+        $this->RegisterAttributeString('IgnoredChannels', '[]');
         $this->Interval = 0;
         $this->Channels = [];
     }
 
+    /**
+     * Destroy
+     *
+     * @return void
+     */
     public function Destroy(): void
     {
         $this->SetTimer(false);
+        parent::Destroy();
     }
 
     /**
@@ -100,7 +119,9 @@ class PRTGSensor extends IPSModuleStrict
         $this->UnregisterProfile('PRTG.IpM');
         $this->UnregisterProfile('PRTG.Items');
         parent::ApplyChanges();
-        $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
+        // Die ID endet mit , oder } (sonst passt z.B. ID 12 auch auf ein Ereignis für 1234).
+        $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '[,}].*');
+        $this->MigrateIgnoredChannels();
         $StateIsNew = ($this->FindIDForIdent('State') == 0);
         $this->MaintainVariable(
             'State',
@@ -342,6 +363,7 @@ class PRTGSensor extends IPSModuleStrict
         if ($this->ReadPropertyInteger('id') == 0) {
             $this->SetStatus(IS_INACTIVE);
             $this->SetTimer(false);
+            return;
         }
         if ($this->RegisterParent() && $this->HasActiveParent()) {
             $this->IOChangeState(IS_ACTIVE);
@@ -384,10 +406,10 @@ class PRTGSensor extends IPSModuleStrict
      */
     public function RequestState(): bool
     {
-        if ($this->RequestSensorState()) {
-            return $this->RequestChannelState();
+        if (!$this->UpdateState()) {
+            return $this->ReportRequestError();
         }
-        return false;
+        return true;
     }
 
     /**
@@ -398,7 +420,9 @@ class PRTGSensor extends IPSModuleStrict
      */
     public function ReceiveData(string $JSONString): string
     {
-        IPS_RunScriptText('PRTG_RequestState(' . $this->InstanceID . ')');
+        // Ereignis von PRTG: Abfrage entkoppelt vom Datenfluss. Symcon führt die Timer einer Instanz
+        // nie gleichzeitig aus, mehrere Ereignisse kurz hintereinander laufen nacheinander.
+        $this->RegisterOnceTimer('EventRequest', 'IPS_RequestAction($_IPS[\'TARGET\'], \'RequestState\', 0);');
         return '';
     }
 
@@ -440,7 +464,10 @@ class PRTGSensor extends IPSModuleStrict
                 if (!$this->HasActiveParent()) {
                     return;
                 }
-                $this->RequestState();
+                // Timer und Ereignisse: Der Fehler geht über die Ausgabe in das Log.
+                if (!$this->UpdateState()) {
+                    $this->ReportRequestError();
+                }
                 return;
             case 'ActionButton':
                 if ($Value) {
@@ -487,10 +514,6 @@ class PRTGSensor extends IPSModuleStrict
      */
     public function AcknowledgeAlarmEx(string $Message): bool
     {
-        if (!is_string($Message)) {
-            trigger_error($this->Translate('Message must be string.'), E_USER_NOTICE);
-            return false;
-        }
         $QueryData = [
             'action' => 0,
             'id'     => $this->ReadPropertyInteger('id')
@@ -501,11 +524,13 @@ class PRTGSensor extends IPSModuleStrict
         }
 
         $Result = $this->SendData('api/acknowledgealarm.htm', $QueryData);
-
-        if (array_key_exists('Payload', $Result)) {
-            return $this->RequestState();
+        if (!array_key_exists('Payload', $Result)) {
+            return $this->ReportRequestError();
         }
-        return false;
+        if (in_array($this->GetValue('State'), [self::StateDown, self::StateDownPartial], true)) {
+            $this->EmulateState(self::StateDownAcknowledged);
+        }
+        return true;
     }
 
     /**
@@ -569,6 +594,43 @@ class PRTGSensor extends IPSModuleStrict
     }
 
     /**
+     * UpdateState
+     *
+     * Fragt Sensor und Kanäle ab, ohne den Fehler auszugeben (Ausgabe übernimmt der Aufrufer).
+     *
+     * @return bool True bei Erfolg, False im Fehlerfall (Grund in LastRequestError)
+     */
+    private function UpdateState(): bool
+    {
+        if ($this->ReadPropertyInteger('id') == 0) {
+            $this->LastRequestError = 'No PRTG object ID configured';
+            return false;
+        }
+        if ($this->RequestSensorState()) {
+            return $this->RequestChannelState();
+        }
+        return false;
+    }
+
+    /**
+     * MigrateIgnoredChannels
+     *
+     * Bis 2.60 lag „Ignoriere Einheit und Typ“ nur im Buffer. Einmalig in das Attribut übernehmen.
+     *
+     * @return void
+     */
+    private function MigrateIgnoredChannels(): void
+    {
+        if ($this->ReadAttributeString('IgnoredChannels') != '[]') {
+            return;
+        }
+        $Ignored = array_keys(array_filter(array_column($this->Channels, 'Ignore', 'objid')));
+        if (count($Ignored) > 0) {
+            $this->WriteAttributeString('IgnoredChannels', json_encode(array_map('intval', $Ignored)));
+        }
+    }
+
+    /**
      * RequestSensorState
      *
      * Fragt den Zustand des Sensors aus PRTG ab.
@@ -586,11 +648,18 @@ class PRTGSensor extends IPSModuleStrict
             return false;
         }
         if (count($Result['sensors']) != 1) {
+            $this->LastRequestError = 'Object not found in PRTG';
+            if ($this->GetStatus() != self::StatusNotFound) {
+                $this->SetStatus(self::StatusNotFound);
+            }
             return false;
         }
         $Data = $Result['sensors'][0];
         if ($Data['name'] == '') {
             return false;
+        }
+        if ($this->GetStatus() != IS_ACTIVE) {
+            $this->SetStatus(IS_ACTIVE);
         }
         if ($this->GetSummary() != $Data['device']) {
             $this->SetSummary($Data['device']);
@@ -797,7 +866,11 @@ class PRTGSensor extends IPSModuleStrict
      */
     private function GetChannelOverview(): array
     {
-        return array_values($this->Channels);
+        $Channels = array_values($this->Channels);
+        foreach ($Channels as &$Channel) {
+            $Channel['Ignore'] = $this->GetChannelOverwrite((int) $Channel['objid']);
+        }
+        return $Channels;
     }
 
     /**
@@ -808,9 +881,8 @@ class PRTGSensor extends IPSModuleStrict
      */
     private function GetChannelOverwrite(int $objid): bool
     {
-        $Channels = $this->Channels;
-        $Overwrites = array_combine(array_column($Channels, 'objid'), array_column($Channels, 'Ignore'));
-        return $Overwrites[$objid] ?? false;
+        $Ignored = json_decode($this->ReadAttributeString('IgnoredChannels'), true);
+        return is_array($Ignored) && in_array($objid, $Ignored, true);
     }
 
     /**
@@ -822,6 +894,13 @@ class PRTGSensor extends IPSModuleStrict
      */
     private function SetChannelOverwrite(int $objid, bool $Ignore): void
     {
+        // Dauerhaft im Attribut, die Kanalübersicht im Buffer zeigt den Stand nur an.
+        $Ignored = json_decode($this->ReadAttributeString('IgnoredChannels'), true);
+        $Ignored = array_values(array_diff(is_array($Ignored) ? $Ignored : [], [$objid]));
+        if ($Ignore) {
+            $Ignored[] = $objid;
+        }
+        $this->WriteAttributeString('IgnoredChannels', json_encode($Ignored));
         $Channels = $this->Channels;
         if (array_key_exists($objid, $Channels)) {
             $Channels[$objid]['Ignore'] = $Ignore;
@@ -829,39 +908,6 @@ class PRTGSensor extends IPSModuleStrict
         $this->Channels = $Channels;
     }
 
-    /**
-     * SendData
-     *
-     * Sendet Eine Anfrage an den IO und liefert die Antwort.
-     *
-     * @param string $Uri       URI der Anfrage
-     * @param array  $QueryData Alle mit Allen GET-Parametern
-     * @param string $PostData  String mit POST Daten
-     * @return array Antwort ale Array
-     */
-    private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
-    {
-        $this->SendDebug('Request Uri:', $Uri, 0);
-        $this->SendDebug('Request QueryData:', $QueryData, 0);
-        $this->SendDebug('Request PostData:', $PostData, 0);
-        $Data['DataID'] = '{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}';
-        $Data['Uri'] = $Uri;
-        $Data['QueryData'] = $QueryData;
-        $Data['PostData'] = $PostData;
-        $ResultString = $this->SendDataToParent(json_encode($Data));
-        // ForwardData liefert im Fehlerfall einen leeren String. Entsteht beim Aufruf eine Ausgabe (Warnung), verwirft Symcon den Rückgabewert und liefert false.
-        $Result = is_string($ResultString) ? @unserialize($ResultString) : false;
-        if (!is_array($Result) || !array_key_exists('Error', $Result)) {
-            return [];
-        }
-        if ($Result['Error'] != 200) {
-            $this->SendDebug('Result Error', $Result, 0);
-            return [];
-        }
-        unset($Result['Error']);
-        $this->SendDebug('Result', $Result, 0);
-        return $Result;
-    }
 }
 
 /* @} */

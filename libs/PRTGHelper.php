@@ -94,13 +94,106 @@ trait ParentStatus
 }
 
 /**
- * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
+ * PRTGRequest Trait für PRTGSensors und PRTGDevices.
+ *
+ * Sendet Anfragen über den IO an PRTG und merkt sich den Grund eines Fehlers,
+ * damit öffentliche Funktionen ihn an den Aufrufer melden können.
  *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
  * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
- * @version       2.60
+ * @version       2.61
+ */
+trait PRTGRequest
+{
+    /**
+     * Unübersetzter Fehlertext der letzten Anfrage (nur innerhalb eines Aufrufs gültig).
+     *
+     * @var string
+     */
+    private string $LastRequestError = '';
+
+    /**
+     * Sendet eine Anfrage an den IO und liefert die Antwort.
+     *
+     * @param string   $Uri       URI der Anfrage
+     * @param string[] $QueryData Alle GET-Parameter
+     * @param string   $PostData  String mit POST-Daten
+     *
+     * @return array Antwort als Array, leer im Fehlerfall (Grund in LastRequestError)
+     */
+    private function SendData(string $Uri, array $QueryData = [], string $PostData = ''): array
+    {
+        $this->LastRequestError = '';
+        if (!$this->HasActiveParent()) {
+            $this->LastRequestError = 'PRTG not reachable';
+            return [];
+        }
+        $this->SendDebug('Request Uri:', $Uri, 0);
+        $this->SendDebug('Request QueryData:', $QueryData, 0);
+        $this->SendDebug('Request PostData:', $PostData, 0);
+        $Data['DataID'] = '{963B49EF-64E6-4C70-8DA4-6699EF9B8CC5}';
+        $Data['Uri'] = $Uri;
+        $Data['QueryData'] = $QueryData;
+        $Data['PostData'] = $PostData;
+        $ResultString = $this->SendDataToParent(json_encode($Data));
+        // Entsteht beim Aufruf eine Ausgabe (Warnung), verwirft Symcon den Rückgabewert und liefert false.
+        $Result = is_string($ResultString) ? @unserialize($ResultString) : false;
+        if (!is_array($Result) || !array_key_exists('Error', $Result)) {
+            $this->LastRequestError = 'PRTG not reachable';
+            return [];
+        }
+        if ($Result['Error'] != 200) {
+            $this->SendDebug('Result Error', $Result, 0);
+            $this->LastRequestError = $this->GetRequestErrorText((int) $Result['Error']);
+            return [];
+        }
+        unset($Result['Error']);
+        $this->SendDebug('Result', $Result, 0);
+        return $Result;
+    }
+
+    /**
+     * Liefert den (unübersetzten) Fehlertext zu einem Fehlercode des IO.
+     *
+     * @param int $Error HTTP-Code oder Status des IO
+     *
+     * @return string
+     */
+    private function GetRequestErrorText(int $Error): string
+    {
+        return match ($Error) {
+            401, IS_EBASE + 2 => 'PRTG: Login failed',
+            400, IS_EBASE + 3 => 'PRTG: Invalid request',
+            500               => 'PRTG: Server error',
+            405               => 'PRTG: Invalid answer',
+            default           => 'PRTG not reachable' // 0, 404, IS_INACTIVE, IS_EBASE + 1
+        };
+    }
+
+    /**
+     * Meldet den Fehler der letzten Anfrage an den Aufrufer.
+     *
+     * @return bool Immer false
+     */
+    private function ReportRequestError(): bool
+    {
+        echo $this->Translate($this->LastRequestError != '' ? $this->LastRequestError : 'PRTG not reachable') . PHP_EOL;
+        return false;
+    }
+}
+
+/**
+ * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
+ *
+ * Erfordert die Traits PRTGRequest und die Methode UpdateState der Klasse.
+ *
+ * @author        Michael Tröger <micha@nall-chan.net>
+ * @copyright     2025 Michael Tröger
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
+ *
+ * @version       2.61
  *
  * @example <b>Ohne</b>
  */
@@ -110,7 +203,7 @@ trait PRTGPause
      * SetResume
      *
      * IPS Instanz-Funktion PRTG_SetResume
-     * Setzt die Überwachung des Gerätes in PRTG fort.
+     * Setzt die Überwachung des Objektes in PRTG fort.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
@@ -119,33 +212,35 @@ trait PRTGPause
         $Result = $this->SendData('api/pause.htm', [
             'id'     => $this->ReadPropertyInteger('id'),
             'action' => 1
-
         ]);
-        if (array_key_exists('Payload', $Result)) {
-            IPS_Sleep(50);
-            return $this->RequestState();
+        if (!array_key_exists('Payload', $Result)) {
+            return $this->ReportRequestError();
         }
-        return false;
+        // PRTG ändert den Status erst mit dem nächsten Scan des Objektes: Scan sofort auslösen (Fehler unkritisch).
+        $this->SendData('api/scannow.htm', ['id' => $this->ReadPropertyInteger('id')]);
+        // Echter Zustand folgt mit der nächsten Abfrage.
+        $this->EmulateState(self::StateScanning, true);
+        return true;
     }
 
     /**
      * SetPause
      *
      * IPS Instanz-Funktion PRTG_SetPause
-     * Pausiert die Überwachung des Gerätes in PRTG.
+     * Pausiert die Überwachung des Objektes in PRTG.
      *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function SetPause(): bool
     {
-        return $this->SetPauseEx('');
+        return $this->SetPauseDurationEx(0, '');
     }
 
     /**
      * SetPauseEx
      *
      * IPS Instanz-Funktion PRTG_SetPauseEx
-     * Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergeben Meldung.
+     * Pausiert die Überwachung des Objektes in PRTG mit einer in '$Message' übergeben Meldung.
      *
      * @param string $Message Meldung für PRTG
      *
@@ -160,9 +255,9 @@ trait PRTGPause
      * SetPauseDuration
      *
      * IPS Instanz-Funktion PRTG_SetPauseDuration
-     * Pausiert die Überwachung des Gerätes in PRTG für die in '$Minutes' angegebene Zeit in Minuten.
+     * Pausiert die Überwachung des Objektes in PRTG für die in '$Minutes' angegebene Zeit in Minuten.
      *
-     * @param int $Minutes Pausenzeit in Minuten
+     * @param int $Minutes Pausenzeit in Minuten, 0 = ohne Begrenzung
      *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
@@ -175,45 +270,62 @@ trait PRTGPause
      * SetPauseDurationEx
      *
      * IPS Instanz-Funktion PRTG_SetPauseDurationEx
-     * Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergeben Meldung für die in '$Minutes' angegebene Zeit in Minuten.
+     * Pausiert die Überwachung des Objektes in PRTG mit einer in '$Message' übergeben Meldung für die in '$Minutes' angegebene Zeit in Minuten.
      *
-     * @param int    $Minutes Pausenzeit in Minuten
+     * @param int    $Minutes Pausenzeit in Minuten, 0 = ohne Begrenzung
      * @param string $Message Meldung für PRTG
      *
      * @return bool True bei Erfolg, False im Fehlerfall
      */
     public function SetPauseDurationEx(int $Minutes, string $Message): bool
     {
-        if (!is_string($Message)) {
-            trigger_error($this->Translate('Message must be string.'), E_USER_NOTICE);
-            return false;
-        }
-        if (!is_int($Minutes)) {
-            trigger_error($this->Translate('Minutes must be integer.'), E_USER_NOTICE);
+        if ($Minutes < 0) {
+            echo $this->Translate('Minutes must not be negative.') . PHP_EOL;
             return false;
         }
         $QueryData = [
-            'action' => 0,
-            'id'     => $this->ReadPropertyInteger('id')
+            'id' => $this->ReadPropertyInteger('id')
         ];
-
         if ($Minutes > 0) {
-            $Uri = 'pauseobjectfor.htm';
+            // API: /api/pauseobjectfor.htm?id=…&pausemsg=…&duration=…
+            $Uri = 'api/pauseobjectfor.htm';
             $QueryData['duration'] = $Minutes;
         } else {
-            $Uri = 'pause.htm';
+            // API: /api/pause.htm?id=…&pausemsg=…&action=0
+            $Uri = 'api/pause.htm';
+            $QueryData['action'] = 0;
         }
-
         if ($Message != '') {
             $QueryData['pausemsg'] = $Message;
         }
-
         $Result = $this->SendData($Uri, $QueryData);
-        if (array_key_exists('Payload', $Result)) {
-            IPS_Sleep(50);
-            return $this->RequestState();
+        if (!array_key_exists('Payload', $Result)) {
+            return $this->ReportRequestError();
         }
-        return false;
+        $this->EmulateState($Minutes > 0 ? self::StatePausedUntil : self::StatePaused, false);
+        return true;
+    }
+
+    /**
+     * Rückmeldung nach einem erfolgreichen Befehl: Statusvariablen sofort setzen.
+     * PRTG übernimmt den Status erst verzögert (Pausieren nach Sekunden, Fortsetzen erst mit dem
+     * nächsten Scan), ein Nachlesen käme für die Bedienung zu spät.
+     *
+     * @param int       $State  Wert der Variable Status (PRTG status_raw)
+     * @param bool|null $Active Überwachung aktiv, null = unverändert
+     *
+     * @return void
+     */
+    private function EmulateState(int $State, ?bool $Active = null): void
+    {
+        $this->SetValue('State', $State);
+        if ($this->ReadPropertyBoolean('ReadableState')) {
+            // Text aus der Darstellung der eigenen Variable Status.
+            $this->SetValue('ReadableState', GetValueFormatted($this->GetIDForIdent('State')));
+        }
+        if (($Active !== null) && $this->ReadPropertyBoolean('ShowActionButton')) {
+            $this->SetValue('ActionButton', $Active);
+        }
     }
 }
 

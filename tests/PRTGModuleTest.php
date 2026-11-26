@@ -163,4 +163,115 @@ class PRTGModuleTest extends TestCase
         $this->assertSame(' Mbit/Sek.', $Intervals[1]['SuffixValue']);
         $this->assertSame(125000, $Intervals[1]['ConversionFactor']);
     }
+
+    /**
+     * A12: „Ignoriere Einheit und Typ“ liegt im Attribut und übersteht damit einen Neustart (Buffer leer).
+     */
+    public function testIgnoredChannelsArePersistent(): void
+    {
+        $Iid = IPS_CreateInstance(self::SensorID);
+        IPS_ApplyChanges($Iid);
+        $Sensor = IPS\InstanceManager::getInstanceInterface($Iid);
+        $Set = new ReflectionMethod($Sensor, 'SetChannelOverwrite');
+        $Get = new ReflectionMethod($Sensor, 'GetChannelOverwrite');
+        $Set->invoke($Sensor, 6, true);
+        $Set->invoke($Sensor, 7, true);
+        $Set->invoke($Sensor, 6, false);
+        // Neustart simulieren: Kanalübersicht im Buffer leeren.
+        $Sensor->Channels = [];
+        $this->assertFalse($Get->invoke($Sensor, 6));
+        $this->assertTrue($Get->invoke($Sensor, 7));
+        $this->assertSame('[7]', (new ReflectionMethod($Sensor, 'ReadAttributeString'))->invoke($Sensor, 'IgnoredChannels'));
+    }
+
+    /**
+     * A12: Einstellung aus dem Buffer einer älteren Version wird einmalig in das Attribut übernommen.
+     */
+    public function testIgnoredChannelsMigrateFromBuffer(): void
+    {
+        $Iid = IPS_CreateInstance(self::SensorID);
+        $Sensor = IPS\InstanceManager::getInstanceInterface($Iid);
+        $Sensor->Channels = [
+            5 => ['objid' => 5, 'Ignore' => false],
+            8 => ['objid' => 8, 'Ignore' => true],
+        ];
+        IPS_ApplyChanges($Iid);
+        $this->assertTrue((new ReflectionMethod($Sensor, 'GetChannelOverwrite'))->invoke($Sensor, 8));
+        $this->assertFalse((new ReflectionMethod($Sensor, 'GetChannelOverwrite'))->invoke($Sensor, 5));
+    }
+
+    /**
+     * A16: Fehlercodes des IO werden zu Meldungen für den Aufrufer.
+     */
+    public function testRequestErrorText(): void
+    {
+        $Device = IPS\InstanceManager::getInstanceInterface(IPS_CreateInstance(self::DeviceID));
+        $Text = new ReflectionMethod($Device, 'GetRequestErrorText');
+        $this->assertSame('PRTG: Login failed', $Text->invoke($Device, 401));
+        $this->assertSame('PRTG: Login failed', $Text->invoke($Device, IS_EBASE + 2));
+        $this->assertSame('PRTG: Invalid request', $Text->invoke($Device, 400));
+        $this->assertSame('PRTG: Server error', $Text->invoke($Device, 500));
+        $this->assertSame('PRTG: Invalid answer', $Text->invoke($Device, 405));
+        $this->assertSame('PRTG not reachable', $Text->invoke($Device, IS_INACTIVE));
+        $this->assertSame('PRTG not reachable', $Text->invoke($Device, 0));
+    }
+
+    /**
+     * A16: Pausieren ohne IO liefert false mit Fehlertext statt nur false.
+     */
+    public function testPauseWithoutIOReportsError(): void
+    {
+        $Iid = IPS_CreateInstance(self::SensorID);
+        IPS_SetProperty($Iid, 'id', 1234);
+        IPS_ApplyChanges($Iid);
+        $Sensor = IPS\InstanceManager::getInstanceInterface($Iid);
+        $this->expectOutputString('PRTG not reachable' . PHP_EOL);
+        $this->assertFalse($Sensor->SetPauseDuration(5));
+    }
+
+    /**
+     * Symcon-Sensor: Meldungsrate je Minute seit der letzten Abfrage, ohne Vorwert bzw. nach Zurücksetzen null.
+     */
+    public function testSensorRatesPerMinute(): void
+    {
+        $IO = IPS\InstanceManager::getInstanceInterface(IPS_CreateInstance(self::IOID));
+        $Rates = new ReflectionMethod($IO, 'GetRatesPerMinute');
+        $this->assertNull($Rates->invoke($IO, ['MessageErrorCount' => 10])['MessageErrorCount']);
+        $IO->SensorCounters = ['Time' => time() - 120, 'Values' => ['MessageErrorCount' => 10]];
+        $this->assertEqualsWithDelta(5.0, $Rates->invoke($IO, ['MessageErrorCount' => 20])['MessageErrorCount'], 0.1);
+        // Zähler zurückgesetzt: kleiner als der Vorwert.
+        $IO->SensorCounters = ['Time' => time() - 60, 'Values' => ['MessageErrorCount' => 20]];
+        $this->assertNull($Rates->invoke($IO, ['MessageErrorCount' => 3])['MessageErrorCount']);
+    }
+
+    /**
+     * WebHook: Basic-Auth nur, wenn ein Benutzer eingestellt ist.
+     */
+    public function testHookBasicAuth(): void
+    {
+        $Iid = IPS_CreateInstance(self::IOID);
+        $IO = IPS\InstanceManager::getInstanceInterface($Iid);
+        $Check = new ReflectionMethod($IO, 'CheckHookAuth');
+        unset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'], $_SERVER['HTTP_AUTHORIZATION']);
+        $this->assertTrue($Check->invoke($IO));
+        IPS_SetProperty($Iid, 'HookUsername', 'prtg');
+        IPS_SetProperty($Iid, 'HookPassword', 'geheim');
+        IPS_ApplyChanges($Iid);
+        $this->assertFalse($Check->invoke($IO));
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Basic ' . base64_encode('prtg:falsch');
+        $this->assertFalse($Check->invoke($IO));
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Basic ' . base64_encode('prtg:geheim');
+        $this->assertTrue($Check->invoke($IO));
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+    }
+
+    /**
+     * Punkt 1: Der Filter für Ereignisse schließt die ID ab (12 passt nicht auf 1234).
+     */
+    public function testReceiveDataFilterMatchesExactId(): void
+    {
+        $Filter = '.*"objid":12[,}].*';
+        $this->assertSame(1, preg_match('/' . $Filter . '/', json_encode(['objid' => 12, 'DataID' => '{45829008-026B-401E-829F-8384DD27619A}'])));
+        $this->assertSame(0, preg_match('/' . $Filter . '/', json_encode(['objid' => 1234, 'DataID' => '{45829008-026B-401E-829F-8384DD27619A}'])));
+    }
 }

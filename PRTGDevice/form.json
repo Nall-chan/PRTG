@@ -71,5 +71,12 @@
                 }
             ]
         }
+    ],
+    "status": [
+        {
+            "code": 201,
+            "icon": "error",
+            "caption": "Object not found in PRTG"
+        }
     ]
 }
