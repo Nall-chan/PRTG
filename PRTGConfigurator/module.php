@@ -78,6 +78,7 @@ class PRTGConfigurator extends IPSModuleStrict
                 $this->UpdateParent();
                 break;
             case IM_CHANGESETTINGS:
+            case IM_CHANGESTATUS:
                 if ($SenderID == $this->ParentID) {
                     $this->UpdateSummary();
                 }
@@ -269,8 +270,8 @@ class PRTGConfigurator extends IPSModuleStrict
         $Data['QueryData'] = $QueryData;
         $Data['PostData'] = $PostData;
         $ResultString = @$this->SendDataToParent(json_encode($Data));
-        // ForwardData liefert im Fehlerfall einen leeren String.
-        $Result = @unserialize($ResultString);
+        // ForwardData liefert im Fehlerfall einen leeren String. Entsteht beim Aufruf eine Ausgabe (Warnung), verwirft Symcon den Rückgabewert und liefert false.
+        $Result = is_string($ResultString) ? @unserialize($ResultString) : false;
         if (!is_array($Result) || !array_key_exists('Error', $Result)) {
             return [];
         }
@@ -295,9 +296,12 @@ class PRTGConfigurator extends IPSModuleStrict
         if ($OldParentID != $NewParentID) {
             if ($OldParentID > 0) {
                 $this->UnregisterMessage($OldParentID, IM_CHANGESETTINGS);
+                $this->UnregisterMessage($OldParentID, IM_CHANGESTATUS);
             }
             if ($NewParentID > 0) {
                 $this->RegisterMessage($NewParentID, IM_CHANGESETTINGS);
+                // Statuswechsel: Der IO kann beim Modul-Reload noch nicht fertig erstellt sein.
+                $this->RegisterMessage($NewParentID, IM_CHANGESTATUS);
             }
             $this->ParentID = $NewParentID;
         }
@@ -313,7 +317,13 @@ class PRTGConfigurator extends IPSModuleStrict
     {
         $Summary = '';
         if (($this->ParentID > 0) && IPS_InstanceExists($this->ParentID)) {
-            $Url = (string) IPS_GetProperty($this->ParentID, 'Host');
+            // Beim Modul-Reload werden alle Instanzen neu erstellt; die Eigenschaften des IO sind dann
+            // eventuell noch nicht lesbar. Die bisherige Zusammenfassung bleibt in dem Fall stehen,
+            // die neue folgt mit IM_CHANGESTATUS/IM_CHANGESETTINGS des IO.
+            $Url = @IPS_GetProperty($this->ParentID, 'Host');
+            if (!is_string($Url)) {
+                return;
+            }
             $Host = parse_url($Url, PHP_URL_HOST);
             if (is_string($Host) && ($Host != '')) {
                 $Scheme = parse_url($Url, PHP_URL_SCHEME) ?? 'http';

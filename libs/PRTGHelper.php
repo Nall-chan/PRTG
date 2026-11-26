@@ -22,6 +22,77 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/ParentIOHelper.php') . '}');
 require_once __DIR__ . '/PRTGChannelValue.php';
+
+/**
+ * ParentStatus Trait für PRTGSensors und PRTGDevices.
+ *
+ * Verteilt die Nachrichten des IO (Statuswechsel, Verbinden, Trennen) an IOChangeState.
+ *
+ * Symcon (C++) arbeitet die MessageSink aller Instanzen nacheinander ab. Der ParentIOHelper
+ * startet deshalb je Instanz ein Skript, damit ein langer Statuswechsel die übrigen Nachrichten nicht aufhält.
+ * Die Rust-Edition (interne Testversion, Stand 9.1; das Verhalten kann sich noch ändern)
+ * stellt die Nachrichten gleichzeitig zu; die Skripte aller Instanzen starten dann auf
+ * einmal und Symcon verwirft einen Teil davon („Zu viele gleichzeitige Skripte“). Dort wird IOChangeState
+ * direkt in der MessageSink aufgerufen. Das ist möglich, weil IOChangeState nur Status und Timer setzt.
+ *
+ * Erfordert die Methoden IOMessageSink (Alias von InstanceStatus::MessageSink), RegisterParent,
+ * HasActiveParent und IOChangeState sowie die Eigenschaft ParentID.
+ *
+ * @author        Michael Tröger <micha@nall-chan.net>
+ * @copyright     2025 Michael Tröger
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
+ *
+ * @version       2.61
+ */
+trait ParentStatus
+{
+    /**
+     * Verarbeitet eine Nachricht des IO bzw. der eigenen Verbindung.
+     *
+     * @param  int $TimeStamp
+     * @param  int $SenderID
+     * @param  int $Message
+     * @param  array $Data
+     * @return void
+     */
+    protected function ParentMessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
+    {
+        if (!$this->IsRustKernel()) {
+            $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
+            return;
+        }
+        switch ($Message) {
+            case FM_CONNECT:
+                $this->RegisterParent();
+                $State = $this->HasActiveParent() ? IS_ACTIVE : IS_INACTIVE;
+                break;
+            case FM_DISCONNECT:
+                $this->RegisterParent();
+                $State = IS_INACTIVE;
+                break;
+            case IM_CHANGESTATUS:
+                if ($SenderID != $this->ParentID) {
+                    return;
+                }
+                $State = $Data[0];
+                break;
+            default:
+                return;
+        }
+        $this->IOChangeState($State);
+    }
+
+    /**
+     * Prüft, ob Symcon in der Rust-Edition läuft (Revision beginnt mit „rust-“).
+     *
+     * @return bool
+     */
+    private function IsRustKernel(): bool
+    {
+        return str_starts_with(IPS_GetKernelRevision(), 'rust-');
+    }
+}
+
 /**
  * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
  *

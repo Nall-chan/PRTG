@@ -118,6 +118,7 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 - IO: Graphen nutzen die SSL-Einstellungen der Instanz. `PRTG_GetGraph` meldet Fehler (z.B. ungültige Parameter, PRTG nicht erreichbar) an den Aufrufer.  
 - IO: Passwort und Passwort-Hash werden im Debug nicht mehr angezeigt.  
 - Sensor: Einheiten eines englisch eingestellten PRTG (z.B. `msec`, `kbit/s`, `Mbit/s`, `KByte`) werden erkannt.  
+- Gerät und Sensor: Nach dem Start, nach Änderungen an der Instanz und beim Verbinden des IO wird nicht mehr sofort abgefragt. Neue Werte kommen mit dem nächsten Intervall oder mit einem Ereignis von PRTG. Bisher fragten dabei alle Instanzen gleichzeitig an, wodurch Symcon bei vielen Instanzen Abfragen verwarf.  
 
 **Behobene falsche Werte in Statusvariablen**  
 
@@ -128,6 +129,7 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 **Fehlerbehebungen**  
 
 - IO: Der WebHook lieferte keine Graphen.  
+- Gerät, Sensor und Konfigurator: Eine fehlgeschlagene Anfrage an den IO führte zu einem PHP-Fehler.  
 - Sensor: Mit gesetztem `Ignoriere Einheit und Typ` wurde eine vorhandene Variable mit abweichendem Typ durch eine neue ersetzt. Sie bleibt jetzt erhalten und der Wert wird in ihren Typ umgewandelt.  
 - IO: Ungültige Antworten von PRTG wurden nicht als Fehler erkannt.  
 

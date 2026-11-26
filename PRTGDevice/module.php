@@ -44,6 +44,7 @@ class PRTGDevice extends IPSModuleStrict
     use \prtg\BufferHelper;
     use \prtg\PRTGPause;
     use \prtg\VariableConverter;
+    use \prtg\ParentStatus;
     use \prtg\InstanceStatus {
         \prtg\InstanceStatus::MessageSink as IOMessageSink;
         \prtg\InstanceStatus::RequestAction as IORequestAction;
@@ -360,6 +361,9 @@ class PRTGDevice extends IPSModuleStrict
 
         if ($this->RegisterParent() && $this->HasActiveParent()) {
             $this->IOChangeState(IS_ACTIVE);
+        } else {
+            // Kein oder inaktiver IO (z.B. Start mit inaktivem IO): Status und Timer zurücksetzen.
+            $this->IOChangeState(IS_INACTIVE);
         }
     }
 
@@ -378,7 +382,7 @@ class PRTGDevice extends IPSModuleStrict
             return;
         }
         if (IPS_InstanceExists($SenderID)) {
-            $this->IOMessageSink($TimeStamp, $SenderID, $Message, $Data);
+            $this->ParentMessageSink($TimeStamp, $SenderID, $Message, $Data);
         }
         switch ($Message) {
             case IPS_KERNELSTARTED:
@@ -448,7 +452,9 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * IOChangeState
      *
-     * Wird ausgeführt wenn sich der Status vom Parent ändert.
+     * Wird ausgeführt wenn sich der Status vom Parent ändert (auch aus ApplyChanges).
+     * Fragt nicht selbst ab: Daten kommen nur über den Timer und über Ereignisse von PRTG,
+     * sonst fragen beim Statuswechsel des IO alle Instanzen gleichzeitig an.
      *
      * @param  int $State
      * @return void
@@ -457,7 +463,6 @@ class PRTGDevice extends IPSModuleStrict
     {
         if ($State == IS_ACTIVE) {
             if ($this->ReadPropertyInteger('id') > 0) {
-                $this->RequestDeviceState();
                 $this->SetStatus(IS_ACTIVE);
                 $this->SetTimer(true);
             }
@@ -580,8 +585,8 @@ class PRTGDevice extends IPSModuleStrict
         $Data['QueryData'] = $QueryData;
         $Data['PostData'] = $PostData;
         $ResultString = $this->SendDataToParent(json_encode($Data));
-        // ForwardData liefert im Fehlerfall einen leeren String.
-        $Result = @unserialize($ResultString);
+        // ForwardData liefert im Fehlerfall einen leeren String. Entsteht beim Aufruf eine Ausgabe (Warnung), verwirft Symcon den Rückgabewert und liefert false.
+        $Result = is_string($ResultString) ? @unserialize($ResultString) : false;
         if (!is_array($Result) || !array_key_exists('Error', $Result)) {
             return [];
         }
