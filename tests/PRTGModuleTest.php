@@ -96,6 +96,54 @@ class PRTGModuleTest extends TestCase
     }
 
     /**
+     * A14: Neue Kanäle mit Zahl und unbekannter Einheit werden Float.
+     * Eine vorhandene String-Variable gilt als Typfehler: Sie bleibt unverändert und wird nicht beschrieben.
+     */
+    public function testChannelTypeForNewAndExistingVariables(): void
+    {
+        $Iid = IPS_CreateInstance(self::SensorID);
+        IPS_ApplyChanges($Iid);
+        $Sensor = IPS\InstanceManager::getInstanceInterface($Iid);
+        // Vorhandene Variable aus einer älteren Version: Kanal 6 als String.
+        $Old = IPS_CreateVariable(VARIABLETYPE_STRING);
+        IPS_SetParent($Old, $Iid);
+        IPS_SetIdent($Old, '6');
+        $Decode = new ReflectionMethod($Sensor, 'DecodeChannelData');
+        $Decode->invoke($Sensor, [
+            ['objid' => 5, 'name' => 'Temperatur', 'lastvalue' => '31 °C', 'lastvalue_raw' => 31.0],
+            ['objid' => 6, 'name' => 'Spannung', 'lastvalue' => '3.29 V', 'lastvalue_raw' => 3.29],
+        ]);
+        $New = IPS_GetObjectIDByIdent('5', $Iid);
+        $this->assertSame(VARIABLETYPE_FLOAT, IPS_GetVariable($New)['VariableType']);
+        $this->assertEqualsWithDelta(31.0, GetValue($New), 0.001);
+        $this->assertSame(VARIABLETYPE_STRING, IPS_GetVariable($Old)['VariableType']);
+        $this->assertSame('', GetValue($Old));
+
+        // „Ignoriere Einheit und Typ“: Variable bleibt erhalten (gleiche ID, Typ String) und bekommt den Anzeigewert.
+        $Overwrite = new ReflectionMethod($Sensor, 'SetChannelOverwrite');
+        $Overwrite->invoke($Sensor, 6, true);
+        $Decode->invoke($Sensor, [
+            ['objid' => 6, 'name' => 'Spannung', 'lastvalue' => '3.29 V', 'lastvalue_raw' => 3.29],
+        ]);
+        $this->assertSame($Old, IPS_GetObjectIDByIdent('6', $Iid));
+        $this->assertSame(VARIABLETYPE_STRING, IPS_GetVariable($Old)['VariableType']);
+        $this->assertSame('3.29 V', GetValue($Old));
+    }
+
+    /**
+     * Ignorierter Typ bei Zahl-Variablen: Wert wird in den Typ der vorhandenen Variable umgewandelt.
+     */
+    public function testIgnoredTypeConvertsValue(): void
+    {
+        $Sensor = IPS\InstanceManager::getInstanceInterface(IPS_CreateInstance(self::SensorID));
+        $Convert = new ReflectionMethod($Sensor, 'ConvertToVariableType');
+        $this->assertSame(3, $Convert->invoke($Sensor, ['Data' => 3.29, 'Text' => '3.29 V'], VARIABLETYPE_INTEGER));
+        $this->assertSame(26.0, $Convert->invoke($Sensor, ['Data' => 26, 'Text' => '26 #'], VARIABLETYPE_FLOAT));
+        $this->assertSame('3.29 V', $Convert->invoke($Sensor, ['Data' => 3.29, 'Text' => '3.29 V'], VARIABLETYPE_STRING));
+        $this->assertNull($Convert->invoke($Sensor, ['Data' => 'Normal', 'Text' => 'Normal'], VARIABLETYPE_FLOAT));
+    }
+
+    /**
      * A2: Bandbreite ab 1 Mbit/s wird in Mbit/Sek. angezeigt (nicht in KB).
      */
     public function testBandwidthIntervalSuffix(): void

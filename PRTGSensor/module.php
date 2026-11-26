@@ -662,17 +662,56 @@ class PRTGSensor extends IPSModuleStrict
                 if ($this->ReadPropertyBoolean('AutoRenameChannels') && (IPS_GetName($vid)) != $Channel['name']) {
                     IPS_SetName($vid, $Channel['name']);
                 }
-                if (!$Channel['Ignore'] && IPS_GetVariable($vid)['VariableType'] != $Data['VarType']) {
-                    $IpsVarTyp = $this->GetVariableTypeName(IPS_GetVariable($vid)['VariableType']);
+                $VarType = IPS_GetVariable($vid)['VariableType'];
+                if ($VarType != $Data['VarType']) {
+                    $IpsVarTyp = $this->GetVariableTypeName($VarType);
                     $ChannelVarTyp = $this->GetVariableTypeName($Data['VarType']);
-                    $this->LogMessage(sprintf($this->Translate("Variable type mismatch for channel \"%s (%s)\"\r\nExpected %s but got %s"), $Channel['name'], IPS_GetLocation($this->InstanceID), $IpsVarTyp, $ChannelVarTyp), KL_ERROR);
                     $this->AddChannelVarTypes($Channel, $ChannelVarTyp, $IpsVarTyp);
+                    if (!$Channel['Ignore']) {
+                        $this->LogMessage(sprintf($this->Translate("Variable type mismatch for channel \"%s (%s)\"\r\nExpected %s but got %s"), $Channel['name'], IPS_GetLocation($this->InstanceID), $IpsVarTyp, $ChannelVarTyp), KL_ERROR);
+                        continue;
+                    }
+                    // „Ignoriere Einheit und Typ“: Die vorhandene Variable bleibt erhalten (kein MaintainVariable,
+                    // das sie mit dem neuen Typ ersetzen würde). Der Wert wird in ihren Typ umgewandelt.
+                    $Value = $this->ConvertToVariableType($Data, $VarType);
+                    if ($Value === null) {
+                        $this->SendDebug('Type ignored', sprintf('Channel %s: value "%s" not convertible to %s', $Ident, $Data['Text'], $IpsVarTyp), 0);
+                        continue;
+                    }
+                    $this->SetValue($Ident, $Value);
                     continue;
                 }
             }
             $this->MaintainVariable($Ident, $Channel['name'], $Data['VarType'], $Data['Presentation'], $Channel['objid'], true);
             $this->SetValue($Ident, $Data['Data']);
         }
+    }
+
+    /**
+     * ConvertToVariableType
+     *
+     * Wandelt den Wert eines Kanals in den Typ einer vorhandenen Variable um
+     * (für Kanäle mit gesetztem „Ignoriere Einheit und Typ“).
+     *
+     * @param  array $Data Ergebnis von GetVariableData ('Data', 'Text')
+     * @param  int $VarType Typ der vorhandenen Variable
+     * @return bool|int|float|string|null Umgewandelter Wert, null wenn ein Text nicht als Zahl lesbar ist
+     */
+    private function ConvertToVariableType(array $Data, int $VarType): bool|int|float|string|null
+    {
+        if ($VarType == VARIABLETYPE_STRING) {
+            // Anzeigewert von PRTG, wie ihn auch eine neu angelegte String-Variable bekommt
+            return (string) $Data['Text'];
+        }
+        $Value = $Data['Data'];
+        if (!is_numeric($Value) && !is_bool($Value)) {
+            return null;
+        }
+        return match ($VarType) {
+            VARIABLETYPE_BOOLEAN => (bool) $Value,
+            VARIABLETYPE_INTEGER => (int) round((float) $Value),
+            default              => (float) $Value,
+        };
     }
 
     /**

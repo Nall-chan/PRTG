@@ -120,18 +120,21 @@ Werte der Variable `Status`:
 
 Für jeden Kanal des Sensors wird eine Statusvariable angelegt. Der Ident ist die Kanal-ID aus PRTG. Typ und Darstellung richten sich nach der Einheit, die PRTG für den Kanal meldet:  
 
-| Einheit in PRTG                             |   Typ   | Darstellung                                                           |
-| :------------------------------------------ | :-----: | :-------------------------------------------------------------------- |
-| `Tg.`, `Std.`, `Min.`, `Sek.`               | integer | Dauer in Sekunden                                                     |
-| `ms`                                        |  float  | Millisekunden                                                         |
-| `#`                                         | integer | Anzahl                                                                |
-| `kByte`, `MByte`, `GByte`, `KB`, `MB`, `GB` |  float  | Byte, angezeigt je nach Größe in Byte, KB, MB oder GB                 |
-| `%`                                         |  float  | Prozent                                                               |
-| `kbit/Sek.`, `Mbit/Sek.`                    |  float  | Byte pro Sekunde, angezeigt je nach Größe in kbit/Sek. oder Mbit/Sek. |
-| `#/Sek.`, `Msg/s`, `Nachr./s`               | integer | Anzahl pro Sekunde                                                    |
-| `#/Min.`                                    | integer | Anzahl pro Minute                                                     |
-| `Items`                                     | integer | Anzahl                                                                |
-| alle anderen                                | string  | Wert als Text, wie er von PRTG übertragen wird                        |
+| Einheit in PRTG                                        |   Typ   | Darstellung                                                           |
+| :----------------------------------------------------- | :-----: | :-------------------------------------------------------------------- |
+| `Tg.`, `Std.`, `Min.`, `Sek.`                          | integer | Dauer in Sekunden                                                     |
+| `ms`, `msec`                                           |  float  | Millisekunden                                                         |
+| `#`                                                    | integer | Anzahl                                                                |
+| `kByte`, `KByte`, `MByte`, `GByte`, `KB`, `MB`, `GB`   |  float  | Byte, angezeigt je nach Größe in Byte, KB, MB oder GB                 |
+| `%`                                                    |  float  | Prozent                                                               |
+| `kbit/Sek.`, `Mbit/Sek.`, `kbit/s`, `Mbit/s`           |  float  | Byte pro Sekunde, angezeigt je nach Größe in kbit/Sek. oder Mbit/Sek. |
+| `#/Sek.`, `Msg/s`, `Nachr./s`                          | integer | Anzahl pro Sekunde                                                    |
+| `#/Min.`                                               | integer | Anzahl pro Minute                                                     |
+| `Items`                                                | integer | Anzahl                                                                |
+| andere Einheit mit Zahlenwert (z.B. `°C`, `V`)         |  float  | Zahl mit der Einheit aus PRTG                                         |
+| ohne Zahlenwert (z.B. Wertetabellen) oder ohne Einheit | string  | Wert als Text, wie er von PRTG übertragen wird                        |
+
+Passt der Typ einer vorhandenen Variable nicht zur Einheit (z.B. eine Variable vom Typ String aus einer älteren Version), so wird dies im Log gemeldet und der Wert nicht geschrieben. Abhilfe: Die Variable löschen, dann legt die Instanz sie bei der nächsten Abfrage mit dem passenden Typ neu an. Oder in der Kanalübersicht `Ignoriere Einheit und Typ` setzen, dann bleibt die Variable erhalten und der Wert wird in ihren Typ umgewandelt geschrieben (bei String der Wert als Text, wie ihn PRTG anzeigt).  
 
 ## 6. Visualisierung
 

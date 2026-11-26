@@ -109,22 +109,26 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 **Version 2.61:**  
 
 > [!IMPORTANT]
-> Neu angelegte Geräte- und Sensor-Instanzen benennen sich und ihre Kanäle nicht mehr automatisch nach den Namen in PRTG um. Das kann in der Instanzkonfiguration eingeschaltet werden. Vorhandene Instanzen behalten ihre bisherige Einstellung.
+> Neu angelegte Geräte- und Sensor-Instanzen benennen sich und ihre Kanäle nicht mehr automatisch nach den Namen in PRTG um. Das kann in der Instanzkonfiguration eingeschaltet werden. Vorhandene Instanzen behalten ihre bisherige Einstellung.  
+> Sensor: Kanäle mit Zahlenwert, deren Einheit bisher nicht erkannt wurde (z.B. `°C`, `V` oder die Einheiten eines englisch eingestellten PRTG), werden als Zahl angelegt. Ist dafür bereits eine Variable vom Typ String vorhanden, meldet die Instanz den abweichenden Typ im Log und schreibt keinen Wert. Abhilfe: Variable löschen oder in der Kanalübersicht `Ignoriere Einheit und Typ` setzen.
 
 **Geändertes Verhalten**  
 
 - Konfigurator: Die Zusammenfassung zeigt den PRTG-Server des IO an.  
 - IO: Graphen nutzen die SSL-Einstellungen der Instanz. `PRTG_GetGraph` meldet Fehler (z.B. ungültige Parameter, PRTG nicht erreichbar) an den Aufrufer.  
 - IO: Passwort und Passwort-Hash werden im Debug nicht mehr angezeigt.  
+- Sensor: Einheiten eines englisch eingestellten PRTG (z.B. `msec`, `kbit/s`, `Mbit/s`, `KByte`) werden erkannt.  
 
 **Behobene falsche Werte in Statusvariablen**  
 
 - Gerät und Sensor: Der Status wurde nach Änderungen an der Instanz oder nach einem Modul-Update auf `Kein Test` gesetzt.  
 - Sensor: Bandbreiten ab 1 Mbit/s wurden mit der Einheit `KB` statt `Mbit/Sek.` angezeigt.  
+- Sensor: Werte mit der Einheit Anzahl pro Sekunde, Anzahl pro Minute und `Items` konnten je nach PRTG-Version um den Faktor 10 falsch sein.  
 
 **Fehlerbehebungen**  
 
 - IO: Der WebHook lieferte keine Graphen.  
+- Sensor: Mit gesetztem `Ignoriere Einheit und Typ` wurde eine vorhandene Variable mit abweichendem Typ durch eine neue ersetzt. Sie bleibt jetzt erhalten und der Wert wird in ihren Typ umgewandelt.  
 - IO: Ungültige Antworten von PRTG wurden nicht als Fehler erkannt.  
 
 **Version 2.60:**  

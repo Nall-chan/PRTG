@@ -21,6 +21,7 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/BufferHelper.php') . '}');
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/DebugHelper.php') . '}');
 eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . '/../libs/helper/ParentIOHelper.php') . '}');
+require_once __DIR__ . '/PRTGChannelValue.php';
 /**
  * PRTGPause Trait für ein PRTGSensors und PRTGDevices.
  *
@@ -164,301 +165,190 @@ trait VariableConverter
     /**
      * GetVariableData
      *
-     * @param  mixed $Value
-     * @return array|bool
+     * Ermittelt aus den Kanaldaten von PRTG den Wert, den Variablentyp und die Darstellung.
+     *
+     * @param  array $Value Kanal aus table.json (lastvalue, lastvalue_raw, name, objid) und 'Ignore'
+     * @return array|bool Array mit 'Data', 'Presentation', 'VarType' und 'Text' (Anzeigewert), false ohne Daten
      */
-    private function GetVariableData($Value): array|bool
+    private function GetVariableData(array $Value): array|bool
     {
         if (!array_key_exists('lastvalue_raw', $Value)) {
             $this->LogMessage(sprintf($this->Translate('Channel "%s (%s)", lastvalue_raw not found!'), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
             return false;
         }
-        if ($Value['lastvalue_raw'] === 'Keine Daten') {
+        $Parsed = ChannelValue::Parse((string) $Value['lastvalue'], $Value['lastvalue_raw']);
+        if ($Parsed === null) {
             return false;
         }
-        if (($Value['lastvalue_raw'] === '') && ($Value['lastvalue'] === '')) {
-            return false;
+        if (!$Parsed['HasUnit'] && preg_match('/[0-9]/', (string) $Value['lastvalue']) && !$Value['Ignore']) {
+            $this->LogMessage(sprintf($this->Translate("Value without suffix in channel \"%s (%s)\" detected.\r\nPlease check the PRTG channel configuration."), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
         }
-        $data = explode(' ', $Value['lastvalue']);
-        if (count($data) == 1) {
-            if (preg_match('/[0-9]/', $Value['lastvalue'], $matches, PREG_OFFSET_CAPTURE, 0)) {
-                if (!$Value['Ignore']) {
-                    $this->LogMessage(sprintf($this->Translate("Value without suffix in channel \"%s (%s)\" detected.\r\nPlease check the PRTG channel configuration."), $Value['name'], IPS_GetLocation($this->InstanceID)), KL_ERROR);
-                }
-            }
-        }
-        if ($data[0] == '<') {
-            array_shift($data);
-        }
-        $Suffix = trim(array_pop($data));
-        if ($Suffix == 'Delay') {
-            $Suffix = trim(array_pop($data));
-        }
-        switch ($Suffix) {
-            case 'Tg.':
-            case 'Std.':
-            case 'Min.':
-            case 'Sek.':
-                $Result = [
-                    'Data'         => (int) $Value['lastvalue_raw'],
-                    'Presentation' => [
-                        'COUNTDOWN_TYPE' => 0,
-                        'FORMAT'         => 2,
-                        'PRESENTATION'   => VARIABLE_PRESENTATION_DURATION,
-                    ],
-                    'VarType'      => VARIABLETYPE_INTEGER
-                ];
-                break;
-            case 'ms':
-                $Result = [
-                    'Data'         => $Value['lastvalue_raw'],
-                    'Presentation' => [
-                        'COLOR'        => -1,
-                        'ICON'         => 'binary',
-                        'SUFFIX'       => ' ms',
-                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'   => 0,
-                        'PERCENTAGE'   => false,
-                        'DIGITS'       => 2,
-                    ],
-                    'VarType'      => VARIABLETYPE_FLOAT
-                ];
-                break;
-            case '#':
-                $Result = [
-                    'Data'         => $Value['lastvalue_raw'],
-                    'Presentation' => [
-                        'COLOR'        => -1,
-                        'ICON'         => 'sigma',
-                        'SUFFIX'       => ' #',
-                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'   => 0,
-                        'PERCENTAGE'   => false,
-                        'DIGITS'       => 0,
-                    ],
-                    'VarType'      => VARIABLETYPE_INTEGER
-                ];
-                break;
-            case 'kByte':
-            case 'MByte':
-            case 'GByte':
-            case 'kb':
-            case 'KB':
-            case 'MB':
-            case 'GB':
-                $Result = [
-                    'Data'         => $Value['lastvalue_raw'],
-                    'Presentation' => [
-                        'COLOR'            => -1,
-                        'ICON'             => '',
-                        'SUFFIX'           => ' MB',
-                        'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'       => 0,
-                        'PERCENTAGE'       => false,
-                        'DIGITS'           => 2,
-                        'INTERVALS_ACTIVE' => true,
-                        'INTERVALS'        => json_encode([
-                            [
-                                'IntervalMinValue'      => 0,
-                                'IntervalMaxValue'      => 1024,
-                                'ConstantActive'        => false,
-                                'ConstantValue'         => '',
-                                'ConversionFactor'      => 1,
-                                'PrefixActive'          => false,
-                                'PrefixValue'           => '',
-                                'SuffixActive'          => true,
-                                'SuffixValue'           => ' Byte',
-                                'DigitsActive'          => true,
-                                'DigitsValue'           => 0,
-                                'IconActive'            => false,
-                                'IconValue'             => '',
-                                'ColorActive'           => false,
-                                'ColorValue'            => -1
-                            ],
-                            [
-                                'IntervalMinValue'      => 1024,
-                                'IntervalMaxValue'      => 1024 * 1024,
-                                'ConstantActive'        => false,
-                                'ConstantValue'         => '',
-                                'ConversionFactor'      => 1024,
-                                'PrefixActive'          => false,
-                                'PrefixValue'           => '',
-                                'SuffixActive'          => true,
-                                'SuffixValue'           => ' KB',
-                                'DigitsActive'          => true,
-                                'DigitsValue'           => 2,
-                                'IconActive'            => false,
-                                'IconValue'             => '',
-                                'ColorActive'           => false,
-                                'ColorValue'            => -1
-                            ],
-                            [
-                                'IntervalMinValue'      => 1024 * 1024,
-                                'IntervalMaxValue'      => 1024 * 1024 * 1024,
-                                'ConstantActive'        => false,
-                                'ConstantValue'         => '',
-                                'ConversionFactor'      => 1024 * 1024,
-                                'PrefixActive'          => false,
-                                'PrefixValue'           => '',
-                                'SuffixActive'          => true,
-                                'SuffixValue'           => ' MB',
-                                'DigitsActive'          => true,
-                                'DigitsValue'           => 2,
-                                'IconActive'            => false,
-                                'IconValue'             => '',
-                                'ColorActive'           => false,
-                                'ColorValue'            => -1
-                            ],
-                            [
-                                'IntervalMinValue'      => 1024 * 1024 * 1024,
-                                'IntervalMaxValue'      => PHP_FLOAT_MAX,
-                                'ConstantActive'        => false,
-                                'ConstantValue'         => '',
-                                'ConversionFactor'      => 1024 * 1024 * 1024,
-                                'PrefixActive'          => false,
-                                'PrefixValue'           => '',
-                                'SuffixActive'          => true,
-                                'SuffixValue'           => ' GB',
-                                'DigitsActive'          => true,
-                                'DigitsValue'           => 2,
-                                'IconActive'            => false,
-                                'IconValue'             => '',
-                                'ColorActive'           => false,
-                                'ColorValue'            => -1
-                            ],
-                        ])
-                    ],
-                    'VarType'      => VARIABLETYPE_FLOAT
-                ];
-                break;
-            case '%':
-                $Result = [
-                    'Data'         => $Value['lastvalue_raw'],
-                    'Presentation' => [
-                        'COLOR'           => -1,
-                        'ICON'            => 'Intensity',
-                        'SUFFIX'          => ' %',
-                        'PRESENTATION'    => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'      => 0,
-                        'PERCENTAGE'      => true,
-                        'DIGITS'          => 2,
-                        'MIN'             => 0,
-                        'MAX'             => 100,
-                        'INTERVALS_ACTIVE'=> false
-                    ],
-                    'VarType'      => VARIABLETYPE_FLOAT
-                ];
-                break;
-            case 'kbit/Sek.':
-            case 'Mbit/Sek.':
-                $Result = [
-                    'Data'         => $Value['lastvalue_raw'],
-                    'Presentation' => [
-                        'COLOR'            => -1,
-                        'ICON'             => '',
-                        'SUFFIX'           => ' kbit/Sek.',
-                        'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'       => 0,
-                        'PERCENTAGE'       => false,
-                        'DIGITS'           => 2,
-                        'INTERVALS_ACTIVE' => true,
-                        'INTERVALS'        => json_encode([
-                            [
-                                'IntervalMinValue'      => 0,
-                                'IntervalMaxValue'      => 125000,
-                                'ConstantActive'        => false,
-                                'ConstantValue'         => '',
-                                'ConversionFactor'      => 125,
-                                'PrefixActive'          => false,
-                                'PrefixValue'           => '',
-                                'SuffixActive'          => true,
-                                'SuffixValue'           => ' kbit/Sek.',
-                                'DigitsActive'          => true,
-                                'DigitsValue'           => 0,
-                                'IconActive'            => false,
-                                'IconValue'             => '',
-                                'ColorActive'           => false,
-                                'ColorValue'            => -1
-                            ],
-                            [
-                                'IntervalMinValue'      => 125000,
-                                'IntervalMaxValue'      => PHP_FLOAT_MAX,
-                                'ConstantActive'        => false,
-                                'ConstantValue'         => '',
-                                'ConversionFactor'      => 125000,
-                                'PrefixActive'          => false,
-                                'PrefixValue'           => '',
-                                'SuffixActive'          => true,
-                                'SuffixValue'           => ' Mbit/Sek.',
-                                'DigitsActive'          => true,
-                                'DigitsValue'           => 2,
-                                'IconActive'            => false,
-                                'IconValue'             => '',
-                                'ColorActive'           => false,
-                                'ColorValue'            => -1
-                            ]
-                        ])
-                    ],
-                    'VarType'      => VARIABLETYPE_FLOAT
-                ];
-                break;
-            case '#/Sek.':
-            case 'Msg/s':
-            case 'Nachr./s':
-                $Result = [
-                    'Data'         => floor($Value['lastvalue_raw'] / 10),
-                    'Presentation' => [
-                        'COLOR'        => -1,
-                        'ICON'         => 'sigma',
-                        'SUFFIX'       => $this->Translate(' Items/sec'),
-                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'   => 0,
-                        'PERCENTAGE'   => false,
-                        'DIGITS'       => 0,
-                    ],
-                    'VarType'      => VARIABLETYPE_INTEGER
-                ];
-                break;
-            case '#/Min.':
-                $Result = [
-                    'Data'         => floor($Value['lastvalue_raw'] / 10),
-                    'Presentation' => [
-                        'COLOR'        => -1,
-                        'ICON'         => 'sigma',
-                        'SUFFIX'       => $this->Translate(' Items/min'),
-                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'   => 0,
-                        'PERCENTAGE'   => false,
-                        'DIGITS'       => 0,
-                    ],
-                    'VarType'      => VARIABLETYPE_INTEGER
-                ];
-                break;
-            case 'Items':
-                $Result = [
-                    'Data'         => floor($Value['lastvalue_raw'] / 10),
-                    'Presentation' => [
-                        'COLOR'        => -1,
-                        'ICON'         => 'sigma',
-                        'SUFFIX'       => $this->Translate(' Items'),
-                        'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                        'USAGE_TYPE'   => 0,
-                        'PERCENTAGE'   => false,
-                        'DIGITS'       => 0,
-                    ],
-                    'VarType'      => VARIABLETYPE_INTEGER
-                ];
-                break;
-            default:
-                $Result = [
-                    'Data'         => $Value['lastvalue'],
-                    'Presentation' => [],
-                    'VarType'      => VARIABLETYPE_STRING
-                ];
-                break;
-        }
-        $this->AddChannelSuffix($Value, $Suffix, $this->GetVariableTypeName($Result['VarType']));
+        $Result = match ($Parsed['Kind']) {
+            ChannelValue::KindDuration => [
+                'Presentation' => [
+                    'COUNTDOWN_TYPE' => 0,
+                    'FORMAT'         => 2,
+                    'PRESENTATION'   => VARIABLE_PRESENTATION_DURATION,
+                ],
+                'VarType'      => VARIABLETYPE_INTEGER
+            ],
+            ChannelValue::KindMilliseconds => [
+                'Presentation' => [
+                    'COLOR'        => -1,
+                    'ICON'         => 'binary',
+                    'SUFFIX'       => ' ms',
+                    'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'USAGE_TYPE'   => 0,
+                    'PERCENTAGE'   => false,
+                    'DIGITS'       => 2,
+                ],
+                'VarType'      => VARIABLETYPE_FLOAT
+            ],
+            ChannelValue::KindCount => [
+                'Presentation' => [
+                    'COLOR'        => -1,
+                    'ICON'         => 'sigma',
+                    'SUFFIX'       => ' #',
+                    'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'USAGE_TYPE'   => 0,
+                    'PERCENTAGE'   => false,
+                    'DIGITS'       => 0,
+                ],
+                'VarType'      => VARIABLETYPE_INTEGER
+            ],
+            ChannelValue::KindBytes => [
+                'Presentation' => [
+                    'COLOR'            => -1,
+                    'ICON'             => '',
+                    'SUFFIX'           => ' MB',
+                    'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'USAGE_TYPE'       => 0,
+                    'PERCENTAGE'       => false,
+                    'DIGITS'           => 2,
+                    'INTERVALS_ACTIVE' => true,
+                    'INTERVALS'        => json_encode([
+                        $this->GetInterval(0, 1024, 1, ' Byte', 0),
+                        $this->GetInterval(1024, 1024 * 1024, 1024, ' KB', 2),
+                        $this->GetInterval(1024 * 1024, 1024 * 1024 * 1024, 1024 * 1024, ' MB', 2),
+                        $this->GetInterval(1024 * 1024 * 1024, PHP_FLOAT_MAX, 1024 * 1024 * 1024, ' GB', 2),
+                    ])
+                ],
+                'VarType'      => VARIABLETYPE_FLOAT
+            ],
+            ChannelValue::KindPercent => [
+                'Presentation' => [
+                    'COLOR'            => -1,
+                    'ICON'             => 'Intensity',
+                    'SUFFIX'           => ' %',
+                    'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'USAGE_TYPE'       => 0,
+                    'PERCENTAGE'       => true,
+                    'DIGITS'           => 2,
+                    'MIN'              => 0,
+                    'MAX'              => 100,
+                    'INTERVALS_ACTIVE' => false
+                ],
+                'VarType'      => VARIABLETYPE_FLOAT
+            ],
+            ChannelValue::KindBandwidth => [
+                // Rohwert in Byte/s: 125 Byte/s = 1 kbit/s, 125000 Byte/s = 1 Mbit/s
+                'Presentation' => [
+                    'COLOR'            => -1,
+                    'ICON'             => '',
+                    'SUFFIX'           => ' kbit/Sek.',
+                    'PRESENTATION'     => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'USAGE_TYPE'       => 0,
+                    'PERCENTAGE'       => false,
+                    'DIGITS'           => 2,
+                    'INTERVALS_ACTIVE' => true,
+                    'INTERVALS'        => json_encode([
+                        $this->GetInterval(0, 125000, 125, ' kbit/Sek.', 0),
+                        $this->GetInterval(125000, PHP_FLOAT_MAX, 125000, ' Mbit/Sek.', 2),
+                    ])
+                ],
+                'VarType'      => VARIABLETYPE_FLOAT
+            ],
+            ChannelValue::KindCountPerSecond => $this->GetCountPresentation(' Items/sec'),
+            ChannelValue::KindCountPerMinute => $this->GetCountPresentation(' Items/min'),
+            ChannelValue::KindItems          => $this->GetCountPresentation(' Items'),
+            ChannelValue::KindNumeric        => [
+                'Presentation' => [
+                    'COLOR'        => -1,
+                    'ICON'         => '',
+                    'SUFFIX'       => ' ' . $Parsed['Unit'],
+                    'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'USAGE_TYPE'   => 0,
+                    'PERCENTAGE'   => false,
+                    'DIGITS'       => 2,
+                ],
+                'VarType'      => VARIABLETYPE_FLOAT
+            ],
+            default => [
+                'Presentation' => [],
+                'VarType'      => VARIABLETYPE_STRING
+            ]
+        };
+        $Result['Data'] = $Parsed['Value'];
+        $Result['Text'] = (string) $Value['lastvalue'];
+        $this->AddChannelSuffix($Value, $Parsed['Unit'], $this->GetVariableTypeName($Result['VarType']));
         return $Result;
+    }
+
+    /**
+     * GetCountPresentation
+     *
+     * Darstellung für Anzahlen mit übersetztem Suffix.
+     *
+     * @param  string $Suffix Suffix (wird übersetzt)
+     * @return array 'Presentation' und 'VarType'
+     */
+    private function GetCountPresentation(string $Suffix): array
+    {
+        return [
+            'Presentation' => [
+                'COLOR'        => -1,
+                'ICON'         => 'sigma',
+                'SUFFIX'       => $this->Translate($Suffix),
+                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                'USAGE_TYPE'   => 0,
+                'PERCENTAGE'   => false,
+                'DIGITS'       => 0,
+            ],
+            'VarType'      => VARIABLETYPE_INTEGER
+        ];
+    }
+
+    /**
+     * GetInterval
+     *
+     * Ein Intervall der Wertanzeige mit Umrechnungsfaktor, Suffix und Nachkommastellen.
+     *
+     * @param  int|float $Min    Untere Grenze
+     * @param  int|float $Max    Obere Grenze
+     * @param  int|float $Factor Umrechnungsfaktor (der Wert wird durch ihn geteilt)
+     * @param  string $Suffix Suffix
+     * @param  int    $Digits Nachkommastellen
+     * @return array Intervall
+     */
+    private function GetInterval(int|float $Min, int|float $Max, int|float $Factor, string $Suffix, int $Digits): array
+    {
+        return [
+            'IntervalMinValue' => $Min,
+            'IntervalMaxValue' => $Max,
+            'ConstantActive'   => false,
+            'ConstantValue'    => '',
+            'ConversionFactor' => $Factor,
+            'PrefixActive'     => false,
+            'PrefixValue'      => '',
+            'SuffixActive'     => true,
+            'SuffixValue'      => $Suffix,
+            'DigitsActive'     => true,
+            'DigitsValue'      => $Digits,
+            'IconActive'       => false,
+            'IconValue'        => '',
+            'ColorActive'      => false,
+            'ColorValue'       => -1
+        ];
     }
 }
 
