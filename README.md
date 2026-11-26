@@ -1,79 +1,97 @@
 [![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
 [![Module Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.version&label=Modul%20Version&color=blue)](https://community.symcon.de/t/modul-prtg-prtg-in-ips-einbinden-und-ips-in-prtg-ueberwachen/47105)
 [![Symcon Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.compatibility.version&suffix=%3E&label=Symcon%20Version&color=green)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v80-v81-q3-2025/)  
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License](https://img.shields.io/badge/License-Custom--NC--SA-green.svg)](#6-lizenz)
 [![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions)
 [![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
-[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](#4-spenden)[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](#4-spenden)  
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](#3-spenden)[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](#3-spenden)  
 
 # Symcon-Modul: PRTG  <!-- omit in toc -->  
 
-Einbinden von PRTG Geräten und Sensoren in Symcon.  
+Einbinden von PRTG Geräten und Sensoren in Symcon und Überwachen von Symcon in PRTG.  
 
 ## Inhaltsverzeichnis <!-- omit in toc -->
 
 - [1. Funktionsumfang](#1-funktionsumfang)
-  - [PRTG IO:](#prtg-io)
-  - [PRTG Konfigurator:](#prtg-konfigurator)
-  - [PRTG Gerät:](#prtg-gerät)
-  - [PRTG Sensor:](#prtg-sensor)
+- [Vorbemerkungen](#vorbemerkungen)
+  - [Zur Library](#zur-library)
+  - [Zur Integration von PRTG](#zur-integration-von-prtg)
 - [2. Voraussetzungen](#2-voraussetzungen)
 - [3. Software-Installation](#3-software-installation)
-- [4. Einrichten der Instanzen in IP-Symcon](#4-einrichten-der-instanzen-in-ip-symcon)
+- [4. Enthaltende Module](#4-enthaltende-module)
+  - [PRTG IO](#prtg-io)
+  - [PRTG Konfigurator](#prtg-konfigurator)
+  - [PRTG Gerät](#prtg-gerät)
+  - [PRTG Sensor](#prtg-sensor)
 - [5. Anhang](#5-anhang)
   - [1. GUID der Module](#1-guid-der-module)
-  - [2. Hinweise](#2-hinweise)
-  - [3. Changelog](#3-changelog)
-  - [4. Spenden](#4-spenden)
+  - [2. Changelog](#2-changelog)
+  - [3. Spenden](#3-spenden)
 - [6. Lizenz](#6-lizenz)
 
 ## 1. Funktionsumfang
 
-### [PRTG IO:](PRTGIO/)  
+- Darstellen des Zustands von Geräten und Sensoren aus PRTG in Symcon, inklusive der Werte aller Kanäle eines Sensors.  
+- Pausieren und Fortsetzen der Überwachung sowie Bestätigen von Alarmen aus Symcon heraus.  
+- Zeitnahes Aktualisieren in Symcon, wenn PRTG eine Statusänderung meldet.  
+- Bereitstellen von Systeminformationen aus Symcon für einen Sensor in PRTG.  
+- Abrufen von Graphen aus PRTG.  
 
-- Schnittstelle zwischen den Device und Sensor Instanzen und PRTG.  
-- Empfangen von Events aus PRTG.  
-- Bereitstellen von Symcon Systeminformation für einen PRTG-Sensor.  
-- Abfragen von Graphen aus PRTG.  
+## Vorbemerkungen
 
-### [PRTG Konfigurator:](PRTGConfigurator/)  
+### Zur Library
 
-- Auflisten alle in PRTG verfügbaren Geräte und Sensoren.  
-- Erstellen von neuen Device und Sensor Instanzen in Symcon.  
+Die Library nutzt die [HTTP-API](https://www.paessler.com/manuals/prtg/http_api) von PRTG.  
+Die Instanzen fragen PRTG zyklisch ab. Zusätzlich kann PRTG Statusänderungen per WebHook an Symcon melden, damit Symcon nicht bis zur nächsten Abfrage warten muss.  
 
-### [PRTG Gerät:](PRTGDevice/)  
+### Zur Integration von PRTG
 
-- Empfangen und darstellen des aktuellen Zustand.  
-- Pausieren und Fortsetzen der Überwachung über die Frontends, Aktionen und PHP-Scripten.  
+Der im [PRTG IO](PRTGIO/README.md) verwendete Benutzer sollte in PRTG administrative Rechte bekommen, um die Überwachung zu steuern und Alarme bestätigen zu können.  
+Die Kommunikation zwischen Symcon und PRTG kann per HTTP oder per HTTPS (SSL/TLS) erfolgen. Hierzu ist die URL im [PRTG IO](PRTGIO/README.md) entsprechend anzupassen.  
 
-### [PRTG Sensor:](PRTGSensor/)  
-
-- Empfangen und darstellen des aktuellen Zustand.  
-- Pausieren und Fortsetzen der Überwachung über die Frontends, Aktionen und PHP-Scripten.  
-- Quittieren von Alarmmeldungen über die Frontends, Aktionen und PHP-Scripten.  
+> [!IMPORTANT]
+> Bei unverschlüsselter Übertragung (HTTP) werden die Zugangsdaten im Klartext übertragen. Für einen PRTG-Server außerhalb des eigenen Netzwerks immer HTTPS verwenden.
 
 ## 2. Voraussetzungen
 
-- IP-Symcon ab Version 8.2
-- PRTG
+- Symcon ab Version 8.2  
+- PRTG mit erreichbarer Weboberfläche  
 
 ## 3. Software-Installation
 
-Über den 'Module-Store' in Symcon das Modul 'PRTG' hinzufügen.  
-**Bei kommerzieller Nutzung (z.B. als Errichter oder Integrator) wenden Sie sich bitte an den Autor.**  
-![Module-Store](imgs/install.png)  
+Über den Module Store in Symcon die Library `PRTG` hinzufügen.  
+![Module Store](imgs/install.png)  
 
-Die Abfrage ob ein [Konfigurator](PRTGConfigurator/README.md#3-einrichten-der-instanzen-in-ip-symcon) Modul angelegt werden soll, ist zu bestätigen.
-Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) abgefragt.
+Die Abfrage, ob ein [Konfigurator](PRTGConfigurator/README.md) angelegt werden soll, ist zu bestätigen.  
+Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md#4-einrichten-der-instanzen-in-symcon) abgefragt.  
 
-## 4. Einrichten der Instanzen in IP-Symcon
+> [!TIP]
+> Zuerst den [PRTG IO](PRTGIO/README.md) erstellen und fertig konfigurieren, sowie in PRTG alle gewünschten Einstellungen vornehmen. Danach die Geräte und Sensoren über den [PRTG Konfigurator](PRTGConfigurator/README.md) anlegen.
 
-Details sind in der Dokumentation der jeweiligen Module beschrieben.  
+## 4. Enthaltende Module
 
-In der Dokumentation des [PRTG IO](PRTGIO/) wird im Anhang erläutert wie eine Überwachung von Symcon aus PRTG erfolgen kann.  
-Ebenso wird dort das Empfangen von Statusänderungen eines Sensors in Symcon erläutert, damit Symcon den Zustand zeitnah darstellen kann.  
+### [PRTG IO](PRTGIO/README.md)
 
-Es wird dingend empfohlen somit zuerst den [PRTG IO](PRTGIO/) zu erstellen und fertig zu konfigurieren, sowie in PRTG alle gewünschten Einstellungen vorzunehmen, bevor weitere Instanzen in Symcon über den [PRTG Konfigurator](PRTGConfigurator/) angelegt werden.  
+- Schnittstelle zwischen den Geräte- und Sensor-Instanzen und PRTG.  
+- Empfangen von Ereignissen aus PRTG über einen WebHook.  
+- Bereitstellen von Systeminformationen aus Symcon für einen Sensor in PRTG.  
+- Abrufen von Graphen aus PRTG.  
+
+### [PRTG Konfigurator](PRTGConfigurator/README.md)
+
+- Auflisten aller in PRTG verfügbaren Geräte und Sensoren.  
+- Anlegen von Geräte- und Sensor-Instanzen in Symcon.  
+
+### [PRTG Gerät](PRTGDevice/README.md)
+
+- Darstellen des Zustands eines Gerätes und der Anzahl seiner Sensoren je Zustand.  
+- Pausieren und Fortsetzen der Überwachung über die Visualisierung, Aktionen und PHP-Skripte.  
+
+### [PRTG Sensor](PRTGSensor/README.md)
+
+- Darstellen des Zustands eines Sensors und der Werte aller seiner Kanäle.  
+- Pausieren und Fortsetzen der Überwachung über die Visualisierung, Aktionen und PHP-Skripte.  
+- Bestätigen von Alarmen über die Visualisierung, Aktionen und PHP-Skripte.  
 
 ## 5. Anhang
 
@@ -86,32 +104,46 @@ Es wird dingend empfohlen somit zuerst den [PRTG IO](PRTGIO/) zu erstellen und f
 |    PRTG Device    |    Device    |  PRTG  | {95C47F84-8DF2-4370-90BD-3ED34C65ED7B} |
 |    PRTG Sensor    |    Device    |  PRTG  | {A37FD212-2E5B-4B65-83F2-956CB5BBB2FA} |
 
-### 2. Hinweise  
+### 2. Changelog
 
-Der im [PRTG IO](PRTGIO/) verwendete Benutzer sollte in PRTG Administrative Rechte bekommen, um die Überwachung zu steuern und Alarme quittieren zu können.  
-Die Kommunikation zwischen Symcon und PRTG kann sowohl per HTTP als auch per HTTPS (SSL/TLS) erfolgen.  
-Hierzu ist PRTG und die URL im [PRTG IO](PRTGIO/) entsprechend zu anzupassen.
-Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem externen PRTG-Server genutzt werden, da die Login-Informationen dann nicht verschlüsselt übertragen werden!  
+**Version 2.61:**  
 
-### 3. Changelog
+> [!IMPORTANT]
+> Neu angelegte Geräte- und Sensor-Instanzen benennen sich und ihre Kanäle nicht mehr automatisch nach den Namen in PRTG um. Das kann in der Instanzkonfiguration eingeschaltet werden. Vorhandene Instanzen behalten ihre bisherige Einstellung.
+
+**Geändertes Verhalten**  
+
+- Konfigurator: Die Zusammenfassung zeigt den PRTG-Server des IO an.  
+- IO: Graphen nutzen die SSL-Einstellungen der Instanz. `PRTG_GetGraph` meldet Fehler (z.B. ungültige Parameter, PRTG nicht erreichbar) an den Aufrufer.  
+- IO: Passwort und Passwort-Hash werden im Debug nicht mehr angezeigt.  
+
+**Behobene falsche Werte in Statusvariablen**  
+
+- Gerät und Sensor: Der Status wurde nach Änderungen an der Instanz oder nach einem Modul-Update auf `Kein Test` gesetzt.  
+- Sensor: Bandbreiten ab 1 Mbit/s wurden mit der Einheit `KB` statt `Mbit/Sek.` angezeigt.  
+
+**Fehlerbehebungen**  
+
+- IO: Der WebHook lieferte keine Graphen.  
+- IO: Ungültige Antworten von PRTG wurden nicht als Fehler erkannt.  
 
 **Version 2.60:**  
 
-- Version für Symcon 8.2.  
-- Umstellung von Profile auf Darstellungen.  
-- Damit einher geht eine Anpassung der Einheiten aller Speicher / Bandbreitenvarialen der Sensoren.  
-- Diese werden jetzt ohne Umrechnung immer als Byte/Bit gespeichert.
-- Variablenhandling überarbeitet.  
-- Die Einheiten aus PRTG werden zuverlässiger erkannt.  
-- Fehlende Einheiten werden im LogFile protokolliert.  
-- Wird aufgrund der Einheit ein andere Variablentyp benötigt, als aktuell vorhanden ist, so wird dies im LogFile protokolliert.  
-- Die Instanz-Konfiguration liefert einen Überblick der Variablen mit ihren erkannten Einheiten und Variablentyp.  
-- Der Symcon Sensor für PRTG enthält jetzt auch MessageQueueSize, MessageSlowCounter, durchschnittliche Laufzeit und Speicherverbrauch aller PHP-Threads
-  
+> [!IMPORTANT]
+> Diese Version benötigt Symcon 8.2.  
+> Die Variablenprofile wurden durch Darstellungen ersetzt. Speicher- und Bandbreitenwerte der Sensoren werden jetzt ohne Umrechnung als Rohwert aus PRTG (Byte bzw. Byte/s) gespeichert.
+
+**Geändertes Verhalten**  
+
+- Sensor: Die Einheiten aus PRTG werden zuverlässiger erkannt.  
+- Sensor: Fehlende Einheiten und Kanäle, die einen anderen Variablentyp benötigen als die vorhandene Variable, werden im Log gemeldet.  
+- Sensor: Die Instanzkonfiguration zeigt eine Übersicht der Kanäle mit ihren erkannten Einheiten und Variablentypen.  
+- IO: Der Symcon-Sensor für PRTG liefert zusätzlich die Größe der Nachrichtenwarteschlange, die Anzahl langsamer Nachrichten sowie die durchschnittliche Laufzeit und den Speicherverbrauch der PHP-Threads.  
+
 **Version 2.52:**  
 
 - Version für Symcon 7.0.  
-  
+
 **Version 2.51:**  
 
 - Sensor und Device Intervall konnte beim starten von Symcon falsch sein.  
@@ -175,7 +207,7 @@ Unverschlüsselte Übertragung sollte niemals zur Kommunikation mit einem extern
 
 - Erstes offizielles Release  
 
-### 4. Spenden  
+### 3. Spenden  
   
 Die Library ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als Unterstützung für den Autor werden hier akzeptiert:  
 
@@ -185,5 +217,5 @@ Die Library ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als U
 
 ## 6. Lizenz
 
-IPS-Modul:  
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
+Symcon-Modul:  
+[Custom NC-SA](LICENSE)  

@@ -12,7 +12,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  * @version       2.60
  *
  */
@@ -23,7 +23,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
  * @version       2.60
  *
@@ -34,6 +34,7 @@ require_once __DIR__ . '/../libs/PRTGHelper.php';
  * @method void UnregisterProfile(string $Name)
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  * @method int RegisterParent()
+ * @method int FindIDForIdent(string $Ident)
  */
 class PRTGDevice extends IPSModuleStrict
 {
@@ -57,7 +58,7 @@ class PRTGDevice extends IPSModuleStrict
     {
         parent::Create();
         $this->RegisterPropertyInteger('id', 0);
-        $this->RegisterPropertyBoolean('AutoRename', true);
+        $this->RegisterPropertyBoolean('AutoRename', false);
         $this->RegisterPropertyBoolean('ShowActionButton', true);
         $this->RegisterPropertyBoolean('ReadableState', true);
         $this->RegisterPropertyBoolean('DisplaySensorState', true);
@@ -78,7 +79,8 @@ class PRTGDevice extends IPSModuleStrict
         parent::ApplyChanges();
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '.*');
 
-        if ($this->MaintainVariable(
+        $StateIsNew = ($this->FindIDForIdent('State') == 0);
+        $this->MaintainVariable(
             'State',
             $this->Translate('State'),
             VARIABLETYPE_INTEGER,
@@ -238,8 +240,11 @@ class PRTGDevice extends IPSModuleStrict
             ],
             -2,
             true
-        )) {
-            $this->SetValue('State', 6);
+        );
+        if ($StateIsNew) {
+            // Neu angelegt: Bis zur ersten Abfrage ist der Zustand unbekannt.
+            // Nicht auf den Rückgabewert von MaintainVariable verlassen, dieser war live auch bei vorhandener Variable true.
+            $this->SetValue('State', 1);
         }
 
         if ($this->ReadPropertyBoolean('ReadableState')) {
@@ -575,10 +580,11 @@ class PRTGDevice extends IPSModuleStrict
         $Data['QueryData'] = $QueryData;
         $Data['PostData'] = $PostData;
         $ResultString = $this->SendDataToParent(json_encode($Data));
-        if ($ResultString === false) {
+        // ForwardData liefert im Fehlerfall einen leeren String.
+        $Result = @unserialize($ResultString);
+        if (!is_array($Result) || !array_key_exists('Error', $Result)) {
             return [];
         }
-        $Result = unserialize($ResultString);
 
         if ($Result['Error'] != 200) {
             $this->SendDebug('Result Error', $Result, 0);

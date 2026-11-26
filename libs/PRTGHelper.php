@@ -12,7 +12,7 @@ namespace prtg;
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  * @version       2.60
  *
  */
@@ -26,7 +26,7 @@ eval('declare(strict_types=1);namespace prtg {?>' . file_get_contents(__DIR__ . 
  *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
  * @version       2.60
  *
@@ -102,7 +102,7 @@ trait PRTGPause
     /**
      * SetPauseDurationEx
      *
-     * IPS Instanz-Funktion PRTG_SetPauseDuration
+     * IPS Instanz-Funktion PRTG_SetPauseDurationEx
      * Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergeben Meldung für die in '$Minutes' angegebene Zeit in Minuten.
      *
      * @param int    $Minutes Pausenzeit in Minuten
@@ -259,71 +259,71 @@ trait VariableConverter
                         'INTERVALS_ACTIVE' => true,
                         'INTERVALS'        => json_encode([
                             [
-                                'IntervalMinValue' => 0,
-                                'IntervalMaxValue' => 1024,
-                                'ConstantActive'   => false,
-                                'ConstantValue'    => '',
-                                'ConversionFactor' => 1,
-                                'PrefixActive'     => false,
-                                'PrefixValue'      => '',
-                                'SuffixActive'     => true,
-                                'SuffixValue'      => ' Byte',
-                                'DigitsActive'     => true,
-                                'DigitsValue'      => 0,
-                                'IconActive'       => false,
-                                'IconValue'        => '',
-                                'ColorActive'      => false,
+                                'IntervalMinValue'      => 0,
+                                'IntervalMaxValue'      => 1024,
+                                'ConstantActive'        => false,
+                                'ConstantValue'         => '',
+                                'ConversionFactor'      => 1,
+                                'PrefixActive'          => false,
+                                'PrefixValue'           => '',
+                                'SuffixActive'          => true,
+                                'SuffixValue'           => ' Byte',
+                                'DigitsActive'          => true,
+                                'DigitsValue'           => 0,
+                                'IconActive'            => false,
+                                'IconValue'             => '',
+                                'ColorActive'           => false,
                                 'ColorValue'            => -1
                             ],
                             [
-                                'IntervalMinValue' => 1024,
-                                'IntervalMaxValue' => 1024 * 1024,
-                                'ConstantActive'   => false,
-                                'ConstantValue'    => '',
-                                'ConversionFactor' => 1024,
-                                'PrefixActive'     => false,
-                                'PrefixValue'      => '',
-                                'SuffixActive'     => true,
-                                'SuffixValue'      => ' KB',
-                                'DigitsActive'     => true,
-                                'DigitsValue'      => 2,
-                                'IconActive'       => false,
-                                'IconValue'        => '',
-                                'ColorActive'      => false,
+                                'IntervalMinValue'      => 1024,
+                                'IntervalMaxValue'      => 1024 * 1024,
+                                'ConstantActive'        => false,
+                                'ConstantValue'         => '',
+                                'ConversionFactor'      => 1024,
+                                'PrefixActive'          => false,
+                                'PrefixValue'           => '',
+                                'SuffixActive'          => true,
+                                'SuffixValue'           => ' KB',
+                                'DigitsActive'          => true,
+                                'DigitsValue'           => 2,
+                                'IconActive'            => false,
+                                'IconValue'             => '',
+                                'ColorActive'           => false,
                                 'ColorValue'            => -1
                             ],
                             [
-                                'IntervalMinValue' => 1024 * 1024,
-                                'IntervalMaxValue' => 1024 * 1024 * 1024,
-                                'ConstantActive'   => false,
-                                'ConstantValue'    => '',
-                                'ConversionFactor' => 1024 * 1024,
-                                'PrefixActive'     => false,
-                                'PrefixValue'      => '',
-                                'SuffixActive'     => true,
-                                'SuffixValue'      => ' MB',
-                                'DigitsActive'     => true,
-                                'DigitsValue'      => 2,
-                                'IconActive'       => false,
-                                'IconValue'        => '',
-                                'ColorActive'      => false,
+                                'IntervalMinValue'      => 1024 * 1024,
+                                'IntervalMaxValue'      => 1024 * 1024 * 1024,
+                                'ConstantActive'        => false,
+                                'ConstantValue'         => '',
+                                'ConversionFactor'      => 1024 * 1024,
+                                'PrefixActive'          => false,
+                                'PrefixValue'           => '',
+                                'SuffixActive'          => true,
+                                'SuffixValue'           => ' MB',
+                                'DigitsActive'          => true,
+                                'DigitsValue'           => 2,
+                                'IconActive'            => false,
+                                'IconValue'             => '',
+                                'ColorActive'           => false,
                                 'ColorValue'            => -1
                             ],
                             [
-                                'IntervalMinValue' => 1024 * 1024 * 1024,
-                                'IntervalMaxValue' => PHP_FLOAT_MAX,
-                                'ConstantActive'   => false,
-                                'ConstantValue'    => '',
-                                'ConversionFactor' => 1024 * 1024 * 1024,
-                                'PrefixActive'     => false,
-                                'PrefixValue'      => '',
-                                'SuffixActive'     => true,
-                                'SuffixValue'      => ' GB',
-                                'DigitsActive'     => true,
-                                'DigitsValue'      => 2,
-                                'IconActive'       => false,
-                                'IconValue'        => '',
-                                'ColorActive'      => false,
+                                'IntervalMinValue'      => 1024 * 1024 * 1024,
+                                'IntervalMaxValue'      => PHP_FLOAT_MAX,
+                                'ConstantActive'        => false,
+                                'ConstantValue'         => '',
+                                'ConversionFactor'      => 1024 * 1024 * 1024,
+                                'PrefixActive'          => false,
+                                'PrefixValue'           => '',
+                                'SuffixActive'          => true,
+                                'SuffixValue'           => ' GB',
+                                'DigitsActive'          => true,
+                                'DigitsValue'           => 2,
+                                'IconActive'            => false,
+                                'IconValue'             => '',
+                                'ColorActive'           => false,
                                 'ColorValue'            => -1
                             ],
                         ])
@@ -364,37 +364,37 @@ trait VariableConverter
                         'INTERVALS_ACTIVE' => true,
                         'INTERVALS'        => json_encode([
                             [
-                                'IntervalMinValue' => 0,
-                                'IntervalMaxValue' => 125000,
-                                'ConstantActive'   => false,
-                                'ConstantValue'    => '',
-                                'ConversionFactor' => 125,
-                                'PrefixActive'     => false,
-                                'PrefixValue'      => '',
-                                'SuffixActive'     => true,
-                                'SuffixValue'      => ' kbit/Sek.',
-                                'DigitsActive'     => true,
-                                'DigitsValue'      => 0,
-                                'IconActive'       => false,
-                                'IconValue'        => '',
-                                'ColorActive'      => false,
+                                'IntervalMinValue'      => 0,
+                                'IntervalMaxValue'      => 125000,
+                                'ConstantActive'        => false,
+                                'ConstantValue'         => '',
+                                'ConversionFactor'      => 125,
+                                'PrefixActive'          => false,
+                                'PrefixValue'           => '',
+                                'SuffixActive'          => true,
+                                'SuffixValue'           => ' kbit/Sek.',
+                                'DigitsActive'          => true,
+                                'DigitsValue'           => 0,
+                                'IconActive'            => false,
+                                'IconValue'             => '',
+                                'ColorActive'           => false,
                                 'ColorValue'            => -1
                             ],
                             [
-                                'IntervalMinValue' => 125000,
-                                'IntervalMaxValue' => PHP_FLOAT_MAX,
-                                'ConstantActive'   => false,
-                                'ConstantValue'    => ' Mbit/Sek.',
-                                'ConversionFactor' => 125000,
-                                'PrefixActive'     => false,
-                                'PrefixValue'      => '',
-                                'SuffixActive'     => true,
-                                'SuffixValue'      => ' KB',
-                                'DigitsActive'     => true,
-                                'DigitsValue'      => 2,
-                                'IconActive'       => false,
-                                'IconValue'        => '',
-                                'ColorActive'      => false,
+                                'IntervalMinValue'      => 125000,
+                                'IntervalMaxValue'      => PHP_FLOAT_MAX,
+                                'ConstantActive'        => false,
+                                'ConstantValue'         => '',
+                                'ConversionFactor'      => 125000,
+                                'PrefixActive'          => false,
+                                'PrefixValue'           => '',
+                                'SuffixActive'          => true,
+                                'SuffixValue'           => ' Mbit/Sek.',
+                                'DigitsActive'          => true,
+                                'DigitsValue'           => 2,
+                                'IconActive'            => false,
+                                'IconValue'             => '',
+                                'ColorActive'           => false,
                                 'ColorValue'            => -1
                             ]
                         ])

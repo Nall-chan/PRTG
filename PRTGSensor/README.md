@@ -1,183 +1,281 @@
 [![SDK](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
 [![Module Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.version&label=Modul%20Version&color=blue)](https://community.symcon.de/t/modul-prtg-prtg-in-ips-einbinden-und-ips-in-prtg-ueberwachen/47105)
 [![Symcon Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNall-chan%2FPRTG%2Frefs%2Fheads%2Fmaster%2Flibrary.json&query=%24.compatibility.version&suffix=%3E&label=Symcon%20Version&color=green)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v80-v81-q3-2025/)  
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License](https://img.shields.io/badge/License-Custom--NC--SA-green.svg)](#10-lizenz)
 [![Check Style](https://github.com/Nall-chan/PRTG/workflows/Check%20Style/badge.svg)](https://github.com/Nall-chan/PRTG/actions)
 [![Run Tests](https://github.com/Nall-chan/PRTG/workflows/Run%20Tests/badge.svg)](https://github.com/Nall-chan/PRTG/actions)  
 [![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](#2-spenden)[![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](#2-spenden)  
 
-# PRTG Device <!-- omit in toc -->
+# PRTG Sensor  <!-- omit in toc -->
 
-Einbindung eines PRTG-Sensor in IPS.  
+Einbindung eines Sensors aus PRTG in Symcon.  
 
 ## Inhaltsverzeichnis <!-- omit in toc -->
 
 - [1. Funktionsumfang](#1-funktionsumfang)
-- [2. Installation](#2-installation)
-- [3. Einrichten der Instanzen in IP-Symcon](#3-einrichten-der-instanzen-in-ip-symcon)
-- [4. Statusvariablen](#4-statusvariablen)
-- [5. Visualisierung](#5-visualisierung)
-- [6. Aktionen](#6-aktionen)
+- [2. Voraussetzungen](#2-voraussetzungen)
+- [3. Software-Installation](#3-software-installation)
+- [4. Einrichten der Instanzen in Symcon](#4-einrichten-der-instanzen-in-symcon)
+  - [Kanalübersicht](#kanalübersicht)
+- [5. Statusvariablen](#5-statusvariablen)
+  - [Variablen der Kanäle](#variablen-der-kanäle)
+- [6. Visualisierung](#6-visualisierung)
+  - [Kachel Visualisierung](#kachel-visualisierung)
+  - [WebFront Visualisierung](#webfront-visualisierung)
 - [7. PHP-Befehlsreferenz](#7-php-befehlsreferenz)
-- [8. Anhang](#8-anhang)
+- [8. Aktionen](#8-aktionen)
+- [9. Anhang](#9-anhang)
   - [1. Changelog](#1-changelog)
   - [2. Spenden](#2-spenden)
-- [9. Lizenz](#9-lizenz)
+- [10. Lizenz](#10-lizenz)
 
 ## 1. Funktionsumfang
 
-- Empfangen und darstellen des aktuellen Zustand.  
-- Pausieren und Fortsetzen der Überwachung über die Frontends, Aktionen und PHP-Scripten.  
-- Quittieren von Alarmmeldungen über die Frontends, Aktionen und PHP-Scripten.  
+- Darstellen des Zustands eines Sensors aus PRTG.  
+- Darstellen der Werte aller Kanäle des Sensors in eigenen Statusvariablen.  
+- Pausieren und Fortsetzen der Überwachung über die Visualisierung, Aktionen und PHP-Skripte.  
+- Bestätigen von Alarmen über die Visualisierung, Aktionen und PHP-Skripte.  
 
-## 2. Installation
+## 2. Voraussetzungen
+
+- Symcon ab Version 8.2  
+- Ein aktiver [PRTG IO](../PRTGIO/README.md)  
+
+## 3. Software-Installation
 
 Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installation).  
 
-## 3. Einrichten der Instanzen in IP-Symcon
+## 4. Einrichten der Instanzen in Symcon
 
-Das Anlegen von neuen Instanzen kann komfortabel über den [PRTG Konfigurator:](../PRTGConfigurator/README.md#3-einrichten-der-instanzen-in-ip-symcon) erfolgen.  
+Das Anlegen von neuen Instanzen erfolgt am einfachsten über den [PRTG Konfigurator](../PRTGConfigurator/README.md#4-einrichten-der-instanzen-in-symcon).  
+Alternativ ist das Modul im Dialog `Instanz hinzufügen` unter dem Hersteller `PRTG` zu finden.  
 
-Alternativ ist das Modul im Dialog 'Instanz hinzufügen' unter dem Hersteller 'PRTG' zu finden.  
 ![Instanz hinzufügen](imgs/add.png)  
 
-Es wird automatisch ein PRTGIO Instanz erzeugt, wenn noch keine vorhanden ist.  
-Erscheint im dem sich öffnenden Konfigurationsformular der Hinweis 'Eine übergeordnete Instanz ist inaktiv', so ist zuerst der [IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) zu konfigurieren.  
-Dieser kann über die Schaltfläche 'Gateway konfigurieren' erreicht werden.  
-Details zur Konfiguration des [IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) sind der Dokumentation des [IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-ip-symcon) zu entnehmen.
+Es wird automatisch eine [PRTG IO](../PRTGIO/README.md)-Instanz erzeugt, wenn noch keine vorhanden ist.  
+Erscheint im Konfigurationsformular der Hinweis `Eine übergeordnete Instanz ist inaktiv`, so ist zuerst der IO zu konfigurieren. Dieser ist über die Schaltfläche `Gateway konfigurieren` erreichbar.  
+Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-symcon).  
 
-Folgende Parameter sind in der Instanz zu konfigurieren:  
-
-![Konfigurator](imgs/conf.png)  
+![Konfiguration](imgs/conf.png)  
 
 **Konfigurationsseite:**  
 
-| Eigenschaft        |   Typ   | Standardwert | Funktion                                                             |
-| :----------------- | :-----: | :----------: | :------------------------------------------------------------------- |
-| id                 | integer |              | PRTG ObjektID des Sensor                                             |
-| AutoRename         |  bool   |     true     | Instanz automatisch an den Namen in PRTG anpassen                    |
-| ShowActionButton   |  bool   |     true     | Aktionsbutton zum pausieren der Überwachung                          |
-| ShowAckButton      |  bool   |     true     | Aktionsbutton zum Quittieren des Alarm                               |
-| ReadableState      |  bool   |     true     | Status als Klartext in String-Variable                               |
-| AutoRenameChannels |  bool   |     true     | Statusvariablen der Kanäle automatisch an den Namen in PRTG anpassen |
-| UseInterval        |  bool   |     true     | Abfrageintervall aus Interval benutzen, sonst PRTG-Intervall nutzen  |
-| Interval           | integer |      60      | Abfrageintervall in Sekunden                                         |
+| Eigenschaft                                         | Name               |   Typ   | Standardwert | Beschreibung                                                                         |
+| :-------------------------------------------------- | :----------------- | :-----: | :----------: | :----------------------------------------------------------------------------------- |
+| Sensor ID                                           | id                 | integer |      0       | Objekt-ID des Sensors in PRTG (in PRTG in der URL der Sensorseite: `sensor.htm?id=`) |
+| Zeige Steuerung der Überwachung                     | ShowActionButton   |  bool   |     true     | Statusvariable `Überwachung` zum Pausieren und Fortsetzen anlegen                    |
+| Zeige Quittieren Button                             | ShowAckButton      |  bool   |     true     | Statusvariable `Alarmsteuerung` zum Bestätigen eines Alarms anlegen                  |
+| Instanz automatisch umbenennen                      | AutoRename         |  bool   |    false     | Name der Instanz an den Namen des Sensors in PRTG anpassen                           |
+| Kanäle automatisch umbenennen                       | AutoRenameChannels |  bool   |    false     | Namen der Variablen der Kanäle an die Namen der Kanäle in PRTG anpassen              |
+| Status in Klartext                                  | ReadableState      |  bool   |     true     | Statusvariable `Status in Klartext` anlegen                                          |
+| Nicht den Sensor Intervall von … Sekunden benutzen  | UseInterval        |  bool   |    false     | `false` = Intervall des Sensors aus PRTG nutzen, `true` = eigenes `Intervall` nutzen |
+| Intervall                                           | Interval           | integer |      60      | Abfrageintervall in Sekunden (mindestens 5), nur bei `UseInterval` = `true`          |
 
-Der Haken für `Ignoriere Einheit und Typ` sollte nur in Ausnahmefällen aktiviert werden.  
-Es wird empfohlen die korrekte Einheit in PRTG unterhalb des Kanal einzustellen.  
+Wird eine der Eigenschaften `Zeige Steuerung der Überwachung`, `Zeige Quittieren Button` oder `Status in Klartext` deaktiviert, so wird die zugehörige Statusvariable gelöscht.  
 
-## 4. Statusvariablen
+Die Zusammenfassung der Instanz zeigt das Gerät des Sensors in PRTG.  
 
-Folgende Statusvariablen werden automatisch angelegt.  
-Zusätzlich werden dynamisch Statusvariablen für die einzelnen Kanäle erstellt.  
+Beispiel zum Setzen der Eigenschaften per Skript:  
 
-| Name            |   Typ   | Ident         | Beschreibung                                                 |
-| :-------------- | :-----: | :------------ | :----------------------------------------------------------- |
-| Status          | integer | State         | Status des Sensor                                            |
-| Status Klartext | string  | ReadableState | Status des Sensor als String wie er von PRTG übertragen wird |
-| Steuerung       | integer | ActionButton  | Pause / Resume Button zum Steuern der Überwachung            |
-| Alarmsteuerung  | integer | AckButton     | Bestätigen Button zum Quittieren des Alarm                   |
+```php
+IPS_SetProperty(12345, 'id', 2001);
+IPS_SetProperty(12345, 'UseInterval', true);
+IPS_SetProperty(12345, 'Interval', 30);
+IPS_ApplyChanges(12345);
+```
 
-## 5. Visualisierung
+### Kanalübersicht
 
-Die direkte Darstellung und Steuerung in der Kachel-Visu und dem WebFront ist möglich.  
-Hier ein Beispiel eines HTTP Sensors für IPS.  
+Die Konfiguration zeigt unter `Kanalübersicht` alle Kanäle des Sensors mit dem letzten Wert, der erkannten Einheit, dem passenden Datentyp und dem Typ der vorhandenen Variable.  
+
+Liefert PRTG einen Wert ohne Einheit oder passt der Typ der vorhandenen Variable nicht zur Einheit, so wird dies im Log gemeldet. Bei abweichendem Typ wird der Wert nicht geschrieben.  
+Mit dem Haken `Ignoriere Einheit und Typ` werden diese Meldungen für einen Kanal unterdrückt.  
+
+> [!TIP]
+> Den Haken `Ignoriere Einheit und Typ` nur in Ausnahmefällen setzen. Besser die korrekte Einheit in PRTG in den Einstellungen des Kanals eintragen.
+
+## 5. Statusvariablen
+
+| Name               |   Typ   | Ident         | Beschreibung                                                                      |
+| :----------------- | :-----: | :------------ | :-------------------------------------------------------------------------------- |
+| Status             | integer | State         | Zustand des Sensors (Werte siehe unten)                                           |
+| Status in Klartext | string  | ReadableState | Zustand des Sensors als Text, wie er von PRTG übertragen wird                     |
+| Überwachung        |  bool   | ActionButton  | `true` = Überwachung aktiv, `false` = pausiert; bedienbar                         |
+| Alarmsteuerung     | integer | AckButton     | Bestätigt beim Bedienen den Alarm des Sensors in PRTG                             |
+| *Name des Kanals*  |    …    | *Kanal-ID*    | Wert des Kanals, siehe [Variablen der Kanäle](#variablen-der-kanäle)              |
+
+Werte der Variable `Status`:  
+
+| Wert | Zustand   | Wert | Zustand                     |
+| :--: | :-------- | :--: | :-------------------------- |
+|  1   | Unbekannt |  8   | Pausiert durch Abhängigkeit |
+|  2   | Suche     |  9   | Pausiert über Zeitplan      |
+|  3   | OK        |  10  | Ungewöhnliche Daten         |
+|  4   | Warnung   |  11  | Nicht lizenziert            |
+|  5   | Fehler    |  12  | Pausiert über Zeitraum      |
+|  6   | Kein Test |  13  | Fehler (Bestätigt)          |
+|  7   | Pausiert  |  14  | Fehler (Teilweise)          |
+
+### Variablen der Kanäle
+
+Für jeden Kanal des Sensors wird eine Statusvariable angelegt. Der Ident ist die Kanal-ID aus PRTG. Typ und Darstellung richten sich nach der Einheit, die PRTG für den Kanal meldet:  
+
+| Einheit in PRTG                             |   Typ   | Darstellung                                                           |
+| :------------------------------------------ | :-----: | :-------------------------------------------------------------------- |
+| `Tg.`, `Std.`, `Min.`, `Sek.`               | integer | Dauer in Sekunden                                                     |
+| `ms`                                        |  float  | Millisekunden                                                         |
+| `#`                                         | integer | Anzahl                                                                |
+| `kByte`, `MByte`, `GByte`, `KB`, `MB`, `GB` |  float  | Byte, angezeigt je nach Größe in Byte, KB, MB oder GB                 |
+| `%`                                         |  float  | Prozent                                                               |
+| `kbit/Sek.`, `Mbit/Sek.`                    |  float  | Byte pro Sekunde, angezeigt je nach Größe in kbit/Sek. oder Mbit/Sek. |
+| `#/Sek.`, `Msg/s`, `Nachr./s`               | integer | Anzahl pro Sekunde                                                    |
+| `#/Min.`                                    | integer | Anzahl pro Minute                                                     |
+| `Items`                                     | integer | Anzahl                                                                |
+| alle anderen                                | string  | Wert als Text, wie er von PRTG übertragen wird                        |
+
+## 6. Visualisierung
+
+Die Darstellung und Steuerung ist in der Kachel Visualisierung und im WebFront möglich.  
+Hier ein Beispiel eines HTTP-Sensors.  
+
+### Kachel Visualisierung
+
 ![Kachel Beispiel](imgs/tile.png)  
+
+### WebFront Visualisierung
+
 ![WebFront Beispiel](imgs/wf.png)  
 
-## 6. Aktionen
-
-**Grundsätzlich können alle bedienbaren Statusvariablen als Ziel einer [`Aktion`](https://www.symcon.de/service/dokumentation/konzepte/automationen/ablaufplaene/aktionen/) mit 'Auf Wert schalten' angesteuert werden, so das hier keine speziellen Aktionen benutzt werden müssen.**
-
-Dennoch gibt es diverse Aktionen für die 'PRTG Sensor' Instanz.  
-Wenn so eine Instanz als Ziel einer Aktion ausgewählt wurde, stehen folgende Aktionen zur Verfügung:  
-![Aktionen](imgs/actions.png)  
+Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status`, `Überwachung` und Anzahl-Kanälen). Diese zeigt das klassische WebFront nicht an.  
 
 ## 7. PHP-Befehlsreferenz
 
+Nach erfolgreichem Steuern der Überwachung oder Bestätigen eines Alarms liest die Instanz den Zustand des Sensors neu aus PRTG.  
+
 ```php
-bool PRTG_RequestState(integer $InstanzID)
+bool PRTG_RequestState(integer $InstanzID);
 ```
 
-Liest den Zustand des Gerätes von PRTG.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Liest den Zustand und die Werte aller Kanäle des Sensors aus PRTG und aktualisiert die Statusvariablen.  
+Gibt `true` zurück, wenn Zustand und Kanäle gelesen wurden, sonst `false`.  
+
+```php
+PRTG_RequestState(12345);
+```
 
 ---
 
 ```php
-bool PRTG_SetResume(integer $InstanzID)
+bool PRTG_SetResume(integer $InstanzID);
 ```
 
-Setzt die Überwachung des Gerätes in PRTG fort.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Setzt die Überwachung des Sensors in PRTG fort.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+
+```php
+PRTG_SetResume(12345);
+```
 
 ---
 
 ```php
-bool PRTG_SetPause(integer $InstanzID)
+bool PRTG_SetPause(integer $InstanzID);
 ```
 
-Pausiert die Überwachung des Gerätes in PRTG.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Pausiert die Überwachung des Sensors in PRTG ohne zeitliche Begrenzung.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+
+```php
+PRTG_SetPause(12345);
+```
 
 ---
 
 ```php
-bool PRTG_SetPauseEx(integer $InstanzID, string $Message)
+bool PRTG_SetPauseEx(integer $InstanzID, string $Message);
 ```
 
-Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergebenen Meldung.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Pausiert die Überwachung des Sensors in PRTG ohne zeitliche Begrenzung.  
+`$Message` ist der Text, den PRTG als Grund der Pause anzeigt. Ein leerer String pausiert ohne Meldung.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+
+```php
+PRTG_SetPauseEx(12345, 'Wartung');
+```
 
 ---
 
 ```php
-bool PRTG_SetPauseDuration(integer $InstanzID, integer $Minutes)
+bool PRTG_SetPauseDuration(integer $InstanzID, integer $Minutes);
 ```
 
-Pausiert die Überwachung des Gerätes in PRTG für die in '$Minutes' angegebene Zeit in Minuten.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Pausiert die Überwachung des Sensors in PRTG für `$Minutes` Minuten. Danach setzt PRTG die Überwachung selbst fort.  
+Bei `0` wird ohne zeitliche Begrenzung pausiert.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+
+```php
+PRTG_SetPauseDuration(12345, 60);
+```
 
 ---
 
 ```php
-bool PRTG_SetPauseDurationEx(integer $InstanzID, integer $Minutes, string $Message)
+bool PRTG_SetPauseDurationEx(integer $InstanzID, integer $Minutes, string $Message);
 ```
 
-Pausiert die Überwachung des Gerätes in PRTG mit einer in '$Message' übergebenen Meldung für die in '$Minutes' angegebene Zeit in Minuten.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Wie `PRTG_SetPauseDuration`, zusätzlich mit dem Text `$Message`, den PRTG als Grund der Pause anzeigt.  
+
+```php
+PRTG_SetPauseDurationEx(12345, 60, 'Wartung');
+```
 
 ---
 
 ```php
-bool PRTG_AcknowledgeAlarm(integer $InstanzID)
+bool PRTG_AcknowledgeAlarm(integer $InstanzID);
 ```
 
-Bestätigt den Alarm des Sensor in PRTG.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Bestätigt den Alarm des Sensors in PRTG.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
+
+```php
+PRTG_AcknowledgeAlarm(12345);
+```
 
 ---
 
 ```php
-bool PRTG_AcknowledgeAlarmEx(integer $InstanzID, string $Message)
+bool PRTG_AcknowledgeAlarmEx(integer $InstanzID, string $Message);
 ```
 
-Bestätigt den Alarm des Sensor in PRTG mit einer in '$Message' übergebenen Meldung.  
-Wurde der Befehl erfolgreich ausgeführt, wird `true` zurück gegeben.  
-Im Fehlerfall wird eine Warnung erzeugt und `false`zurück gegeben.  
+Bestätigt den Alarm des Sensors in PRTG mit dem Text `$Message`, den PRTG zur Bestätigung anzeigt.  
+Gibt `true` zurück, wenn PRTG den Befehl angenommen hat und der neue Zustand gelesen wurde, sonst `false`.  
 
-## 8. Anhang
+```php
+PRTG_AcknowledgeAlarmEx(12345, 'Wird geprüft');
+```
+
+## 8. Aktionen
+
+**Grundsätzlich können alle bedienbaren Statusvariablen als Ziel einer [`Aktion`](https://www.symcon.de/service/dokumentation/konzepte/automationen/ablaufplaene/aktionen/) mit `Auf Wert schalten` angesteuert werden, so dass hier keine speziellen Aktionen benutzt werden müssen.**
+
+Wird eine `PRTG Sensor`-Instanz als Ziel einer Aktion ausgewählt, stehen zusätzlich folgende Aktionen zur Verfügung:  
+
+- Bestätige Alarm des Sensors  
+- Bestätige Alarm des Sensors mit einer Nachricht  
+- Setze das Gerät oder den Sensor auf Pause  
+- Setze das Gerät oder den Sensor mit einer Nachricht auf Pause  
+- Setze das Gerät oder den Sensor für eine bestimmte Zeit auf Pause  
+- Setze das Gerät oder den Sensor für eine bestimmte Zeit mit einer Nachricht auf Pause  
+- Setze das Gerät oder den Sensor auf Fortsetzen  
+
+![Aktionen](imgs/actions.png)  
+
+## 9. Anhang
 
 ### 1. Changelog
 
-[Changelog der Library](../README.md#3-changelog)  
+[Changelog der Library](../README.md#2-changelog)  
 
 ### 2. Spenden  
   
@@ -187,7 +285,7 @@ Die Library ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als U
 
 [![Wunschliste](https://img.shields.io/badge/Wunschliste-Amazon-ff69fb.svg)](https://www.amazon.de/hz/wishlist/ls/YU4AI9AQT9F?ref_=wl_share)  
 
-## 9. Lizenz
+## 10. Lizenz
 
-IPS-Modul:  
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)  
+Symcon-Modul:  
+[Custom NC-SA](../LICENSE)  

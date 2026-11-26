@@ -29,6 +29,12 @@
             "IP of event hook": "IP für Ereignis-Hook",
             "Port of event hook": "Port für Ereignis-Hook",
             "use https": "https benutzen",
+            "Invalid graph type": "Ungültiger Typ des Graphen",
+            "Invalid sensor ID": "Ungültige Sensor-ID",
+            "Invalid graph time span": "Ungültiger Zeitbereich des Graphen",
+            "Invalid graph size": "Ungültige Größe des Graphen",
+            "Graph could not be loaded": "Graph konnte nicht geladen werden",
+            "Invalid answer from PRTG": "Ungültige Antwort von PRTG",
             "This module is free for non-commercial use,\r\nDonations in support of the author are accepted here:": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos,\r\nSchenkungen als Unterstützung für den Autor werden hier akzeptiert:"
         }
     }

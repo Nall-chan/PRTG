@@ -13,7 +13,7 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  * @version       2.60
  *
  */
@@ -24,12 +24,13 @@ eval('declare(strict_types=1);namespace PRTGConfigurator {?>' . file_get_content
  *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
  * @version       2.60
  *
  * @example <b>Ohne</b>
  *
+ * @property int $ParentID
  * @method bool SendDebug(string $Message, mixed $Data, int $Format)
  */
 class PRTGConfigurator extends IPSModuleStrict
@@ -44,6 +45,7 @@ class PRTGConfigurator extends IPSModuleStrict
     {
         parent::Create();
         $this->SetReceiveDataFilter('.*"nothingtoreceive":.*');
+        $this->ParentID = 0;
     }
 
     /**
@@ -51,7 +53,36 @@ class PRTGConfigurator extends IPSModuleStrict
      */
     public function ApplyChanges(): void
     {
+        $this->RegisterMessage($this->InstanceID, FM_CONNECT);
+        $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
         parent::ApplyChanges();
+        if (IPS_GetKernelRunlevel() != KR_READY) {
+            $this->RegisterMessage(0, IPS_KERNELSTARTED);
+            return;
+        }
+        $this->UpdateParent();
+    }
+
+    /**
+     * Interne Funktion des SDK.
+     */
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
+    {
+        switch ($Message) {
+            case IPS_KERNELSTARTED:
+                $this->UnregisterMessage(0, IPS_KERNELSTARTED);
+                $this->UpdateParent();
+                break;
+            case FM_CONNECT:
+            case FM_DISCONNECT:
+                $this->UpdateParent();
+                break;
+            case IM_CHANGESETTINGS:
+                if ($SenderID == $this->ParentID) {
+                    $this->UpdateSummary();
+                }
+                break;
+        }
     }
 
     /**
@@ -238,10 +269,11 @@ class PRTGConfigurator extends IPSModuleStrict
         $Data['QueryData'] = $QueryData;
         $Data['PostData'] = $PostData;
         $ResultString = @$this->SendDataToParent(json_encode($Data));
-        if ($ResultString === false) {
+        // ForwardData liefert im Fehlerfall einen leeren String.
+        $Result = @unserialize($ResultString);
+        if (!is_array($Result) || !array_key_exists('Error', $Result)) {
             return [];
         }
-        $Result = unserialize($ResultString);
         if ($Result['Error'] != 200) {
             $this->SendDebug('Result Error', $Result, 0);
             return [];
@@ -249,6 +281,47 @@ class PRTGConfigurator extends IPSModuleStrict
         unset($Result['Error']);
         $this->SendDebug('Result', $Result, 0);
         return $Result;
+    }
+
+    /**
+     * Ermittelt den verbundenen IO und beobachtet dessen Einstellungen, damit die Zusammenfassung aktuell bleibt.
+     *
+     * @return void
+     */
+    private function UpdateParent(): void
+    {
+        $OldParentID = $this->ParentID;
+        $NewParentID = (int) $this->GetIO();
+        if ($OldParentID != $NewParentID) {
+            if ($OldParentID > 0) {
+                $this->UnregisterMessage($OldParentID, IM_CHANGESETTINGS);
+            }
+            if ($NewParentID > 0) {
+                $this->RegisterMessage($NewParentID, IM_CHANGESETTINGS);
+            }
+            $this->ParentID = $NewParentID;
+        }
+        $this->UpdateSummary();
+    }
+
+    /**
+     * Zeigt den PRTG-Server des IO (ohne Pfad und Zugangsdaten) in der Zusammenfassung an.
+     *
+     * @return void
+     */
+    private function UpdateSummary(): void
+    {
+        $Summary = '';
+        if (($this->ParentID > 0) && IPS_InstanceExists($this->ParentID)) {
+            $Url = (string) IPS_GetProperty($this->ParentID, 'Host');
+            $Host = parse_url($Url, PHP_URL_HOST);
+            if (is_string($Host) && ($Host != '')) {
+                $Scheme = parse_url($Url, PHP_URL_SCHEME) ?? 'http';
+                $Port = parse_url($Url, PHP_URL_PORT);
+                $Summary = $Scheme . '://' . $Host . (is_int($Port) ? ':' . $Port : '');
+            }
+        }
+        $this->SetSummary($Summary);
     }
 
     /**

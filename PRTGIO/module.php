@@ -13,7 +13,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  * @file          module.php
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  * @version       2.60
  *
  */
@@ -24,7 +24,7 @@ eval('declare(strict_types=1);namespace PRTGIO {?>' . file_get_contents(__DIR__ 
  *
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2025 Michael Tröger
- * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
+ * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
  * @version       2.60
  *
@@ -46,6 +46,9 @@ class PRTGIO extends IPSModuleStrict
     public const isDisconnected = IS_EBASE + 1;
     public const isUnauthorized = IS_EBASE + 2;
     public const isURLnotValid = IS_EBASE + 3;
+
+    public const GraphPNG = 1;
+    public const GraphSVG = 2;
 
     /** @var array $http_error */
     private static $http_error =
@@ -190,51 +193,31 @@ class PRTGIO extends IPSModuleStrict
      * GetGraph
      *
      * IPS Instanz-Funktion PRTG_GetGraph
-     * Liefert einen Graphen aus PRTG.
+     * Liefert einen Graphen aus PRTG. Im Fehlerfall wird eine Fehlermeldung ausgegeben (der Aufrufer erhält false).
      *
      * @param int  $Type         Typ des Graphen
      *                           enum[1=PNG, 2=SVG]
      * @param int  $SensorId     Objekt-ID des Sensors
      * @param int  $GraphId      Zeitbereich des Graphen
      *                           enum[0=live, 1=last 48 hours, 2=30 days, 3=365 days]
-     * @param int  $Width        Höhe des Graphen in Pixel.
+     * @param int  $Width        Breite des Graphen in Pixel.
      * @param int  $Height       Höhe des Graphen in Pixel.
      * @param int  $Theme        Darstellung
      *                           enum[0,1,2,3]
      * @param int  $BaseFontSize Schriftgröße, 10 ist Standard
      * @param bool $ShowLegend   Legende Anzeigen
      *
-     * @return string
+     * @return string Bilddaten des Graphen
      */
     public function GetGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend): string
     {
-        if ($this->State != self::isConnected) {
+        $Error = '';
+        $Graph = $this->FetchGraph($Type, $SensorId, $GraphId, $Width, $Height, $Theme, $BaseFontSize, $ShowLegend, $Error);
+        if ($Graph === false) {
+            echo $this->Translate($Error) . PHP_EOL;
             return '';
         }
-        //'showLegend%3D%271%27+baseFontSize%3D%275%27'
-        $QueryData = ['type'         => 'graph',
-            'graphid'                => $GraphId,
-            'width'                  => $Width,
-            'height'                 => $Height,
-            'theme'                  => $Theme,
-            'refreshable'            => 'true',
-            'graphstyling'           => "showLegend='" . (int) $ShowLegend . "' baseFontSize=" . $BaseFontSize . "'",
-            'id'                     => $SensorId
-        ];
-        if ($Type == 1) {
-            $URL = $this->CreateQueryURL('chart.png', $QueryData);
-        } elseif ($Type == 2) {
-            $URL = $this->CreateQueryURL('chart.svg', $QueryData);
-        }
-        $Timeout = [
-            'Timeout' => 5000
-        ];
-        $this->SendDebug('PRTG Graph URL', $URL, 0);
-        $Result = Sys_GetURLContentEx($URL, $Timeout);
-        if (!$Result) {
-            return '';
-        }
-        return $Result;
+        return $Graph;
     }
 
     /**
@@ -270,6 +253,9 @@ class PRTGIO extends IPSModuleStrict
                 break;
             case 500:
                 trigger_error('Server error', E_USER_WARNING);
+                break;
+            case 405: // Antwort ist kein gültiges JSON
+                trigger_error('Invalid answer from PRTG', E_USER_WARNING);
                 break;
         }
         restore_error_handler();
@@ -325,14 +311,28 @@ class PRTGIO extends IPSModuleStrict
         }
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'GET':
-                if (isset($_GET['graph']) && ($_GET['graph'] == 'png')) {
-                    header('Content-type: image/png');
-                    echo $this->GetGraph(1, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling'], true);
-                    return;
-                }
-                if (isset($_GET['graph']) && ($_GET['graph'] == 'svg')) {
-                    header('Content-Type: image/svg+xml');
-                    echo $this->GetGraph(2, $_GET['id'], $_GET['graphid'], $_GET['width'], $_GET['height'], $_GET['theme'], $_GET['graphstyling'], true);
+                if (isset($_GET['graph']) && in_array($_GET['graph'], ['png', 'svg'], true)) {
+                    $Type = ($_GET['graph'] == 'png') ? self::GraphPNG : self::GraphSVG;
+                    $Error = '';
+                    $Graph = $this->FetchGraph(
+                        $Type,
+                        (int) ($_GET['id'] ?? 0),
+                        (int) ($_GET['graphid'] ?? 0),
+                        (int) ($_GET['width'] ?? 800),
+                        (int) ($_GET['height'] ?? 400),
+                        (int) ($_GET['theme'] ?? 0),
+                        (int) ($_GET['basefontsize'] ?? 10),
+                        (bool) ($_GET['showlegend'] ?? true),
+                        $Error
+                    );
+                    if ($Graph === false) {
+                        header('HTTP/1.0 400 Bad Request');
+                        header('Content-type: text/plain');
+                        echo $Error;
+                        return;
+                    }
+                    header(($Type == self::GraphPNG) ? 'Content-Type: image/png' : 'Content-Type: image/svg+xml');
+                    echo $Graph;
                     return;
                 }
                 if (isset($_SERVER['HTTP_SENSORID'])) {
@@ -586,6 +586,85 @@ class PRTGIO extends IPSModuleStrict
     }
 
     /**
+     * FetchGraph
+     *
+     * Lädt einen Graphen aus PRTG. Gibt selbst keine Fehler aus, damit auch der WebHook sie nutzen kann.
+     *
+     * @param int    $Type         Typ des Graphen (self::GraphPNG oder self::GraphSVG)
+     * @param int    $SensorId     Objekt-ID des Sensors
+     * @param int    $GraphId      Zeitbereich des Graphen (0=live, 1=48 Stunden, 2=30 Tage, 3=365 Tage)
+     * @param int    $Width        Breite des Graphen in Pixel
+     * @param int    $Height       Höhe des Graphen in Pixel
+     * @param int    $Theme        Darstellung
+     * @param int    $BaseFontSize Schriftgröße, 10 ist Standard
+     * @param bool   $ShowLegend   Legende anzeigen
+     * @param string $Error        Enthält im Fehlerfall den (unübersetzten) Fehlertext
+     *
+     * @return string|false Bilddaten oder false im Fehlerfall
+     */
+    private function FetchGraph(int $Type, int $SensorId, int $GraphId, int $Width, int $Height, int $Theme, int $BaseFontSize, bool $ShowLegend, string &$Error): string|false
+    {
+        if ($this->State != self::isConnected) {
+            $Error = 'PRTG not reachable';
+            return false;
+        }
+        $File = match ($Type) {
+            self::GraphPNG => 'chart.png',
+            self::GraphSVG => 'chart.svg',
+            default        => ''
+        };
+        if ($File === '') {
+            $Error = 'Invalid graph type';
+            return false;
+        }
+        if ($SensorId < 1) {
+            $Error = 'Invalid sensor ID';
+            return false;
+        }
+        if (($GraphId < 0) || ($GraphId > 3)) {
+            $Error = 'Invalid graph time span';
+            return false;
+        }
+        if (($Width < 1) || ($Height < 1)) {
+            $Error = 'Invalid graph size';
+            return false;
+        }
+        $QueryData = [
+            'type'         => 'graph',
+            'graphid'      => $GraphId,
+            'width'        => $Width,
+            'height'       => $Height,
+            'theme'        => $Theme,
+            'refreshable'  => 'true',
+            'graphstyling' => "showLegend='" . (int) $ShowLegend . "' baseFontSize='" . $BaseFontSize . "'",
+            'id'           => $SensorId
+        ];
+        $HttpCode = 0;
+        // SendRequest statt Sys_GetURLContentEx, damit die SSL-Einstellungen der Instanz gelten.
+        $Result = $this->SendRequest($this->CreateQueryURL($File, $QueryData), $HttpCode, '', false);
+        if (($HttpCode != 200) || ($Result === '')) {
+            $Error = 'Graph could not be loaded';
+            return false;
+        }
+        return $Result;
+    }
+
+    /**
+     * MaskUrl
+     *
+     * Maskiert Zugangsdaten in einer URL für die Debug-Ausgabe.
+     *
+     * @param string $Url URL mit Zugangsdaten
+     *
+     * @return string URL ohne Zugangsdaten
+     */
+    private function MaskUrl(string $Url): string
+    {
+        $Url = preg_replace('#//[^/@]+@#', '//***@', $Url);
+        return preg_replace('/(password|passhash)=[^&]*/i', '$1=***', $Url);
+    }
+
+    /**
      * SendData
      *
      * Sendet Eine Anfrage an PRTG und liefert die Antwort.
@@ -615,8 +694,9 @@ class PRTGIO extends IPSModuleStrict
             return ['Payload' => $ResultString, 'Error' => $HttpCode];
         }
         $Result = json_decode($ResultString, true);
-        if ($Result === null) {
-            $Result['Error'] = 405;
+        if (!is_array($Result)) {
+            $this->SendDebug('Invalid JSON', $ResultString, 0);
+            return ['Error' => 405];
         }
         array_walk_recursive($Result, [$this, 'ResultEncode']);
         $Result['Error'] = 200;
@@ -701,7 +781,7 @@ class PRTGIO extends IPSModuleStrict
         ];
         $QueryURL = $this->CreateQueryURL('api/getpasshash.htm', $QueryData);
         $HttpCode = 0;
-        $Result = $this->SendRequest($QueryURL, $HttpCode);
+        $Result = $this->SendRequest($QueryURL, $HttpCode, '', false);
         if ($Result === '') {
             if ($HttpCode == 0) {
                 $this->SetStatus(IS_EBASE + 1);
@@ -750,12 +830,13 @@ class PRTGIO extends IPSModuleStrict
      * @param string $Url      URL der Abfrage
      * @param int    $HttpCode Enthält den HTTP-Code der Antwort
      * @param string $PostData String mit POST Daten
+     * @param bool   $DebugResult Antwort im Debug ausgeben (false für Passwort-Hash und Binärdaten)
      *
      * @return string Antwort als String
      */
-    private function SendRequest(string $Url, int &$HttpCode, string $PostData = ''): string
+    private function SendRequest(string $Url, int &$HttpCode, string $PostData = '', bool $DebugResult = true): string
     {
-        $this->SendDebug('Request:', $Url, 0);
+        $this->SendDebug('Request:', $this->MaskUrl($Url), 0);
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $Url);
         if ($PostData != '') {
@@ -789,7 +870,7 @@ class PRTGIO extends IPSModuleStrict
         }
         if ($HttpCode == 0) {
             if ($SSLResult !== false) {
-                $this->SendDebug('SSL connect', self::$SSLError[$SSLResult], 0);
+                $this->SendDebug('SSL connect', self::$SSLError[$SSLResult] ?? ('SSL error ' . $SSLResult), 0);
             }
             $this->SendDebug('Not connected', '', 0);
         } elseif ($HttpCode == 400) {
@@ -800,8 +881,10 @@ class PRTGIO extends IPSModuleStrict
         } elseif ($HttpCode == 404) {
             $this->SendDebug('Not Found Error', $HttpCode, 0);
             return '';
-        } else {
+        } elseif ($DebugResult) {
             $this->SendDebug('Result:' . $HttpCode, $Result, 0);
+        } else {
+            $this->SendDebug('Result:' . $HttpCode, strlen($Result) . ' Bytes', 0);
         }
         return $Result;
     }
