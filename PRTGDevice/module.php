@@ -43,7 +43,6 @@ class PRTGDevice extends IPSModuleStrict
     use \prtg\DebugHelper;
     use \prtg\BufferHelper;
     use \prtg\PRTGPause;
-    use \prtg\VariableConverter;
     use \prtg\ParentStatus;
     use \prtg\PRTGRequest;
     use \prtg\InstanceStatus {
@@ -64,6 +63,8 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * Create
      *
+     * Registriert Eigenschaften, Attribute und Timer und initialisiert die Buffer.
+     *
      * @return void
      */
     public function Create(): void
@@ -81,6 +82,8 @@ class PRTGDevice extends IPSModuleStrict
 
     /**
      * ApplyChanges
+     *
+     * Wendet die Konfiguration an: Ereignisfilter, Statusvariablen, Status und Timer.
      *
      * @return void
      */
@@ -382,10 +385,12 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * MessageSink
      *
-     * @param  int $TimeStamp
-     * @param  int $SenderID
-     * @param  int $Message
-     * @param  array $Data
+     * Verarbeitet registrierte Nachrichten (Kernelstart, Statuswechsel und Verbindung des IO).
+     *
+     * @param int $TimeStamp Zeitpunkt der Nachricht
+     * @param int $SenderID Objekt-ID des Absenders
+     * @param int $Message Nachrichtentyp (z.B. IM_CHANGESTATUS)
+     * @param array $Data Daten der Nachricht
      * @return void
      */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -421,8 +426,11 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * ReceiveData
      *
-     * @param  string $JSONString
-     * @return string
+     * Empfängt ein Ereignis von PRTG über den IO (nur für die eigene Objekt-ID, siehe ReceiveDataFilter).
+     * Die Abfrage läuft entkoppelt über einen einmaligen Timer, damit der Datenfluss nicht blockiert.
+     *
+     * @param string $JSONString Ereignis als JSON mit objid
+     * @return string Immer ein leerer String
      */
     public function ReceiveData(string $JSONString): string
     {
@@ -435,8 +443,10 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * RequestAction
      *
-     * @param  string $Ident
-     * @param  mixed $Value
+     * Bedienung der Statusvariablen (Überwachung) und interne Aktionen (Abfrage per Timer).
+     *
+     * @param string $Ident Ident der Statusvariable bzw. interne Aktion
+     * @param mixed $Value Neuer Wert bzw. Parameter der Aktion
      * @return void
      */
     public function RequestAction(string $Ident, mixed $Value): void
@@ -465,8 +475,7 @@ class PRTGDevice extends IPSModuleStrict
                 }
                 return;
         }
-        trigger_error($this->Translate('Invalid Ident'), E_USER_NOTICE);
-        return;
+        echo $this->Translate('Invalid Ident') . PHP_EOL;
     }
 
     /**
@@ -476,7 +485,7 @@ class PRTGDevice extends IPSModuleStrict
      * Fragt nicht selbst ab: Daten kommen nur über den Timer und über Ereignisse von PRTG,
      * sonst fragen beim Statuswechsel des IO alle Instanzen gleichzeitig an.
      *
-     * @param  int $State
+     * @param int $State Neuer Status des IO (z.B. IS_ACTIVE)
      * @return void
      */
     protected function IOChangeState(int $State): void
@@ -495,6 +504,8 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * KernelReady
      *
+     * Wird nach dem Start von Symcon ausgeführt und wendet die Konfiguration an.
+     *
      * @return void
      */
     private function KernelReady(): void
@@ -508,7 +519,7 @@ class PRTGDevice extends IPSModuleStrict
      *
      * Setzt den Intervall-Timer.
      *
-     * @param  bool $Active
+     * @param bool $Active true = Timer mit dem Intervall starten, false = stoppen
      * @return void
      */
     private function SetTimer(bool $Active): void
@@ -574,7 +585,8 @@ class PRTGDevice extends IPSModuleStrict
             $this->SetValue('ReadableState', $Data['status']);
         }
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
-            $this->SetValue('ActionButton', (bool) $Data['active_raw']);
+            // PRTG meldet bei einer befristeten Pause active = -1 (aktiv), nur bei unbefristeter Pause 0 (live geprüft).
+            $this->SetValue('ActionButton', ((bool) $Data['active_raw']) && ((int) $Data['status_raw'] != self::StatePausedUntil));
         }
         if ($this->ReadPropertyBoolean('AutoRename') && (IPS_GetName($this->InstanceID)) != $Data['name']) {
             IPS_SetName($this->InstanceID, $Data['name']);
@@ -598,7 +610,9 @@ class PRTGDevice extends IPSModuleStrict
     /**
      * GetSummary
      *
-     * @return string
+     * Liest die eigene Zusammenfassung, um sie nur bei Änderung neu zu schreiben.
+     *
+     * @return string Aktuelle Zusammenfassung der Instanz
      */
     private function GetSummary(): string
     {

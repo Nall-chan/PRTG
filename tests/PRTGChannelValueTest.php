@@ -49,7 +49,7 @@ class PRTGChannelValueTest extends TestCase
             '°C intern ×10 (KB 76000081708)'             => ['5.6 °C', 50.6, ChannelValue::KindNumeric, 5.6, '°C'],
             'V (anodot)'                                 => ['3.29 V', 3.29, ChannelValue::KindNumeric, 3.29, 'V'],
             'Wertetabelle (anodot)'                      => ['Normal', 1, ChannelValue::KindText, 'Normal', ''],
-            'Wertetabelle mehrere Wörter (KB)'           => ['Reservoir Level OK', 1, ChannelValue::KindText, 'Reservoir Level OK', 'OK'],
+            'Wertetabelle mehrere Wörter (KB)'           => ['Reservoir Level OK', 1, ChannelValue::KindText, 'Reservoir Level OK', ''],
             'Zahl ohne Einheit'                          => ['42', 42, ChannelValue::KindText, '42', ''],
         ];
     }

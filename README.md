@@ -54,7 +54,7 @@ Die Kommunikation zwischen Symcon und PRTG kann per HTTP oder per HTTPS (SSL/TLS
 
 ## 2. Voraussetzungen
 
-- Symcon ab Version 8.2  
+- Symcon ab Version 9.0  
 - PRTG mit erreichbarer Weboberfläche  
 
 ## 3. Software-Installation
@@ -106,9 +106,10 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 
 ### 2. Changelog
 
-**Version 2.61:**  
+**Version 2.70:**  
 
 > [!IMPORTANT]
+> Diese Version benötigt Symcon 9.0.  
 > Neu angelegte Geräte- und Sensor-Instanzen benennen sich und ihre Kanäle nicht mehr automatisch nach den Namen in PRTG um. Das kann in der Instanzkonfiguration eingeschaltet werden. Vorhandene Instanzen behalten ihre bisherige Einstellung.  
 > Sensor: Kanäle mit Zahlenwert, deren Einheit bisher nicht erkannt wurde (z.B. `°C`, `V` oder die Einheiten eines englisch eingestellten PRTG), werden als Zahl angelegt. Ist dafür bereits eine Variable vom Typ String vorhanden, meldet die Instanz den abweichenden Typ im Log und schreibt keinen Wert. Abhilfe: Variable löschen oder in der Kanalübersicht `Ignoriere Einheit und Typ` setzen.  
 > Graphen über den WebHook und `PRTG_GetGraph` werden mit Version 3.00 entfernt.
@@ -135,10 +136,12 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 - Gerät und Sensor: Der Status wurde nach Änderungen an der Instanz oder nach einem Modul-Update auf `Kein Test` gesetzt.  
 - Sensor: Bandbreiten ab 1 Mbit/s wurden mit der Einheit `KB` statt `Mbit/Sek.` angezeigt.  
 - Sensor: Werte mit der Einheit Anzahl pro Sekunde, Anzahl pro Minute und `Items` konnten je nach PRTG-Version um den Faktor 10 falsch sein.  
+- Gerät und Sensor: Während einer Pause für eine bestimmte Zeit zeigte `Überwachung` den Wert aktiv. Die Überwachung ließ sich dadurch nicht über die Variable fortsetzen.  
 
 **Fehlerbehebungen**  
 
 - IO: Der WebHook lieferte keine Graphen.  
+- IO: Konnte PRTG einen Graphen nicht erzeugen (z.B. bei einer unbekannten Sensor-ID), lieferten WebHook und `PRTG_GetGraph` die Fehlermeldung von PRTG als Bild aus. Jetzt antwortet der WebHook mit `400 Bad Request`, `PRTG_GetGraph` meldet einen Fehler. Ein ungültiger Wert für `graph` ergibt ebenfalls `400 Bad Request` statt `404 Not Found`.  
 - Gerät, Sensor und Konfigurator: Eine fehlgeschlagene Anfrage an den IO führte zu einem PHP-Fehler.  
 - Sensor: Mit gesetztem `Ignoriere Einheit und Typ` wurde eine vorhandene Variable mit abweichendem Typ durch eine neue ersetzt. Sie bleibt jetzt erhalten und der Wert wird in ihren Typ umgewandelt.  
 - IO: Ungültige Antworten von PRTG wurden nicht als Fehler erkannt.  
@@ -146,12 +149,13 @@ Es wird automatisch die Konfiguration für den benötigten [IO](PRTGIO/README.md
 - IO: `Deaktiviere Prüfung des Zertifikat` war ohne Wirkung. Die Prüfung des Zertifikats wird damit jetzt vollständig abgeschaltet.  
 - Gerät und Sensor: Ein Ereignis von PRTG löste auch bei Instanzen mit ähnlicher ID eine Abfrage aus (z.B. bei ID 12 durch ein Ereignis für ID 1234).  
 - Sensor: Die Einstellung `Ignoriere Einheit und Typ` ging bei einem Neustart von Symcon verloren.  
+- Sensor: Die Kanalübersicht zeigte bei Kanälen mit Text (z.B. `Good (2048)`) das letzte Wort als Einheit.  
 - Gerät und Sensor: Das Pausieren nutzte eine Adresse, die nicht der PRTG-API entspricht.  
 
 **Version 2.60:**  
 
 > [!IMPORTANT]
-> Diese Version benötigt Symcon 8.2.  
+> Diese Version benötigt Symcon 9.0.  
 > Die Variablenprofile wurden durch Darstellungen ersetzt. Speicher- und Bandbreitenwerte der Sensoren werden jetzt ohne Umrechnung als Rohwert aus PRTG (Byte bzw. Byte/s) gespeichert.
 
 **Geändertes Verhalten**  

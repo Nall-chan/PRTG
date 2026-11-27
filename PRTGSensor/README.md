@@ -38,7 +38,7 @@ Einbindung eines Sensors aus PRTG in Symcon.
 
 ## 2. Voraussetzungen
 
-- Symcon ab Version 8.2  
+- Symcon ab Version 9.0  
 - Ein aktiver [PRTG IO](../PRTGIO/README.md)  
 
 ## 3. Software-Installation
@@ -50,13 +50,13 @@ Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installa
 Das Anlegen von neuen Instanzen erfolgt am einfachsten über den [PRTG Konfigurator](../PRTGConfigurator/README.md#4-einrichten-der-instanzen-in-symcon).  
 Alternativ ist das Modul im Dialog `Instanz hinzufügen` unter dem Hersteller `PRTG` zu finden.  
 
-![Instanz hinzufügen](imgs/add.png)  
+![Instanz hinzufügen](../imgs/create.png)  
 
 Es wird automatisch eine [PRTG IO](../PRTGIO/README.md)-Instanz erzeugt, wenn noch keine vorhanden ist.  
 Erscheint im Konfigurationsformular der Hinweis `Eine übergeordnete Instanz ist inaktiv`, so ist zuerst der IO zu konfigurieren. Dieser ist über die Schaltfläche `Gateway konfigurieren` erreichbar.  
 Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-symcon).  
 
-![Konfiguration](imgs/conf.png)  
+![Konfiguration](imgs/config.png)  
 
 **Konfigurationsseite:**  
 
@@ -74,7 +74,7 @@ Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-de
 Wird eine der Eigenschaften `Zeige Steuerung der Überwachung`, `Zeige Quittieren Button` oder `Status in Klartext` deaktiviert, so wird die zugehörige Statusvariable gelöscht.  
 
 Die Zusammenfassung der Instanz zeigt das Gerät des Sensors in PRTG.  
-Existiert das Objekt in PRTG nicht (mehr), zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies einmalig im Log.  
+Existiert das Objekt in PRTG nicht (mehr), zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies bei jeder Abfrage im Log.  
 
 Beispiel zum Setzen der Eigenschaften per Skript:  
 
@@ -119,14 +119,16 @@ Werte der Variable `Status`:
 
 ### Variablen der Kanäle
 
-Für jeden Kanal des Sensors wird eine Statusvariable angelegt. Der Ident ist die Kanal-ID aus PRTG. Typ und Darstellung richten sich nach der Einheit, die PRTG für den Kanal meldet:  
+Für jeden Kanal des Sensors wird eine Statusvariable angelegt. Der Ident ist die Kanal-ID aus PRTG.  
+Ist der Sensor in PRTG pausiert, liefert PRTG die Kanäle ohne Wert. Vorhandene Variablen behalten dann ihren letzten Wert, fehlende werden erst angelegt, wenn PRTG wieder Werte liefert.  
+Typ und Darstellung richten sich nach der Einheit, die PRTG für den Kanal meldet:  
 
 | Einheit in PRTG                                        |   Typ   | Darstellung                                                           |
 | :----------------------------------------------------- | :-----: | :-------------------------------------------------------------------- |
 | `Tg.`, `Std.`, `Min.`, `Sek.`                          | integer | Dauer in Sekunden                                                     |
 | `ms`, `msec`                                           |  float  | Millisekunden                                                         |
 | `#`                                                    | integer | Anzahl                                                                |
-| `kByte`, `KByte`, `MByte`, `GByte`, `KB`, `MB`, `GB`   |  float  | Byte, angezeigt je nach Größe in Byte, KB, MB oder GB                 |
+| `kb`, `kByte`, `KByte`, `MByte`, `GByte`, `KB`, `MB`, `GB` |  float  | Byte, angezeigt je nach Größe in Byte, KB, MB oder GB                 |
 | `%`                                                    |  float  | Prozent                                                               |
 | `kbit/Sek.`, `Mbit/Sek.`, `kbit/s`, `Mbit/s`           |  float  | Byte pro Sekunde, angezeigt je nach Größe in kbit/Sek. oder Mbit/Sek. |
 | `#/Sek.`, `Msg/s`, `Nachr./s`                          | integer | Anzahl pro Sekunde                                                    |
@@ -144,13 +146,13 @@ Hier ein Beispiel eines HTTP-Sensors.
 
 ### Kachel Visualisierung
 
-![Kachel Beispiel](imgs/tile.png)  
+![Kachel Beispiel](imgs/tile_list.png)  
 
 ### WebFront Visualisierung
 
-![WebFront Beispiel](imgs/wf.png)  
+![WebFront Beispiel](imgs/webfront.png)  
 
-Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status`, `Überwachung` und Anzahl-Kanälen). Diese zeigt das klassische WebFront nicht an.  
+Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status`, `Überwachung`, Anzahl- und Millisekunden-Kanälen). Diese zeigt das klassische WebFront nicht an.  
 
 ## 7. PHP-Befehlsreferenz
 

@@ -67,6 +67,8 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * Create
      *
+     * Registriert Eigenschaften, Attribute und Timer und initialisiert die Buffer.
+     *
      * @return void
      */
     public function Create(): void
@@ -90,6 +92,8 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * Destroy
      *
+     * Stoppt den Timer beim Löschen der Instanz.
+     *
      * @return void
      */
     public function Destroy(): void
@@ -100,6 +104,8 @@ class PRTGSensor extends IPSModuleStrict
 
     /**
      * ApplyChanges
+     *
+     * Wendet die Konfiguration an: Ereignisfilter, Migration der Ignorieren-Einstellung, Statusvariablen, Status und Timer.
      *
      * @return void
      */
@@ -121,7 +127,10 @@ class PRTGSensor extends IPSModuleStrict
         parent::ApplyChanges();
         // Die ID endet mit , oder } (sonst passt z.B. ID 12 auch auf ein Ereignis für 1234).
         $this->SetReceiveDataFilter('.*"objid":' . $this->ReadPropertyInteger('id') . '[,}].*');
+        // Erst nach der Migration leeren, sie liest die Ignorieren-Einstellung noch aus dem alten Buffer.
         $this->MigrateIgnoredChannels();
+        $this->Interval = 0;
+        $this->Channels = [];
         $StateIsNew = ($this->FindIDForIdent('State') == 0);
         $this->MaintainVariable(
             'State',
@@ -376,10 +385,12 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * MessageSink
      *
-     * @param  int $TimeStamp
-     * @param  int $SenderID
-     * @param  int $Message
-     * @param  array $Data
+     * Verarbeitet registrierte Nachrichten (Kernelstart, Statuswechsel und Verbindung des IO).
+     *
+     * @param int $TimeStamp Zeitpunkt der Nachricht
+     * @param int $SenderID Objekt-ID des Absenders
+     * @param int $Message Nachrichtentyp (z.B. IM_CHANGESTATUS)
+     * @param array $Data Daten der Nachricht
      * @return void
      */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -415,8 +426,11 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * ReceiveData
      *
-     * @param  string $JSONString
-     * @return string
+     * Empfängt ein Ereignis von PRTG über den IO (nur für die eigene Objekt-ID, siehe ReceiveDataFilter).
+     * Die Abfrage läuft entkoppelt über einen einmaligen Timer, damit der Datenfluss nicht blockiert.
+     *
+     * @param string $JSONString Ereignis als JSON mit objid
+     * @return string Immer ein leerer String
      */
     public function ReceiveData(string $JSONString): string
     {
@@ -429,7 +443,9 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * GetConfigurationForm
      *
-     * @return string
+     * Ergänzt das Formular um das Intervall des Sensors aus PRTG und die Kanalübersicht.
+     *
+     * @return string Formular als JSON
      */
     public function GetConfigurationForm(): string
     {
@@ -447,8 +463,10 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * RequestAction
      *
-     * @param  string $Ident
-     * @param  mixed $Value
+     * Bedienung der Statusvariablen (Überwachung, Alarmsteuerung), Formularaktionen und interne Aktionen (Abfrage per Timer).
+     *
+     * @param string $Ident Ident der Statusvariable bzw. interne Aktion
+     * @param mixed $Value Neuer Wert bzw. Parameter der Aktion
      * @return void
      */
     public function RequestAction(string $Ident, mixed $Value): void
@@ -487,8 +505,7 @@ class PRTGSensor extends IPSModuleStrict
                 $this->SetChannelOverwrite($Data['objid'], $Data['Ignore']);
                 return;
         }
-        trigger_error('Invalid Ident', E_USER_NOTICE);
-        return;
+        echo $this->Translate('Invalid Ident') . PHP_EOL;
     }
 
     /**
@@ -540,7 +557,7 @@ class PRTGSensor extends IPSModuleStrict
      * Fragt nicht selbst ab: Daten kommen nur über den Timer und über Ereignisse von PRTG,
      * sonst fragen beim Statuswechsel des IO alle Instanzen gleichzeitig an.
      *
-     * @param  int $State
+     * @param int $State Neuer Status des IO (z.B. IS_ACTIVE)
      * @return void
      */
     protected function IOChangeState(int $State): void
@@ -559,6 +576,8 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * KernelReady
      *
+     * Wird nach dem Start von Symcon ausgeführt und wendet die Konfiguration an.
+     *
      * @return void
      */
     private function KernelReady(): void
@@ -572,7 +591,7 @@ class PRTGSensor extends IPSModuleStrict
      *
      * Setzt den Intervall-Timer.
      *
-     * @param  bool $Active
+     * @param bool $Active true = Timer mit dem Intervall starten, false = stoppen
      * @return void
      */
     private function SetTimer(bool $Active): void
@@ -669,7 +688,8 @@ class PRTGSensor extends IPSModuleStrict
             $this->SetValue('ReadableState', $Data['status']);
         }
         if ($this->ReadPropertyBoolean('ShowActionButton')) {
-            $this->SetValue('ActionButton', (bool) $Data['active_raw']);
+            // PRTG meldet bei einer befristeten Pause active = -1 (aktiv), nur bei unbefristeter Pause 0 (live geprüft).
+            $this->SetValue('ActionButton', ((bool) $Data['active_raw']) && ((int) $Data['status_raw'] != self::StatePausedUntil));
         }
         if ($this->ReadPropertyBoolean('AutoRename') && (IPS_GetName($this->InstanceID)) != $Data['name']) {
             IPS_SetName($this->InstanceID, $Data['name']);
@@ -708,7 +728,7 @@ class PRTGSensor extends IPSModuleStrict
      *
      * Dekodiert die Daten der Kanäle und schreibt diese in Statusvariablen.
      *
-     * @param array $Channels
+     * @param array $Channels Kanäle aus table.json (content=channels)
      * @return void
      */
     private function DecodeChannelData(array $Channels): void
@@ -790,8 +810,10 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * GetVariableTypeName
      *
-     * @param  int $VarType
-     * @return string
+     * Liefert den Namen eines Variablentyps für die Kanalübersicht und Log-Meldungen.
+     *
+     * @param int $VarType Variablentyp (VARIABLETYPE_*)
+     * @return string Boolean, Integer, Float, String oder Unknown
      */
     private function GetVariableTypeName(int $VarType): string
     {
@@ -807,7 +829,9 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * GetSummary
      *
-     * @return string
+     * Liest die eigene Zusammenfassung, um sie nur bei Änderung neu zu schreiben.
+     *
+     * @return string Aktuelle Zusammenfassung der Instanz
      */
     private function GetSummary(): string
     {
@@ -817,8 +841,11 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * AddChannelSuffix
      *
-     * @param  array $ChannelData
-     * @param  string $Unit
+     * Trägt Name, letzten Wert und erkannte Einheit eines Kanals in die Kanalübersicht ein.
+     *
+     * @param array $ChannelData Kanal aus table.json
+     * @param string $Unit Erkannte Einheit (leer = keine erkannt)
+     * @param string $ChannelVarTyp Zur Einheit passender Variablentyp
      * @return void
      */
     private function AddChannelSuffix(array $ChannelData, string $Unit = '', string $ChannelVarTyp = ''): void
@@ -832,16 +859,18 @@ class PRTGSensor extends IPSModuleStrict
         }
         $Channels[$ChannelData['objid']]['Name'] = $ChannelData['name'];
         $Channels[$ChannelData['objid']]['Data'] = $ChannelData['lastvalue'];
-        $Channels[$ChannelData['objid']]['Unit'] = $Unit ? $Unit : 'no Unit detected';
+        $Channels[$ChannelData['objid']]['Unit'] = ($Unit !== '') ? $Unit : $this->Translate('no Unit detected');
         $this->Channels = $Channels;
     }
 
     /**
      * AddChannelVarTypes
      *
-     * @param  array $ChannelData
-     * @param  string $ChannelVarType
-     * @param  string $IpsVarId
+     * Trägt den passenden und den vorhandenen Variablentyp eines Kanals in die Kanalübersicht ein.
+     *
+     * @param array $ChannelData Kanal aus table.json
+     * @param string $ChannelVarTyp Zur Einheit passender Variablentyp
+     * @param string $IpsVarTyp Typ der vorhandenen Variable
      * @return void
      */
     private function AddChannelVarTypes(array $ChannelData, string $ChannelVarTyp, string $IpsVarTyp): void
@@ -862,7 +891,9 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * GetChannelOverview
      *
-     * @return array
+     * Liefert die Zeilen der Kanalübersicht mit der gespeicherten Ignorieren-Einstellung.
+     *
+     * @return array Zeilen der Kanalübersicht
      */
     private function GetChannelOverview(): array
     {
@@ -876,8 +907,10 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * GetChannelOverwrite
      *
-     * @param  int $objid
-     * @return bool
+     * Prüft, ob für einen Kanal `Ignoriere Einheit und Typ` gesetzt ist.
+     *
+     * @param int $objid Kanal-ID in PRTG
+     * @return bool true, wenn der Kanal ignoriert wird
      */
     private function GetChannelOverwrite(int $objid): bool
     {
@@ -888,8 +921,10 @@ class PRTGSensor extends IPSModuleStrict
     /**
      * SetChannelOverwrite
      *
-     * @param  int $objid
-     * @param  bool $Ignore
+     * Speichert `Ignoriere Einheit und Typ` für einen Kanal dauerhaft im Attribut und aktualisiert die Kanalübersicht.
+     *
+     * @param int $objid Kanal-ID in PRTG
+     * @param bool $Ignore true = Einheit und Typ ignorieren
      * @return void
      */
     private function SetChannelOverwrite(int $objid, bool $Ignore): void

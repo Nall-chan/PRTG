@@ -266,6 +266,46 @@ class PRTGModuleTest extends TestCase
     }
 
     /**
+     * A10: Ungültige Adresse setzt Status 203, der interne Zustand folgt dem Status.
+     */
+    public function testInvalidHostSetsMatchingState(): void
+    {
+        $Iid = IPS_CreateInstance(self::IOID);
+        IPS_SetProperty($Iid, 'Open', true);
+        IPS_SetProperty($Iid, 'Host', 'nohost');
+        IPS_ApplyChanges($Iid);
+        $IO = IPS\InstanceManager::getInstanceInterface($Iid);
+        $this->assertSame(IS_EBASE + 3, IPS_GetInstance($Iid)['InstanceStatus']);
+        $this->assertSame(IS_EBASE + 3, $IO->State);
+    }
+
+    /**
+     * D9: PRTG meldet Fehler beim Graphen als Text mit HTTP 200; nur echte Bilder gelten als Graph.
+     */
+    public function testGraphImageCheck(): void
+    {
+        $IO = IPS\InstanceManager::getInstanceInterface(IPS_CreateInstance(self::IOID));
+        $Check = new ReflectionMethod($IO, 'IsGraphImage');
+        $this->assertTrue($Check->invoke($IO, 1, "\x89PNG\r\n\x1a\n...."));
+        $this->assertFalse($Check->invoke($IO, 1, 'Fehler beim Generieren des Graphen.'));
+        $this->assertTrue($Check->invoke($IO, 2, "<?xml version='1.0'?><!DOCTYPE svg><svg width='800'></svg>"));
+        $this->assertFalse($Check->invoke($IO, 2, 'Fehler beim Generieren des Graphen.'));
+    }
+
+    /**
+     * B4: Unbekannter Ident wird als übersetzte Fehlermeldung ausgegeben.
+     */
+    public function testInvalidIdentReportsError(): void
+    {
+        foreach ([self::DeviceID, self::SensorID] as $ModuleID) {
+            $Instance = IPS\InstanceManager::getInstanceInterface(IPS_CreateInstance($ModuleID));
+            ob_start();
+            $Instance->RequestAction('Unknown', 0);
+            $this->assertSame($Instance->Translate('Invalid Ident') . PHP_EOL, ob_get_clean());
+        }
+    }
+
+    /**
      * Punkt 1: Der Filter für Ereignisse schließt die ID ab (12 passt nicht auf 1234).
      */
     public function testReceiveDataFilterMatchesExactId(): void

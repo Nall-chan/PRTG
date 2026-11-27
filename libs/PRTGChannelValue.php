@@ -13,7 +13,7 @@ namespace prtg;
  * @author        Michael Tröger <micha@nall-chan.net>
  * @copyright     2026 Michael Tröger
  * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
- * @version       2.61
+ * @version       2.70
  *
  */
 
@@ -127,7 +127,8 @@ class ChannelValue
             $Kind = self::KindText;
         }
         if ($Kind === self::KindText) {
-            return ['Kind' => $Kind, 'Unit' => $Unit, 'Value' => $LastValue, 'HasUnit' => $HasUnit];
+            // Das letzte Wort eines Textes (z.B. „Good (2048)“) ist keine Einheit.
+            return ['Kind' => $Kind, 'Unit' => '', 'Value' => $LastValue, 'HasUnit' => $HasUnit];
         }
         $Value = (float) $Raw;
         if ($Kind !== self::KindDuration) {

@@ -89,7 +89,7 @@
                 {
                     "caption": "Ignore unit and type",
                     "name": "Ignore",
-                    "width": "150px",
+                    "width": "220px",
                     "edit": {
                         "type": "CheckBox"
                     }

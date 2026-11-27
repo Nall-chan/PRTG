@@ -105,6 +105,8 @@ class PRTGIO extends IPSModuleStrict
     /**
      * Create
      *
+     * Registriert Eigenschaften, Attribute und Timer und initialisiert die Buffer.
+     *
      * @return void
      */
     public function Create(): void
@@ -114,7 +116,6 @@ class PRTGIO extends IPSModuleStrict
         $this->RegisterPropertyString('Host', 'http://');
         $this->RegisterPropertyString('Username', '');
         $this->RegisterPropertyString('Password', '');
-        $this->RegisterPropertyInteger('Interval', 0);
         $this->RegisterPropertyBoolean('NoCertCheck', false);
         $this->RegisterPropertyBoolean('NoPeerVerify', false);
         $this->RegisterPropertyBoolean('NoHostVerify', false);
@@ -136,6 +137,8 @@ class PRTGIO extends IPSModuleStrict
 
     /**
      * ApplyChanges
+     *
+     * Wendet die Konfiguration an: WebHook registrieren, URL prüfen, Adresse des Ereignis-WebHooks ermitteln und bei PRTG anmelden (Passwort-Hash).
      *
      * @return void
      */
@@ -168,10 +171,12 @@ class PRTGIO extends IPSModuleStrict
     /**
      * MessageSink
      *
-     * @param  int $TimeStamp
-     * @param  int $SenderID
-     * @param  int $Message
-     * @param  array $Data
+     * Verarbeitet den Start von Symcon.
+     *
+     * @param int $TimeStamp Zeitpunkt der Nachricht
+     * @param int $SenderID Objekt-ID des Absenders
+     * @param int $Message Nachrichtentyp (z.B. IM_CHANGESTATUS)
+     * @param array $Data Daten der Nachricht
      * @return void
      */
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -186,8 +191,10 @@ class PRTGIO extends IPSModuleStrict
     /**
      * RequestAction
      *
-     * @param  string $Ident
-     * @param  mixed $Value
+     * Interne Aktionen (Start von Symcon).
+     *
+     * @param string $Ident Ident der Aktion
+     * @param mixed $Value Parameter der Aktion
      * @return void
      */
     public function RequestAction(string $Ident, mixed $Value): void
@@ -232,8 +239,10 @@ class PRTGIO extends IPSModuleStrict
     /**
      * ForwardData
      *
-     * @param  string $JSONString
-     * @return string
+     * Führt eine Anfrage eines Kindes an PRTG aus.
+     *
+     * @param string $JSONString Anfrage als JSON mit Uri, QueryData und PostData
+     * @return string Serialisiertes Ergebnis; Fehler im Feld Error (HTTP-Code oder Status des IO)
      */
     public function ForwardData(string $JSONString): string
     {
@@ -247,7 +256,9 @@ class PRTGIO extends IPSModuleStrict
     /**
      * GetConfigurationForm
      *
-     * @return string
+     * Ergänzt das Formular um die Adresse des Ereignis-WebHooks.
+     *
+     * @return string Formular als JSON
      */
     public function GetConfigurationForm(): string
     {
@@ -279,6 +290,8 @@ class PRTGIO extends IPSModuleStrict
     /**
      * ProcessHookdata
      *
+     * Verarbeitet Anfragen an den WebHook: Ereignisse von PRTG (POST), Graphen und Daten für den Symcon-Sensor (GET, optional mit Basic-Authentifizierung).
+     *
      * @return void
      */
     protected function ProcessHookdata(): void
@@ -301,8 +314,12 @@ class PRTGIO extends IPSModuleStrict
                     echo 'Unauthorized';
                     return;
                 }
-                if (isset($_GET['graph']) && in_array($_GET['graph'], ['png', 'svg'], true)) {
-                    $Type = ($_GET['graph'] == 'png') ? self::GraphPNG : self::GraphSVG;
+                if (isset($_GET['graph'])) {
+                    $Type = match ($_GET['graph']) {
+                        'png'   => self::GraphPNG,
+                        'svg'   => self::GraphSVG,
+                        default => 0
+                    };
                     $Error = '';
                     $Graph = $this->FetchGraph(
                         $Type,
@@ -349,8 +366,10 @@ class PRTGIO extends IPSModuleStrict
     /**
      * SetStatus
      *
-     * @param  int $InstanceStatus
-     * @return bool
+     * Setzt den Instanzstatus und merkt ihn im Buffer State.
+     *
+     * @param int $InstanceStatus Neuer Status
+     * @return bool Ergebnis von IPSModuleStrict::SetStatus
      */
     protected function SetStatus(int $InstanceStatus): bool
     {
@@ -360,6 +379,8 @@ class PRTGIO extends IPSModuleStrict
 
     /**
      * KernelReady
+     *
+     * Wird nach dem Start von Symcon ausgeführt und wendet die Konfiguration an.
      *
      * @return void
      */
@@ -372,7 +393,9 @@ class PRTGIO extends IPSModuleStrict
     /**
      * GetConsumerAddress
      *
-     * @return bool
+     * Ermittelt die Adresse des Ereignis-WebHooks (beachtet NAT und die Experteneinstellungen) und zeigt sie im Formular an.
+     *
+     * @return bool true, wenn eine gültige Adresse ermittelt wurde
      */
     private function GetConsumerAddress(): bool
     {
@@ -420,13 +443,15 @@ class PRTGIO extends IPSModuleStrict
     /**
      * ShowLastError
      *
-     * @param  string $ErrorMessage
-     * @param  string $ErrorTitle
+     * Zeigt eine Fehlermeldung als Popup im Formular an.
+     *
+     * @param string $ErrorMessage Text der Meldung (wird übersetzt)
+     * @param string $ErrorTitle Titel des Popups (wird übersetzt)
      * @return void
      */
     private function ShowLastError(string $ErrorMessage, string $ErrorTitle = 'Error'): void
     {
-        IPS_Sleep(500);
+        usleep(500000);
         $this->UpdateFormField('ErrorTitle', 'caption', $this->Translate($ErrorTitle));
         $this->UpdateFormField('ErrorText', 'caption', $this->Translate($ErrorMessage));
         $this->UpdateFormField('ErrorPopup', 'visible', true);
@@ -681,11 +706,30 @@ class PRTGIO extends IPSModuleStrict
         $HttpCode = 0;
         // SendRequest statt Sys_GetURLContentEx, damit die SSL-Einstellungen der Instanz gelten.
         $Result = $this->SendRequest($this->CreateQueryURL($File, $QueryData), $HttpCode, '', false);
-        if (($HttpCode != 200) || ($Result === '')) {
+        if (($HttpCode != 200) || !$this->IsGraphImage($Type, $Result)) {
+            // PRTG meldet Fehler (z.B. unbekannte Sensor-ID) als Text mit HTTP 200.
+            $this->SendDebug('Graph error', $HttpCode . ' ' . substr($Result, 0, 200), 0);
             $Error = 'Graph could not be loaded';
             return false;
         }
         return $Result;
+    }
+
+    /**
+     * IsGraphImage
+     *
+     * Prüft, ob die Antwort von PRTG ein Bild des angeforderten Typs ist.
+     *
+     * @param  int    $Type   GraphPNG oder GraphSVG
+     * @param  string $Result Antwort von PRTG
+     * @return bool True, wenn die Antwort ein PNG bzw. SVG ist
+     */
+    private function IsGraphImage(int $Type, string $Result): bool
+    {
+        if ($Type == self::GraphPNG) {
+            return str_starts_with($Result, "\x89PNG");
+        }
+        return str_contains(substr($Result, 0, 1024), '<svg');
     }
 
     /**
@@ -747,7 +791,7 @@ class PRTGIO extends IPSModuleStrict
      *
      * Callback für array_walk_recursive. Dekodiert HTML-Kodierte Strings.
      *
-     * @param  mixed $item
+     * @param mixed $item Wert des Arrays (per Referenz)
      * @return void
      */
     private function ResultEncode(mixed &$item): void
@@ -767,14 +811,12 @@ class PRTGIO extends IPSModuleStrict
     private function CheckHost(): bool
     {
         if (!$this->ReadPropertyBoolean('Open')) {
-            $this->SetStatus(IS_INACTIVE);
-            $this->State = self::isInActive;
+            $this->SetStatus(self::isInActive);
             return false;
         }
         $URL = $this->ReadPropertyString('Host');
         if ($URL == 'http://') {
-            $this->SetStatus(IS_INACTIVE);
-            $this->State = self::isInActive;
+            $this->SetStatus(self::isInActive);
             return false;
         }
         $Scheme = parse_url($URL, PHP_URL_SCHEME);
@@ -783,8 +825,7 @@ class PRTGIO extends IPSModuleStrict
         }
         $Host = parse_url($URL, PHP_URL_HOST);
         if ($Host == null) {
-            $this->SetStatus(IS_EBASE + 3);
-            $this->State = self::isDisconnected;
+            $this->SetStatus(self::isURLnotValid);
             return false;
         }
         $Port = parse_url($URL, PHP_URL_PORT);
@@ -822,22 +863,16 @@ class PRTGIO extends IPSModuleStrict
         $HttpCode = 0;
         $Result = $this->SendRequest($QueryURL, $HttpCode, '', false);
         if ($Result === '') {
-            if ($HttpCode == 0) {
-                $this->SetStatus(IS_EBASE + 1);
-                $this->State = self::isDisconnected;
-            } elseif ($HttpCode == 404) {
-                $this->SetStatus(IS_EBASE + 1);
-                $this->State = self::isDisconnected;
+            if (($HttpCode == 0) || ($HttpCode == 404)) {
+                $this->SetStatus(self::isDisconnected);
             } else {
-                $this->SetStatus(IS_EBASE + 2);
-                $this->State = self::isUnauthorized;
+                $this->SetStatus(self::isUnauthorized);
             }
             $this->Hash = '';
             return false;
         }
         $this->Hash = $Result;
-        $this->SetStatus(IS_ACTIVE);
-        $this->State = self::isConnected;
+        $this->SetStatus(self::isConnected);
         return true;
     }
 

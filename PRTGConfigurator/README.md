@@ -32,7 +32,7 @@ Vereinfacht das Anlegen von Geräte- und Sensor-Instanzen in Symcon.
 
 ## 2. Voraussetzungen
 
-- Symcon ab Version 8.2  
+- Symcon ab Version 9.0  
 - Ein aktiver [PRTG IO](../PRTGIO/README.md)  
 
 ## 3. Software-Installation
@@ -44,13 +44,13 @@ Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installa
 Nach der Installation aus dem Module Store erfolgt eine Abfrage, ob der Konfigurator angelegt werden soll.  
 Alternativ ist das Modul im Dialog `Instanz hinzufügen` unter dem Hersteller `PRTG` zu finden.  
 
-![Instanz hinzufügen](imgs/add.png)  
+![Instanz hinzufügen](../imgs/create.png)  
 
 Es wird automatisch eine [PRTG IO](../PRTGIO/README.md)-Instanz erzeugt, wenn noch keine vorhanden ist.  
 Erscheint im Konfigurationsformular der Hinweis `Eine übergeordnete Instanz ist inaktiv`, so ist zuerst der IO zu konfigurieren. Dieser ist über die Schaltfläche `Gateway konfigurieren` erreichbar.  
 Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-symcon).  
 
-![Konfigurator](imgs/conf1.png)  
+![Konfigurator](imgs/config.png)  
 
 Ist der IO aktiv, zeigt der Konfigurator beim Öffnen oder nach Betätigen der Schaltfläche `Aktualisieren` alle Geräte und Sensoren aus PRTG an.  
 Die Zusammenfassung des Konfigurators zeigt den PRTG-Server des verbundenen IO.  
@@ -59,7 +59,7 @@ Die Zusammenfassung des Konfigurators zeigt den PRTG-Server des verbundenen IO.
 Neue Instanzen werden unterhalb einer Kategorie mit dem Namen des jeweiligen Gerätes erstellt. Diese Kategorien liegen direkt im Root des Objektbaums, es kann jedoch eine andere Ursprungskategorie ausgewählt werden.  
 Die Struktur dient dem schnellen Auffinden der erstellten Instanzen. Anschließend können die Instanzen frei im Objektbaum verschoben werden.  
 
-![Konfigurator](imgs/conf2.png)  
+![Konfigurator](imgs/config_list.png)  
 
 Der Konfigurator besitzt keine Eigenschaften.  
 

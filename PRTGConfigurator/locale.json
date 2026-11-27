@@ -2,8 +2,7 @@
     "translations": {
         "de": {
             "PRTG Configurator": "PRTG Konfigurator",
-            "Create under category": "Unter folgender Kategorie erzeugen",
-            "ObjectID": "ObjectID",
+            "ObjectID": "Objekt-ID",
             "Type": "Typ",
             "Group": "Gruppe",
             "Device": "Gerät",

@@ -35,7 +35,7 @@ Einbindung eines Gerätes aus PRTG in Symcon.
 
 ## 2. Voraussetzungen
 
-- Symcon ab Version 8.2  
+- Symcon ab Version 9.0  
 - Ein aktiver [PRTG IO](../PRTGIO/README.md)  
 
 ## 3. Software-Installation
@@ -47,13 +47,13 @@ Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installa
 Das Anlegen von neuen Instanzen erfolgt am einfachsten über den [PRTG Konfigurator](../PRTGConfigurator/README.md#4-einrichten-der-instanzen-in-symcon).  
 Alternativ ist das Modul im Dialog `Instanz hinzufügen` unter dem Hersteller `PRTG` zu finden.  
 
-![Instanz hinzufügen](imgs/add.png)  
+![Instanz hinzufügen](../imgs/create.png)  
 
 Es wird automatisch eine [PRTG IO](../PRTGIO/README.md)-Instanz erzeugt, wenn noch keine vorhanden ist.  
 Erscheint im Konfigurationsformular der Hinweis `Eine übergeordnete Instanz ist inaktiv`, so ist zuerst der IO zu konfigurieren. Dieser ist über die Schaltfläche `Gateway konfigurieren` erreichbar.  
 Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-der-instanzen-in-symcon).  
 
-![Konfiguration](imgs/conf.png)  
+![Konfiguration](imgs/config.png)  
 
 **Konfigurationsseite:**  
 
@@ -70,7 +70,7 @@ Details stehen in der [Dokumentation des IO](../PRTGIO/README.md#4-einrichten-de
 Wird eine der Eigenschaften `Zeige Steuerung der Überwachung`, `Status in Klartext`, `Anzahl der Sensoren anzeigen` oder `Status der Sensoren anzeigen` deaktiviert, so werden die zugehörigen Statusvariablen gelöscht.  
 
 Die Zusammenfassung der Instanz zeigt die Gruppe des Gerätes in PRTG.  
-Existiert das Objekt in PRTG nicht (mehr), zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies einmalig im Log.  
+Existiert das Objekt in PRTG nicht (mehr), zeigt die Instanz den Status `Objekt in PRTG nicht gefunden` und meldet dies bei jeder Abfrage im Log.  
 
 Beispiel zum Setzen der Eigenschaften per Skript:  
 
@@ -115,13 +115,13 @@ Die Darstellung und Steuerung ist in der Kachel Visualisierung und im WebFront m
 
 ### Kachel Visualisierung
 
-![Kachel Beispiel](imgs/tile.png)  
+![Kachel Beispiel](imgs/tile_list.png)  
 
 ### WebFront Visualisierung
 
-![WebFront Beispiel](imgs/wf.png)  
+![WebFront Beispiel](imgs/webfront.png)  
 
-Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status` und `Überwachung`). Diese zeigt das klassische WebFront nicht an.  
+Einige Symbole sind Font-Awesome-Symbole (z.B. bei `Status`, `Überwachung` und den Anzahlen der Sensoren). Diese zeigt das klassische WebFront nicht an.  
 
 ## 7. PHP-Befehlsreferenz
 

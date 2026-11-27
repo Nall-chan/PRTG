@@ -42,17 +42,19 @@ require_once __DIR__ . '/PRTGChannelValue.php';
  * @copyright     2025 Michael Tröger
  * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
- * @version       2.61
+ * @version       2.70
  */
 trait ParentStatus
 {
     /**
+     * ParentMessageSink
+     *
      * Verarbeitet eine Nachricht des IO bzw. der eigenen Verbindung.
      *
-     * @param  int $TimeStamp
-     * @param  int $SenderID
-     * @param  int $Message
-     * @param  array $Data
+     * @param int $TimeStamp Zeitpunkt der Nachricht
+     * @param int $SenderID Objekt-ID des Absenders
+     * @param int $Message Nachrichtentyp (z.B. IM_CHANGESTATUS)
+     * @param array $Data Daten der Nachricht
      * @return void
      */
     protected function ParentMessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -103,7 +105,7 @@ trait ParentStatus
  * @copyright     2025 Michael Tröger
  * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
- * @version       2.61
+ * @version       2.70
  */
 trait PRTGRequest
 {
@@ -155,11 +157,12 @@ trait PRTGRequest
     }
 
     /**
+     * GetRequestErrorText
+     *
      * Liefert den (unübersetzten) Fehlertext zu einem Fehlercode des IO.
      *
-     * @param int $Error HTTP-Code oder Status des IO
-     *
-     * @return string
+     * @param int $Error HTTP-Code oder Status des IO aus dem Feld Error
+     * @return string Fehlertext (unübersetzt, Übersetzung beim Ausgeben)
      */
     private function GetRequestErrorText(int $Error): string
     {
@@ -193,7 +196,7 @@ trait PRTGRequest
  * @copyright     2025 Michael Tröger
  * @license       Custom Non-Commercial Share-Alike License (see LICENSE)
  *
- * @version       2.61
+ * @version       2.70
  *
  * @example <b>Ohne</b>
  */
@@ -307,13 +310,14 @@ trait PRTGPause
     }
 
     /**
+     * EmulateState
+     *
      * Rückmeldung nach einem erfolgreichen Befehl: Statusvariablen sofort setzen.
      * PRTG übernimmt den Status erst verzögert (Pausieren nach Sekunden, Fortsetzen erst mit dem
      * nächsten Scan), ein Nachlesen käme für die Bedienung zu spät.
      *
-     * @param int       $State  Wert der Variable Status (PRTG status_raw)
-     * @param bool|null $Active Überwachung aktiv, null = unverändert
-     *
+     * @param int $State Neuer Wert der Variable Status
+     * @param ?bool $Active Neuer Wert der Variable Überwachung, null = unverändert
      * @return void
      */
     private function EmulateState(int $State, ?bool $Active = null): void
@@ -337,8 +341,10 @@ trait VariableConverter
     /**
      * ConvertPRTGTimestamp
      *
-     * @param  float $Timestamp
-     * @return float|int
+     * Wandelt einen Zeitstempel von PRTG (Tage seit 30.12.1899) in einen Unix-Zeitstempel um.
+     *
+     * @param float $Timestamp Zeitstempel von PRTG in Tagen
+     * @return float|int Unix-Zeitstempel
      */
     private function ConvertPRTGTimestamp(float $Timestamp): float|int
     {

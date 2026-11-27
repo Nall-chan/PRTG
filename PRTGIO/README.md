@@ -37,7 +37,7 @@ I/O zur Kommunikation mit PRTG.
 
 ## 2. Voraussetzungen
 
-- Symcon ab Version 8.2  
+- Symcon ab Version 9.0  
 - PRTG mit erreichbarer Weboberfläche  
 - Ein Benutzer in PRTG, der die Überwachung steuern und Alarme bestätigen darf (administrative Rechte)  
 
@@ -50,7 +50,7 @@ Dieses Modul ist Bestandteil der [PRTG-Library](../README.md#3-software-installa
 Die Instanz wird automatisch erzeugt, sobald z.B. der [PRTG Konfigurator](../PRTGConfigurator/README.md) erstellt wird.  
 Alternativ ist das Modul im Dialog `Instanz hinzufügen` unter dem Hersteller `PRTG` zu finden.  
 
-![Instanz hinzufügen](imgs/add.png)  
+![Instanz hinzufügen](../imgs/create.png)  
 
 Die erweiterten SSL-Einstellungen sind ab Werk inaktiv. Für selbst signierte Zertifikate sind z.B. `Deaktiviere Prüfung des Hostnamen` und `Deaktiviere Prüfung der Gegenstelle` zu aktivieren.  
 
@@ -58,7 +58,7 @@ Die Adresse des Ereignis-WebHooks für PRTG wird unterhalb der Konfiguration ang
 Dabei werden sowohl mehrere IP-Adressen als auch die globalen NAT-Einstellungen von Symcon beachtet.  
 Ist es aus anderen Gründen nötig, die Adresse anzupassen, so kann dies im Bereich `Experteneinstellung Ereignis-Hook` erfolgen.  
 
-![Konfiguration](imgs/conf.png)  
+![Konfiguration](imgs/config.png)  
 
 **Konfigurationsseite:**  
 
@@ -227,7 +227,7 @@ Sind die Parameter ungültig, ist PRTG nicht erreichbar oder konnte der Graph ni
 Der Rückgabewert einer Instanz-Funktion ist auf 1 MB begrenzt. Für große Graphen den [WebHook](#graphen-über-den-webhook-abrufen) verwenden.  
 
 ```php
-$Svg = PRTG_GetGraph(12345, 2, 2001, 800, 400, 0, 10, true);
+$Svg = PRTG_GetGraph(12345, 2, 2001, 0, 800, 400, 0, 10, true);
 SetValueString(23456, $Svg);
 ```
 
